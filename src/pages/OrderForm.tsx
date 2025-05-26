@@ -79,7 +79,7 @@ const OrderForm = () => {
     e.preventDefault();
     const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
     if (items.length > 0 && allFieldsFilled && user) {
-      await dispatch(createOrder({ userId: user.id.toString(), items, address }));
+      await dispatch(createOrder({ userId: user.id, items, address }));
       navigate('/');
     }
   };
