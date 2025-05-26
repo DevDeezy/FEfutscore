@@ -13,8 +13,7 @@ import AdminRoute from './components/AdminRoute';
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { setUser } from './store/slices/authSlice';
-import jwt_decode from 'jwt-decode';
-
+import { jwtDecode } from 'jwt-decode';
 const theme = createTheme({
   palette: {
     primary: {
@@ -43,10 +42,10 @@ function useAuthRestore() {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decoded = jwt_decode(token);
+        const decoded = jwtDecode(token);
         // Check if token is expired
         if (typeof decoded === 'object' && decoded && 'exp' in decoded) {
-          if ((decoded.exp * 1000) < Date.now()) {
+          if (((decoded as { exp: number }).exp * 1000) < Date.now()) {
             localStorage.removeItem('token');
             return;
           }

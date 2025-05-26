@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createOrder, fetchOrders } from '../store/slices/orderSlice';
 import { OrderItem } from '../types';
 import { AppDispatch, RootState } from '../store';
+import jwt_decode from 'jwt-decode';
 
 const OrderForm = () => {
   const navigate = useNavigate();
@@ -24,11 +25,11 @@ const OrderForm = () => {
   const { orders } = useSelector((state: RootState) => state.order);
   const { user } = useSelector((state: RootState) => state.auth);
   const [currentItem, setCurrentItem] = useState<OrderItem>({
-    productType: 'tshirt',
-    imageFront: '',
-    imageBack: '',
+    product_type: 'tshirt',
+    image_front: '',
+    image_back: '',
     size: 'S',
-    playerName: '',
+    player_name: '',
   });
   const [items, setItems] = useState<OrderItem[]>([]);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
@@ -63,14 +64,14 @@ const OrderForm = () => {
   };
 
   const handleAddItem = () => {
-    if (currentItem.imageFront && currentItem.size) {
+    if (currentItem.image_front && currentItem.size) {
       setItems([...items, currentItem]);
       setCurrentItem({
-        productType: 'tshirt',
-        imageFront: '',
-        imageBack: '',
+        product_type: 'tshirt',
+        image_front: '',
+        image_back: '',
         size: 'M',
-        playerName: '',
+        player_name: '',
       });
     }
   };
@@ -98,7 +99,7 @@ const OrderForm = () => {
           
           <Grid container spacing={3}>
             {/* Image pickers */}
-            {currentItem.productType === 'tshirt' ? (
+            {currentItem.product_type === 'tshirt' ? (
               <>
                 <Grid item xs={12} sm={6}>
                   <Button variant="contained" component="label" fullWidth>
@@ -111,10 +112,10 @@ const OrderForm = () => {
                       ref={imageFrontInputRef}
                     />
                   </Button>
-                  {currentItem.imageFront && (
+                  {currentItem.image_front && (
                     <Box sx={{ mt: 2, textAlign: 'center' }}>
                       <img
-                        src={currentItem.imageFront}
+                        src={currentItem.image_front}
                         alt="Pré-visualização Frente"
                         style={{ maxWidth: '200px', maxHeight: '200px' }}
                       />
@@ -132,10 +133,10 @@ const OrderForm = () => {
                       ref={imageBackInputRef}
                     />
                   </Button>
-                  {currentItem.imageBack && (
+                  {currentItem.image_back && (
                     <Box sx={{ mt: 2, textAlign: 'center' }}>
                       <img
-                        src={currentItem.imageBack}
+                        src={currentItem.image_back}
                         alt="Pré-visualização Verso"
                         style={{ maxWidth: '200px', maxHeight: '200px' }}
                       />
@@ -155,10 +156,10 @@ const OrderForm = () => {
                     ref={imageFrontInputRef}
                   />
                 </Button>
-                {currentItem.imageFront && (
+                {currentItem.image_front && (
                   <Box sx={{ mt: 2, textAlign: 'center' }}>
                     <img
-                      src={currentItem.imageFront}
+                      src={currentItem.image_front}
                       alt="Pré-visualização"
                       style={{ maxWidth: '200px', maxHeight: '200px' }}
                     />
@@ -170,12 +171,12 @@ const OrderForm = () => {
               <FormControl fullWidth>
                 <InputLabel>Produto</InputLabel>
                 <Select
-                  value={currentItem.productType}
+                  value={currentItem.product_type}
                   label="Produto"
                   onChange={(e) =>
                     setCurrentItem({
                       ...currentItem,
-                      productType: e.target.value as OrderItem['productType'],
+                      product_type: e.target.value as OrderItem['product_type'],
                       size: e.target.value === 'shoes' ? '42' : 'S',
                     })
                   }
@@ -186,7 +187,7 @@ const OrderForm = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={4}>
-              {currentItem.productType === 'shoes' ? (
+              {currentItem.product_type === 'shoes' ? (
                 <TextField
                   fullWidth
                   type="number"
@@ -216,14 +217,14 @@ const OrderForm = () => {
                 </FormControl>
               )}
             </Grid>
-            {currentItem.productType === 'tshirt' && (
+            {currentItem.product_type === 'tshirt' && (
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 label="Nome do Jogador"
-                value={currentItem.playerName}
+                value={currentItem.player_name}
                 onChange={(e) =>
-                  setCurrentItem({ ...currentItem, playerName: e.target.value })
+                  setCurrentItem({ ...currentItem, player_name: e.target.value })
                 }
               />
             </Grid>
@@ -233,7 +234,7 @@ const OrderForm = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleAddItem}
-                disabled={!currentItem.imageFront || !currentItem.size}
+                  disabled={!currentItem.image_front || !currentItem.size}
               >
                 Adicionar Item
               </Button>
@@ -250,26 +251,26 @@ const OrderForm = () => {
                   <Grid item xs={12} sm={4} key={index}>
                     <Paper sx={{ p: 2 }}>
                       <img
-                        src={item.imageFront}
+                        src={item.image_front}
                         alt={`Item ${index + 1} Frente`}
                         style={{ width: '100%', height: '150px', objectFit: 'cover' }}
                       />
-                      {item.productType === 'tshirt' && item.imageBack && (
+                      {item.product_type === 'tshirt' && item.image_back && (
                         <img
-                          src={item.imageBack}
+                          src={item.image_back}
                           alt={`Item ${index + 1} Verso`}
                           style={{ width: '100%', height: '150px', objectFit: 'cover', marginTop: 8 }}
                         />
                       )}
                       <Typography variant="body2" sx={{ mt: 1 }}>
-                        Produto: {item.productType === 'tshirt' ? 'Camisola' : 'Ténis'}
+                        Produto: {item.product_type === 'tshirt' ? 'Camisola' : 'Ténis'}
                       </Typography>
                       <Typography variant="body2">
                         Tamanho: {item.size}
                       </Typography>
-                      {item.playerName && (
+                      {item.player_name && (
                         <Typography variant="body2">
-                          Nome do Jogador: {item.playerName}
+                          Nome do Jogador: {item.player_name}
                         </Typography>
                       )}
                     </Paper>
@@ -336,26 +337,26 @@ const OrderForm = () => {
                   {order.items.map((item, idx) => (
                     <Box key={idx} sx={{ mt: 1 }}>
                      <img
-                        src={item.imageFront.startsWith('data:') ? item.imageFront : `data:image/jpeg;base64,${item.imageFront}`}
+                        src={item.image_front.startsWith('data:') ? item.image_front : `data:image/jpeg;base64,${item.image_front}`}
                         alt={`Item ${idx + 1} Frente`}
                         style={{ width: '100%', height: '100px', objectFit: 'cover' }}
                       />
-                      {item.productType === 'tshirt' && item.imageBack && (
+                      {item.product_type === 'tshirt' && item.image_back && (
                         <img
-                        src={item.imageBack.startsWith('data:') ? item.imageBack : `data:image/jpeg;base64,${item.imageBack}`}
+                        src={item.image_back.startsWith('data:') ? item.image_back : `data:image/jpeg;base64,${item.image_back}`}
                         alt={`Item ${idx + 1} Verso`}
                         style={{ width: '100%', height: '100px', objectFit: 'cover', marginTop: 4 }}
                         />
                       )}
                       <Typography variant="body2">
-                        Produto: {item.productType === 'tshirt' ? 'Camisola' : 'Ténis'}
+                        Produto: {item.product_type === 'tshirt' ? 'Camisola' : 'Ténis'}
                       </Typography>
                       <Typography variant="body2">
                         Tamanho: {item.size}
                       </Typography>
-                      {item.playerName && (
+                      {item.player_name && (
                         <Typography variant="body2">
-                          Nome do Jogador: {item.playerName}
+                          Nome do Jogador: {item.player_name}
                         </Typography>
                       )}
                     </Box>

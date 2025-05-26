@@ -1,3 +1,5 @@
+import jwt_decode from 'jwt-decode';
+
 export interface User {
   id: number;
   email: string;
@@ -7,11 +9,11 @@ export interface User {
 }
 
 export interface OrderItem {
-  productType: 'tshirt' | 'shoes';
-  imageFront: string;
-  imageBack?: string; // Only for t-shirts
+  product_type: 'tshirt' | 'shoes';
+  image_front: string;
+  image_back?: string; // Only for t-shirts
   size: 'S' | 'M' | 'L' | 'XL' | '39' | '40' | '41' | '42';
-  playerName?: string; // Make playerName optional
+  player_name?: string; // Make playerName optional
 }
 
 export interface Order {
