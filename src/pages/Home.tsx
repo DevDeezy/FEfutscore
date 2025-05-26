@@ -14,7 +14,7 @@ const Home = () => {
           Welcome to FutScore
         </Typography>
         <Typography variant="h5" color="text.secondary" paragraph>
-          Create custom orders for your favorite sports merchandise
+          sports merchandise store
         </Typography>
         {!user && (
           <Box sx={{ mt: 4 }}>
