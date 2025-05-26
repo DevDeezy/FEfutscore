@@ -12,22 +12,13 @@ const initialState: OrderState = {
 
 export const createOrder = createAsyncThunk(
   'order/create',
-  async (orderData: { items: any[]; address: any }) => {
-    const formData = new FormData();
-    orderData.items.forEach((item, index) => {
-      formData.append('image', item.image);
-      formData.append('productType', item.productType);
-      formData.append('size', item.size);
-      formData.append('color', item.color);
-    });
-    formData.append('address', JSON.stringify(orderData.address));
-
-    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createorder`, formData, {
+  async (orderData: { userId: string; items: any[]; address: any }) => {
+    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createorder`, orderData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
       },
     });
-    return response.data;
+    return response.data; // { id: orderId }
   }
 );
 
@@ -40,6 +31,18 @@ export const updateOrderStatus = createAsyncThunk(
   'order/updateStatus',
   async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
     const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderstatus/${orderId}`, { status });
+    return response.data;
+  }
+);
+
+export const updateOrderImages = createAsyncThunk(
+  'order/updateImages',
+  async ({ orderId, images }: { orderId: string; images: { imageFront: string; imageBack?: string; }[] }) => {
+    const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderimages/${orderId}`, { images }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   }
 );
@@ -95,6 +98,23 @@ const orderSlice = createSlice({
       .addCase(updateOrderStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to update order status';
+      })
+      .addCase(updateOrderImages.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateOrderImages.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.orders.findIndex(
+          (order) => order._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.orders[index] = action.payload;
+        }
+      })
+      .addCase(updateOrderImages.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'Failed to update order images';
       });
   },
 });
