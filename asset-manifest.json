@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/futscore/static/css/main.e6c13ad2.css",
+    "main.js": "/futscore/static/js/main.f64459a0.js",
+    "static/js/453.258b012d.chunk.js": "/futscore/static/js/453.258b012d.chunk.js",
+    "index.html": "/futscore/index.html",
+    "main.e6c13ad2.css.map": "/futscore/static/css/main.e6c13ad2.css.map",
+    "main.f64459a0.js.map": "/futscore/static/js/main.f64459a0.js.map",
+    "453.258b012d.chunk.js.map": "/futscore/static/js/453.258b012d.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.f64459a0.js"
+  ]
+}
