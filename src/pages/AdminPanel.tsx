@@ -227,14 +227,14 @@ const AdminPanel = () => {
                         {order.items.map((item, index) => (
                           <Box key={index} sx={{ mb: 1 }}>
                             <Typography variant="body2">
-                              Type: {item.productType}
+                              Type: {item.product_type}
                             </Typography>
                             <Typography variant="body2">
                               Size: {item.size}
                             </Typography>
-                            {item.playerName && (
+                            {item.player_name && (
                               <Typography variant="body2">
-                                Player Name: {item.playerName}
+                                Player Name: {item.player_name}
                               </Typography>
                             )}
                           </Box>
@@ -269,16 +269,16 @@ const AdminPanel = () => {
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={() => window.open(order.items[0].imageFront, '_blank')}
+                        onClick={() => window.open(order.items[0].image_front, '_blank')}
                       >
                         View Front Image
                       </Button>
-                      {order.items[0].productType === 'tshirt' && order.items[0].imageBack && (
+                      {order.items[0].product_type === 'tshirt' && order.items[0].image_back && (
                         <Button
                           variant="contained"
                           color="secondary"
                           size="small"
-                          onClick={() => window.open(order.items[0].imageBack, '_blank')}
+                          onClick={() => window.open(order.items[0].image_back, '_blank')}
                           sx={{ ml: 1 }}
                         >
                           View Back Image
@@ -386,7 +386,7 @@ const AdminPanel = () => {
                       <TableCell>{pack.name}</TableCell>
                       <TableCell>
                         {pack.items.map((item: any, idx: number) => (
-                          <span key={idx}>{item.quantity} x {item.productType}{idx < pack.items.length - 1 ? ', ' : ''}</span>
+                          <span key={idx}>{item.quantity} x {item.product_type}{idx < pack.items.length - 1 ? ', ' : ''}</span>
                         ))}
                       </TableCell>
                       <TableCell>${pack.price}</TableCell>
@@ -416,7 +416,7 @@ const AdminPanel = () => {
                       <Select
                         value={item.productType}
                         label="Product"
-                        onChange={(e) => handlePackItemChange(idx, 'productType', e.target.value)}
+                        onChange={(e) => handlePackItemChange(idx, 'product_type', e.target.value)}
                       >
                         <MenuItem value="tshirt">T-Shirt</MenuItem>
                         <MenuItem value="shoes">Shoes</MenuItem>
