@@ -331,7 +331,7 @@ const OrderForm = () => {
                     Estado: {order.status}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Data: {new Date(order.createdAt).toLocaleDateString()}
+                    Data: {new Date(order.created_at).toLocaleDateString()}
                   </Typography>
                   {order.items.map((item, idx) => (
                     <Box key={idx} sx={{ mt: 1 }}>
