@@ -22,7 +22,7 @@ export const createOrder = createAsyncThunk(
     });
     formData.append('address', JSON.stringify(orderData.address));
 
-    const response = await axios.post(`${API_BASE_URL}/api/orders`, formData, {
+    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/orders`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -32,14 +32,14 @@ export const createOrder = createAsyncThunk(
 );
 
 export const fetchOrders = createAsyncThunk('order/fetchAll', async () => {
-  const response = await axios.get(`${API_BASE_URL}/api/orders`);
+  const response = await axios.get(`${API_BASE_URL}/.netlify/functions/orders`);
   return response.data;
 });
 
 export const updateOrderStatus = createAsyncThunk(
   'order/updateStatus',
   async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
-    const response = await axios.put(`${API_BASE_URL}/api/orders/${orderId}/status`, { status });
+    const response = await axios.put(`${API_BASE_URL}/.netlify/functions/orders/${orderId}/status`, { status });
     return response.data;
   }
 );

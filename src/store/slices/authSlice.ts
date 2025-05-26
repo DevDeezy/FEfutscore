@@ -12,7 +12,7 @@ const initialState: AuthState = {
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials: { email: string; password: string }) => {
-    const response = await axios.post(`${API_BASE_URL}/api/users/login`, credentials);
+    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/users/login`, credentials);
     return response.data;
   }
 );
@@ -20,7 +20,7 @@ export const login = createAsyncThunk(
 export const register = createAsyncThunk(
   'auth/register',
   async (credentials: { email: string; password: string }) => {
-    const response = await axios.post(`${API_BASE_URL}/api/users/register`, credentials);
+    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/users/register`, credentials);
     return response.data;
   }
 );
