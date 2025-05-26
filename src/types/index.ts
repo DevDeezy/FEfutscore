@@ -18,7 +18,7 @@ export interface Order {
   user: string;
   items: OrderItem[];
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  createdAt: string;
+  created_at: string;
 }
 
 export interface AuthState {
