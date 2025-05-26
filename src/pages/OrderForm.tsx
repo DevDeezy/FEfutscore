@@ -79,7 +79,7 @@ const OrderForm = () => {
     e.preventDefault();
     const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
     if (items.length > 0 && allFieldsFilled && user) {
-      await dispatch(createOrder({ userId: user._id, items, address }));
+      await dispatch(createOrder({ userId: user.id.toString(), items, address }));
       navigate('/');
     }
   };
@@ -312,7 +312,7 @@ const OrderForm = () => {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={items.length === 0 || !Object.values(address).every((v) => v.trim() !== '')}
+              disabled={items.length === 0 || Object.values(address).some((v) => v.trim() === '')}
             >
               Submeter Encomenda
             </Button>

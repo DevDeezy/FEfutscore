@@ -11,17 +11,26 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials: { email: string; password: string }) => {
-    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/users/login`, credentials);
-    return response.data;
+  async (credentials: { email: string; password: string }, thunkAPI) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/.netlify/functions/login`, credentials);
+      localStorage.setItem('token', response.data.token);
+      return response.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(err.response?.data?.error || 'Login failed');
+    }
   }
 );
 
 export const register = createAsyncThunk(
   'auth/register',
-  async (credentials: { email: string; password: string }) => {
-    const response = await axios.post(`${API_BASE_URL}/.netlify/functions/users/register`, credentials);
-    return response.data;
+  async (credentials: { email: string; password: string; role?: string }, thunkAPI) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createuser`, credentials);
+      return response.data;
+    } catch (err: any) {
+      return thunkAPI.rejectWithValue(err.response?.data?.error || 'Registration failed');
+    }
   }
 );
 
@@ -32,6 +41,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.error = null;
+      localStorage.removeItem('token');
     },
     clearError: (state) => {
       state.error = null;
@@ -49,7 +59,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Login failed';
+        state.error = action.payload as string || 'Login failed';
       })
       .addCase(register.pending, (state) => {
         state.loading = true;
@@ -61,7 +71,7 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Registration failed';
+        state.error = action.payload as string || 'Registration failed';
       });
   },
 });
