@@ -269,7 +269,14 @@ const AdminPanel = () => {
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={() => window.open(order.items[0].image_front, '_blank')}
+                        onClick={() => {
+                          if (order.items[0].image_front) {
+                            window.open(
+                              order.items[0].image_front.startsWith('data:') ? order.items[0].image_front : `data:image/jpeg;base64,${order.items[0].image_front}`,
+                              '_blank'
+                            );
+                          }
+                        }}
                       >
                         View Front Image
                       </Button>
@@ -278,7 +285,14 @@ const AdminPanel = () => {
                           variant="contained"
                           color="secondary"
                           size="small"
-                          onClick={() => window.open(order.items[0].image_back, '_blank')}
+                          onClick={() => {
+                            if (order.items[0].image_back) {
+                              window.open(
+                                order.items[0].image_back.startsWith('data:') ? order.items[0].image_back : `data:image/jpeg;base64,${order.items[0].image_back}`,
+                                '_blank'
+                              );
+                            }
+                          }}
                           sx={{ ml: 1 }}
                         >
                           View Back Image
