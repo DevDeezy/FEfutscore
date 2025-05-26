@@ -10,10 +10,10 @@ import OrderForm from './pages/OrderForm';
 import AdminPanel from './pages/AdminPanel';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
-import jwt_decode from 'jwt-decode';
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import { setUser } from './store/slices/authSlice';
+import jwt_decode from 'jwt-decode';
 
 const theme = createTheme({
   palette: {
