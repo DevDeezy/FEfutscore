@@ -22,6 +22,7 @@ const OrderForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { orders } = useSelector((state: RootState) => state.order);
+  const { user } = useSelector((state: RootState) => state.auth);
   const [currentItem, setCurrentItem] = useState<OrderItem>({
     productType: 'tshirt',
     imageFront: '',
@@ -77,8 +78,8 @@ const OrderForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-    if (items.length > 0 && allFieldsFilled) {
-      await dispatch(createOrder({ items, address }));
+    if (items.length > 0 && allFieldsFilled && user) {
+      await dispatch(createOrder({ userId: user._id, items, address }));
       navigate('/');
     }
   };
