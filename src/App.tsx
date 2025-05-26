@@ -27,8 +27,8 @@ const AppRoutes = () => (
     <Navbar />
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/order" element={<OrderForm />} />
-      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/order" element={<PrivateRoute><OrderForm /></PrivateRoute>} />
+      <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
     </Routes>
   </>
 );
