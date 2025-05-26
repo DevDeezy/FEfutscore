@@ -29,6 +29,7 @@ import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
 import { Order } from '../types';
 import { AppDispatch } from '../store';
 import axios from 'axios';
+import { API_BASE_URL } from '../api';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -62,7 +63,7 @@ const AdminPanel = () => {
     setUsersLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/users', {
+      const res = await axios.get(`${API_BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data);
@@ -76,7 +77,7 @@ const AdminPanel = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/users/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(users.filter((u) => u._id !== id));
@@ -89,7 +90,7 @@ const AdminPanel = () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        '/api/users',
+        `${API_BASE_URL}/api/users`,
         newUser,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -109,7 +110,7 @@ const AdminPanel = () => {
     setPacksLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('/api/packs', {
+      const res = await axios.get(`${API_BASE_URL}/api/packs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPacks(res.data);
@@ -123,7 +124,7 @@ const AdminPanel = () => {
     if (!window.confirm('Are you sure you want to delete this pack?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/packs/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/packs/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPacks(packs.filter((p) => p._id !== id));
@@ -166,13 +167,13 @@ const AdminPanel = () => {
       const token = localStorage.getItem('token');
       if (editingPack) {
         // Update
-        const res = await axios.put(`/api/packs/${editingPack._id}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/api/packs/${editingPack._id}`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks(packs.map((p) => (p._id === editingPack._id ? res.data : p)));
       } else {
         // Create
-        const res = await axios.post('/api/packs', packForm, {
+        const res = await axios.post(`${API_BASE_URL}/api/packs`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks([...packs, res.data]);
