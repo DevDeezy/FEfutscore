@@ -10,6 +10,10 @@ import OrderForm from './pages/OrderForm';
 import AdminPanel from './pages/AdminPanel';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import jwt_decode from 'jwt-decode';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { setUser } from './store/slices/authSlice';
 
 const theme = createTheme({
   palette: {
@@ -33,7 +37,30 @@ const AppRoutes = () => (
   </>
 );
 
+function useAuthRestore() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded = jwt_decode(token);
+        // Check if token is expired
+        if (typeof decoded === 'object' && decoded && 'exp' in decoded) {
+          if ((decoded.exp * 1000) < Date.now()) {
+            localStorage.removeItem('token');
+            return;
+          }
+        }
+        dispatch(setUser({ ...decoded, token }));
+      } catch (e) {
+        localStorage.removeItem('token');
+      }
+    }
+  }, [dispatch]);
+}
+
 function App() {
+  useAuthRestore();
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
