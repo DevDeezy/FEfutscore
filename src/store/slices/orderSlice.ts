@@ -39,7 +39,7 @@ export const fetchOrders = createAsyncThunk('order/fetchAll', async () => {
 export const updateOrderStatus = createAsyncThunk(
   'order/updateStatus',
   async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
-    const response = await axios.put(`${API_BASE_URL}/.netlify/functions/orders/${orderId}/status`, { status });
+    const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderstatus/${orderId}`, { status });
     return response.data;
   }
 );

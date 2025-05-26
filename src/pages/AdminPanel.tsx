@@ -110,7 +110,7 @@ const AdminPanel = () => {
     setPacksLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getPacks`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpacks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPacks(res.data);
@@ -124,7 +124,7 @@ const AdminPanel = () => {
     if (!window.confirm('Are you sure you want to delete this pack?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/.netlify/functions/deletePack/${id}`, {
+      await axios.delete(`${API_BASE_URL}/.netlify/functions/deletepack/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPacks(packs.filter((p) => p._id !== id));
@@ -167,13 +167,13 @@ const AdminPanel = () => {
       const token = localStorage.getItem('token');
       if (editingPack) {
         // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatePack/${editingPack._id}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack._id}`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks(packs.map((p) => (p._id === editingPack._id ? res.data : p)));
       } else {
         // Create
-        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createPack`, packForm, {
+        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createpack`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks([...packs, res.data]);
