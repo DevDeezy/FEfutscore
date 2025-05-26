@@ -63,7 +63,7 @@ const AdminPanel = () => {
     setUsersLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getUsers`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data);
