@@ -335,16 +335,16 @@ const OrderForm = () => {
                   </Typography>
                   {order.items.map((item, idx) => (
                     <Box key={idx} sx={{ mt: 1 }}>
-                      <img
-                        src={item.imageFront}
+                     <img
+                        src={item.imageFront.startsWith('data:') ? item.imageFront : `data:image/jpeg;base64,${item.imageFront}`}
                         alt={`Item ${idx + 1} Frente`}
                         style={{ width: '100%', height: '100px', objectFit: 'cover' }}
                       />
                       {item.productType === 'tshirt' && item.imageBack && (
                         <img
-                          src={item.imageBack}
-                          alt={`Item ${idx + 1} Verso`}
-                          style={{ width: '100%', height: '100px', objectFit: 'cover', marginTop: 4 }}
+                        src={item.imageBack.startsWith('data:') ? item.imageBack : `data:image/jpeg;base64,${item.imageBack}`}
+                        alt={`Item ${idx + 1} Verso`}
+                        style={{ width: '100%', height: '100px', objectFit: 'cover', marginTop: 4 }}
                         />
                       )}
                       <Typography variant="body2">
