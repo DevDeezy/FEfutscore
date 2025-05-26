@@ -90,7 +90,7 @@ const AdminPanel = () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        `${API_BASE_URL}/.netlify/functions/createUser`,
+        `${API_BASE_URL}/.netlify/functions/createuser`,
         newUser,
         { headers: { Authorization: `Bearer ${token}` } }
       );
