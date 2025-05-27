@@ -47,7 +47,7 @@ const AdminPanel = () => {
   const [packsLoading, setPacksLoading] = useState(false);
   const [openPackDialog, setOpenPackDialog] = useState(false);
   const [editingPack, setEditingPack] = useState<any | null>(null);
-  const [packForm, setPackForm] = useState({ name: '', items: [{ productType: 'tshirt', quantity: 1 }], price: 0 });
+  const [packForm, setPackForm] = useState({ name: '', items: [{ product_type: 'tshirt', quantity: 1 }], price: 0 });
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -138,7 +138,7 @@ const AdminPanel = () => {
     if (pack) {
       setPackForm({ name: pack.name, items: pack.items, price: pack.price });
     } else {
-      setPackForm({ name: '', items: [{ productType: 'tshirt', quantity: 1 }], price: 0 });
+      setPackForm({ name: '', items: [{ product_type: 'tshirt', quantity: 1 }], price: 0 });
     }
     setOpenPackDialog(true);
   };
@@ -155,7 +155,7 @@ const AdminPanel = () => {
   };
 
   const handleAddPackItem = () => {
-    setPackForm((prev) => ({ ...prev, items: [...prev.items, { productType: 'tshirt', quantity: 1 }] }));
+    setPackForm((prev) => ({ ...prev, items: [...prev.items, { product_type: 'tshirt', quantity: 1 }] }));
   };
 
   const handleRemovePackItem = (idx: number) => {
@@ -428,7 +428,7 @@ const AdminPanel = () => {
                     <FormControl>
                       <InputLabel>Product</InputLabel>
                       <Select
-                        value={item.productType}
+                        value={item.product_type}
                         label="Product"
                         onChange={(e) => handlePackItemChange(idx, 'product_type', e.target.value)}
                       >
