@@ -35,6 +35,9 @@ const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { orders, loading } = useSelector((state: RootState) => state.order);
 
+  // Debug log for orders
+  console.log('AdminPanel orders:', orders);
+
   // User management state
   const [users, setUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -218,7 +221,7 @@ const AdminPanel = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {orders.map((order) => (
+                {Array.isArray(orders) && orders.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell>{order._id}</TableCell>
                     <TableCell>{order.user}</TableCell>
