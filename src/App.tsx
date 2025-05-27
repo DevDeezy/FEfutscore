@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import Navbar from './components/Navbar';
@@ -10,10 +10,11 @@ import OrderForm from './pages/OrderForm';
 import AdminPanel from './pages/AdminPanel';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
-import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from './store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
+import { RootState } from './store';
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -25,16 +26,52 @@ const theme = createTheme({
   },
 });
 
-const AppRoutes = () => (
-  <>
-    <Navbar />
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/order" element={<PrivateRoute><OrderForm /></PrivateRoute>} />
-      <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
-    </Routes>
-  </>
-);
+const AppRoutes = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        if (typeof decoded === 'object' && decoded && 'exp' in decoded) {
+          if (((decoded as { exp: number }).exp * 1000) < Date.now()) {
+            localStorage.removeItem('token');
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem('token');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return null; // or a loading spinner
+  }
+
+  return (
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route 
+          path="/order" 
+          element={
+            user ? <OrderForm /> : <Navigate to="/login" replace />
+          } 
+        />
+        <Route 
+          path="/admin" 
+          element={
+            user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" replace />
+          } 
+        />
+      </Routes>
+    </>
+  );
+};
 
 function useAuthRestore() {
   const dispatch = useDispatch();
@@ -43,7 +80,6 @@ function useAuthRestore() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Check if token is expired
         if (typeof decoded === 'object' && decoded && 'exp' in decoded) {
           if (((decoded as { exp: number }).exp * 1000) < Date.now()) {
             localStorage.removeItem('token');
