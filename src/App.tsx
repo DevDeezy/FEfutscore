@@ -47,6 +47,9 @@ const AppRoutes = () => {
     setIsLoading(false);
   }, []);
 
+  // Debug log for user
+  console.log('AppRoutes user:', user);
+
   if (isLoading) {
     return null; // or a loading spinner
   }
@@ -65,7 +68,7 @@ const AppRoutes = () => {
         <Route 
           path="/admin" 
           element={
-            user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" replace />
+            (() => { console.log('Admin route user:', user); return user?.role === 'admin' ? <AdminPanel /> : <Navigate to="/" replace /> })()
           } 
         />
       </Routes>
