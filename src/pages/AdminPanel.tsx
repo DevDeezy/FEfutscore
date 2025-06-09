@@ -10,67 +10,76 @@ import {
   TableHead,
   TableRow,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Tabs,
+  Tab,
   Box,
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tabs,
-  Tab,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
-import { Order } from '../types';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
+import * as XLSX from 'xlsx';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders, loading } = useSelector((state: RootState) => state.order);
-
-  // Debug log for orders
-  console.log('AdminPanel orders:', orders);
-
-  // User management state
-  const [users, setUsers] = useState<any[]>([]);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [openAddUser, setOpenAddUser] = useState(false);
-  const [newUser, setNewUser] = useState({ email: '', password: '', role: 'user' });
+  const { orders } = useSelector((state: RootState) => state.order);
   const [tab, setTab] = useState(0);
 
-  // Packs & Prices state
+  // Users state
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [openAddUser, setOpenAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({ email: '', password: '', role: 'user' });
+
+  // Packs state
   const [packs, setPacks] = useState<any[]>([]);
   const [packsLoading, setPacksLoading] = useState(false);
+  const [packsError, setPacksError] = useState<string | null>(null);
   const [openPackDialog, setOpenPackDialog] = useState(false);
   const [editingPack, setEditingPack] = useState<any | null>(null);
   const [packForm, setPackForm] = useState({ name: '', items: [{ product_type: 'tshirt', quantity: 1 }], price: 0 });
 
+  // Order details dialog state
+  const [openOrderDialog, setOpenOrderDialog] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [orderStatus, setOrderStatus] = useState('');
+  const [orderStatusLoading, setOrderStatusLoading] = useState(false);
+  const [orderStatusError, setOrderStatusError] = useState<string | null>(null);
+
+  // Fetch orders, users, and packs on mount
   useEffect(() => {
     dispatch(fetchOrders());
+    fetchUsers();
+    fetchPacks();
+    // eslint-disable-next-line
   }, [dispatch]);
 
-  useEffect(() => {
-    if (tab === 1) fetchUsers();
-    if (tab === 2) fetchPacks();
-    // eslint-disable-next-line
-  }, [tab]);
-
+  // USERS
   const fetchUsers = async () => {
     setUsersLoading(true);
+    setUsersError(null);
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(res.data);
-    } catch (err) {
+    } catch (err: any) {
+      setUsersError('Failed to fetch users');
       setUsers([]);
     }
     setUsersLoading(false);
@@ -83,7 +92,7 @@ const AdminPanel = () => {
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteUser/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(users.filter((u) => u._id !== id));
+      setUsers(users.filter((u) => u._id !== id && u.id !== id));
     } catch (err) {
       alert('Failed to delete user');
     }
@@ -105,19 +114,18 @@ const AdminPanel = () => {
     }
   };
 
-  const handleStatusChange = (orderId: string, status: Order['status']) => {
-    dispatch(updateOrderStatus({ orderId, status }));
-  };
-
+  // PACKS
   const fetchPacks = async () => {
     setPacksLoading(true);
+    setPacksError(null);
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpacks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPacks(res.data);
-    } catch (err) {
+    } catch (err: any) {
+      setPacksError('Failed to fetch packs');
       setPacks([]);
     }
     setPacksLoading(false);
@@ -130,7 +138,7 @@ const AdminPanel = () => {
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deletepack/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPacks(packs.filter((p) => p._id !== id));
+      setPacks(packs.filter((p) => p._id !== id && p.id !== id));
     } catch (err) {
       alert('Failed to delete pack');
     }
@@ -170,10 +178,10 @@ const AdminPanel = () => {
       const token = localStorage.getItem('token');
       if (editingPack) {
         // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack._id}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack._id || editingPack.id}`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPacks(packs.map((p) => (p._id === editingPack._id ? res.data : p)));
+        setPacks(packs.map((p) => (p._id === editingPack._id || p.id === editingPack.id ? res.data : p)));
       } else {
         // Create
         const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createpack`, packForm, {
@@ -188,13 +196,42 @@ const AdminPanel = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container>
-        <Typography>Loading...</Typography>
-      </Container>
-    );
-  }
+  // Update order status
+  const handleUpdateOrderStatus = async () => {
+    if (!selectedOrder) return;
+    setOrderStatusLoading(true);
+    setOrderStatusError(null);
+    try {
+      await dispatch(updateOrderStatus({ orderId: selectedOrder._id || selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
+      setOpenOrderDialog(false);
+      dispatch(fetchOrders());
+    } catch (err) {
+      setOrderStatusError('Failed to update order status');
+    }
+    setOrderStatusLoading(false);
+  };
+
+  // Export orders to Excel (call backend endpoint and download file)
+  const handleExportOrders = async () => {
+    try {
+      const response = await fetch('https://befutscore.netlify.app/.netlify/functions/exportorders', {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to generate Excel');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders_with_images.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      alert('Failed to export orders: ' + message);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -208,105 +245,61 @@ const AdminPanel = () => {
           <Tab label="Packs & Prices" />
         </Tabs>
         {tab === 0 && (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order ID</TableCell>
-                  <TableCell>User</TableCell>
-                  <TableCell>Items</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Created At</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Array.isArray(orders) && orders.map((order) => (
-                  <TableRow key={order._id}>
-                    <TableCell>{order._id}</TableCell>
-                    <TableCell>{order.user}</TableCell>
-                    <TableCell>
-                      <Box>
-                        {order.items.map((item, index) => (
-                          <Box key={index} sx={{ mb: 1 }}>
-                            <Typography variant="body2">
-                              Type: {item.product_type}
-                            </Typography>
-                            <Typography variant="body2">
-                              Size: {item.size}
-                            </Typography>
-                            {item.player_name && (
-                              <Typography variant="body2">
-                                Player Name: {item.player_name}
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <FormControl fullWidth>
-                        <InputLabel>Status</InputLabel>
-                        <Select
-                          value={order.status}
-                          label="Status"
-                          onChange={(e) =>
-                            handleStatusChange(
-                              order._id,
-                              e.target.value as Order['status']
-                            )
-                          }
-                        >
-                          <MenuItem value="pending">Pending</MenuItem>
-                          <MenuItem value="processing">Processing</MenuItem>
-                          <MenuItem value="completed">Completed</MenuItem>
-                          <MenuItem value="cancelled">Cancelled</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        onClick={() => {
-                          if (order.items[0].image_front) {
-                            window.open(
-                              order.items[0].image_front.startsWith('data:') ? order.items[0].image_front : `data:image/jpeg;base64,${order.items[0].image_front}`,
-                              '_blank'
-                            );
-                          }
-                        }}
-                      >
-                        View Front Image
-                      </Button>
-                      {order.items[0].product_type === 'tshirt' && order.items[0].image_back && (
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          size="small"
-                          onClick={() => {
-                            if (order.items[0].image_back) {
-                              window.open(
-                                order.items[0].image_back.startsWith('data:') ? order.items[0].image_back : `data:image/jpeg;base64,${order.items[0].image_back}`,
-                                '_blank'
-                              );
-                            }
-                          }}
-                          sx={{ ml: 1 }}
-                        >
-                          View Back Image
-                        </Button>
-                      )}
-                    </TableCell>
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button variant="contained" color="primary" onClick={handleExportOrders}>
+                Export Orders to Excel
+              </Button>
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Order ID</TableCell>
+                    <TableCell>User</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Created At</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {Array.isArray(orders) && orders.length > 0 ? (
+                    orders.map((order, idx) => (
+                      <TableRow key={order._id || idx}>
+                        <TableCell>{order._id}</TableCell>
+                        <TableCell>
+                          {typeof order.user === 'object'
+                            ? ((order.user as any)?.email || (order.user as any)?.id || JSON.stringify(order.user))
+                            : order.user}
+                        </TableCell>
+                        <TableCell>{order.status}</TableCell>
+                        <TableCell>{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setOrderStatus(order.status);
+                              setOpenOrderDialog(true);
+                            }}
+                          >
+                            Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        No orders found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
         )}
         {tab === 1 && (
           <>
@@ -316,6 +309,7 @@ const AdminPanel = () => {
                 Add User
               </Button>
             </Box>
+            {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError}</Alert> : null}
             <TableContainer>
               <Table>
                 <TableHead>
@@ -327,18 +321,26 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user._id}>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.role}</TableCell>
-                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button color="error" onClick={() => handleDeleteUser(user._id)}>
-                          Delete
-                        </Button>
+                  {Array.isArray(users) && users.length > 0 ? (
+                    users.map((user, idx) => (
+                      <TableRow key={user._id || user.id || idx}>
+                        <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
+                        <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
+                        <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
+                        <TableCell>
+                          <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        No users found.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -387,6 +389,7 @@ const AdminPanel = () => {
                 Add Pack
               </Button>
             </Box>
+            {packsLoading ? <CircularProgress /> : packsError ? <Alert severity="error">{packsError}</Alert> : null}
             <TableContainer>
               <Table>
                 <TableHead>
@@ -398,21 +401,29 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {packs.map((pack) => (
-                    <TableRow key={pack._id}>
-                      <TableCell>{pack.name}</TableCell>
-                      <TableCell>
-                        {pack.items.map((item: any, idx: number) => (
-                          <span key={idx}>{item.quantity} x {item.product_type}{idx < pack.items.length - 1 ? ', ' : ''}</span>
-                        ))}
-                      </TableCell>
-                      <TableCell>${pack.price}</TableCell>
-                      <TableCell>
-                        <Button size="small" onClick={() => handleOpenPackDialog(pack)}>Edit</Button>
-                        <Button size="small" color="error" onClick={() => handleDeletePack(pack._id)}>Delete</Button>
+                  {Array.isArray(packs) && packs.length > 0 ? (
+                    packs.map((pack, idx) => (
+                      <TableRow key={pack._id || pack.id || idx}>
+                        <TableCell>{pack.name}</TableCell>
+                        <TableCell>
+                          {Array.isArray(pack.items) && pack.items.map((item: any, i: number) => (
+                            <span key={i}>{item.quantity} x {item.product_type}{i < pack.items.length - 1 ? ', ' : ''}</span>
+                          ))}
+                        </TableCell>
+                        <TableCell>${pack.price}</TableCell>
+                        <TableCell>
+                          <Button size="small" onClick={() => handleOpenPackDialog(pack)}>Edit</Button>
+                          <Button size="small" color="error" onClick={() => handleDeletePack(pack._id || pack.id)}>Delete</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        No packs found.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -466,6 +477,94 @@ const AdminPanel = () => {
             </Dialog>
           </>
         )}
+        {/* Order Details Dialog */}
+        <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Order Details</DialogTitle>
+          <DialogContent>
+            {selectedOrder && (
+              <>
+                <Typography variant="subtitle1" gutterBottom>
+                  Order ID: {selectedOrder._id || selectedOrder.id}
+                </Typography>
+                <Typography variant="subtitle2" gutterBottom>
+                  User: {
+                    typeof selectedOrder.user === 'object'
+                      ? ((selectedOrder.user as any)?.email || (selectedOrder.user as any)?.id || JSON.stringify(selectedOrder.user))
+                      : selectedOrder.user
+                  }
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Status: {selectedOrder.status}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Created At: {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : ''}
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6">Order Items</Typography>
+                  {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+                      {selectedOrder.items.map((item: any, idx: number) => (
+                        <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
+                          <Typography variant="subtitle2">{item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}</Typography>
+                          <Typography variant="body2">Size: {item.size}</Typography>
+                          {item.player_name && <Typography variant="body2">Player Name: {item.player_name}</Typography>}
+                          {item.image_front && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="caption">Front Image:</Typography>
+                              <img
+                                src={item.image_front}
+                                alt="Front"
+                                style={{ width: 120, height: 120, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 4 }}
+                              />
+                            </Box>
+                          )}
+                          {item.product_type === 'tshirt' && item.image_back && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="caption">Back Image:</Typography>
+                              <img
+                                src={item.image_back}
+                                alt="Back"
+                                style={{ width: 120, height: 120, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 4 }}
+                              />
+                            </Box>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography>No items found for this order.</Typography>
+                  )}
+                </Box>
+                <Box sx={{ mt: 3 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={orderStatus}
+                      label="Status"
+                      onChange={(e) => setOrderStatus(e.target.value)}
+                    >
+                      <MenuItem value="pending">Pending</MenuItem>
+                      <MenuItem value="processing">Processing</MenuItem>
+                      <MenuItem value="completed">Completed</MenuItem>
+                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                    </Select>
+                  </FormControl>
+                  {orderStatusError && <Alert severity="error" sx={{ mt: 2 }}>{orderStatusError}</Alert>}
+                </Box>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenOrderDialog(false)}>Close</Button>
+            <Button
+              onClick={handleUpdateOrderStatus}
+              variant="contained"
+              disabled={orderStatusLoading || !selectedOrder || orderStatus === selectedOrder.status}
+            >
+              {orderStatusLoading ? 'Saving...' : 'Save Status'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Container>
   );

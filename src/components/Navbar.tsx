@@ -6,7 +6,10 @@ import {
   Typography,
   Button,
   Box,
+  Badge,
+  IconButton,
 } from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { logout } from '../store/slices/authSlice';
@@ -15,6 +18,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { items } = useSelector((state: RootState) => state.cart);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -32,7 +36,7 @@ const Navbar = () => {
         >
           FutScore
         </Typography>
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {user ? (
             <>
               <Button
@@ -42,6 +46,16 @@ const Navbar = () => {
               >
                 New Order
               </Button>
+              <IconButton
+                color="inherit"
+                component={RouterLink}
+                to="/cart"
+                sx={{ ml: 1 }}
+              >
+                <Badge badgeContent={items.length} color="error">
+                  <ShoppingCartIcon />
+                </Badge>
+              </IconButton>
               {user.role === 'admin' && (
                 <Button
                   color="inherit"

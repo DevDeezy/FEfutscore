@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -12,17 +12,16 @@ import {
   MenuItem,
   Box,
   Grid,
+  Alert,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { createOrder, fetchOrders } from '../store/slices/orderSlice';
+import { addToCart } from '../store/slices/cartSlice';
 import { OrderItem } from '../types';
 import { AppDispatch, RootState } from '../store';
-import jwt_decode from 'jwt-decode';
 
 const OrderForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { orders } = useSelector((state: RootState) => state.order);
   const { user } = useSelector((state: RootState) => state.auth);
   const [currentItem, setCurrentItem] = useState<OrderItem>({
     product_type: 'tshirt',
@@ -31,41 +30,94 @@ const OrderForm = () => {
     size: 'S',
     player_name: '',
   });
-  const [items, setItems] = useState<OrderItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
   const imageBackInputRef = useRef<HTMLInputElement>(null);
-  const [address, setAddress] = useState({
-    nome: '',
-    morada: '',
-    cidade: '',
-    distrito: '',
-    pais: 'Portugal',
-    codigoPostal: '',
-    telemovel: '',
-  });
 
   const tshirtSizes = ['S', 'M', 'L', 'XL'];
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'imageFront' | 'imageBack') => {
+  const validateImage = (file: File): boolean => {
+    console.log('Validating file:', file.name, file.type, file.size);
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return false;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: 'image_front' | 'image_back'
+  ) => {
+    console.log('Image change event triggered for:', field);
+    setError(null);
+    
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCurrentItem((prev) => ({ ...prev, [field]: reader.result as string }));
-        if (field === 'imageFront' && imageFrontInputRef.current) {
-          imageFrontInputRef.current.value = '';
-        }
-        if (field === 'imageBack' && imageBackInputRef.current) {
-          imageBackInputRef.current.value = '';
-        }
-      };
+    console.log('Selected file:', file);
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    if (!validateImage(file)) {
+      console.log('File validation failed');
+      if (field === 'image_front' && imageFrontInputRef.current) {
+        imageFrontInputRef.current.value = '';
+      }
+      if (field === 'image_back' && imageBackInputRef.current) {
+        imageBackInputRef.current.value = '';
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      console.log('FileReader onload triggered');
+      const result = event.target?.result;
+      if (typeof result === 'string') {
+        console.log('Setting image data for:', field);
+        setCurrentItem((prev) => ({ ...prev, [field]: result }));
+      } else {
+        console.error('FileReader result is not a string');
+        setError('Error processing the image');
+      }
+    };
+
+    reader.onerror = (event) => {
+      console.error('FileReader error:', event);
+      setError('Error reading the image file');
+      if (field === 'image_front' && imageFrontInputRef.current) {
+        imageFrontInputRef.current.value = '';
+      }
+      if (field === 'image_back' && imageBackInputRef.current) {
+        imageBackInputRef.current.value = '';
+      }
+    };
+
+    try {
+      console.log('Starting to read file');
       reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error in readAsDataURL:', err);
+      setError('Error processing the image file');
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddToCart = () => {
+    console.log('Adding to cart:', currentItem);
     if (currentItem.image_front && currentItem.size) {
-      setItems([...items, currentItem]);
+      dispatch(addToCart(currentItem));
       setCurrentItem({
         product_type: 'tshirt',
         image_front: '',
@@ -73,100 +125,23 @@ const OrderForm = () => {
         size: 'M',
         player_name: '',
       });
+      navigate('/cart');
     }
   };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-    if (items.length > 0 && allFieldsFilled && user) {
-      await dispatch(createOrder({ userId: user.id, items, address }));
-      navigate('/');
-    }
-  };
-
-  useEffect(() => {
-    dispatch(fetchOrders());
-  }, [dispatch]);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Criar Nova Encomenda
+          Create New Order
         </Typography>
-        <form onSubmit={handleSubmit}>
-          
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+        <form onSubmit={(e) => { e.preventDefault(); handleAddToCart(); }}>
           <Grid container spacing={3}>
-            {/* Image pickers */}
-            {currentItem.product_type === 'tshirt' ? (
-              <>
-                <Grid item xs={12} sm={6}>
-                  <Button variant="contained" component="label" fullWidth>
-                    Carregar Imagem da Camisola
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, 'imageFront')}
-                      ref={imageFrontInputRef}
-                    />
-                  </Button>
-                  {currentItem.image_front && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                      <img
-                        src={currentItem.image_front}
-                        alt="Pré-visualização Frente"
-                        style={{ maxWidth: '200px', maxHeight: '200px' }}
-                      />
-                    </Box>
-                  )}
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Button variant="contained" component="label" fullWidth>
-                    Carregar Imagem do Logo
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={(e) => handleImageChange(e, 'imageBack')}
-                      ref={imageBackInputRef}
-                    />
-                  </Button>
-                  {currentItem.image_back && (
-                    <Box sx={{ mt: 2, textAlign: 'center' }}>
-                      <img
-                        src={currentItem.image_back}
-                        alt="Pré-visualização Verso"
-                        style={{ maxWidth: '200px', maxHeight: '200px' }}
-                      />
-                    </Box>
-                  )}
-                </Grid>
-              </>
-            ) : (
-              <Grid item xs={12}>
-                <Button variant="contained" component="label" fullWidth>
-                  Carregar Imagem dos Ténis
-                  <input
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    onChange={(e) => handleImageChange(e, 'imageFront')}
-                    ref={imageFrontInputRef}
-                  />
-                </Button>
-                {currentItem.image_front && (
-                  <Box sx={{ mt: 2, textAlign: 'center' }}>
-                    <img
-                      src={currentItem.image_front}
-                      alt="Pré-visualização"
-                      style={{ maxWidth: '200px', maxHeight: '200px' }}
-                    />
-                  </Box>
-                )}
-              </Grid>
-            )}
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Produto</InputLabel>
@@ -217,160 +192,94 @@ const OrderForm = () => {
                 </FormControl>
               )}
             </Grid>
-            {currentItem.product_type === 'tshirt' && (
             <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 label="Nome do Jogador"
                 value={currentItem.player_name}
                 onChange={(e) =>
-                  setCurrentItem({ ...currentItem, player_name: e.target.value })
+                  setCurrentItem({
+                    ...currentItem,
+                    player_name: e.target.value,
+                  })
                 }
               />
             </Grid>
-            )}
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
-                color="primary"
-                onClick={handleAddItem}
-                  disabled={!currentItem.image_front || !currentItem.size}
+                component="label"
+                fullWidth
+                onClick={() => {
+                  if (imageFrontInputRef.current) {
+                    imageFrontInputRef.current.click();
+                  }
+                }}
               >
-                Adicionar Item
+                Upload Imagem Frontal
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/png,image/gif"
+                  ref={imageFrontInputRef}
+                  onChange={(e) => handleImageChange(e, 'image_front')}
+                />
               </Button>
+              {currentItem.image_front && (
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                  <img
+                    src={currentItem.image_front}
+                    alt="Front"
+                    style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                  />
+                </Box>
+              )}
             </Grid>
+            {currentItem.product_type === 'tshirt' && (
+              <Grid item xs={12} sm={6}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  fullWidth
+                  onClick={() => {
+                    if (imageBackInputRef.current) {
+                      imageBackInputRef.current.click();
+                    }
+                  }}
+                >
+                  Upload Imagem Traseira
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/jpeg,image/png,image/gif"
+                    ref={imageBackInputRef}
+                    onChange={(e) => handleImageChange(e, 'image_back')}
+                  />
+                </Button>
+                {currentItem.image_back && (
+                  <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <img
+                      src={currentItem.image_back}
+                      alt="Back"
+                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                    />
+                  </Box>
+                )}
+              </Grid>
+            )}
           </Grid>
-
-          {items.length > 0 && (
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Itens Adicionados ({items.length})
-              </Typography>
-              <Grid container spacing={2}>
-                {items.map((item, index) => (
-                  <Grid item xs={12} sm={4} key={index}>
-                    <Paper sx={{ p: 2 }}>
-                      <img
-                        src={item.image_front}
-                        alt={`Item ${index + 1} Frente`}
-                        style={{ width: '100%', height: '150px', objectFit: 'cover' }}
-                      />
-                      {item.product_type === 'tshirt' && item.image_back && (
-                        <img
-                          src={item.image_back}
-                          alt={`Item ${index + 1} Verso`}
-                          style={{ width: '100%', height: '150px', objectFit: 'cover', marginTop: 8 }}
-                        />
-                      )}
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        Produto: {item.product_type === 'tshirt' ? 'Camisola' : 'Ténis'}
-                      </Typography>
-                      <Typography variant="body2">
-                        Tamanho: {item.size}
-                      </Typography>
-                      {item.player_name && (
-                        <Typography variant="body2">
-                          Nome do Jogador: {item.player_name}
-                        </Typography>
-                      )}
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
-
-          {/* Address fields */}
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" gutterBottom>Dados de Envio</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Nome" fullWidth required value={address.nome} onChange={e => setAddress({ ...address, nome: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Telemóvel" fullWidth required value={address.telemovel} onChange={e => setAddress({ ...address, telemovel: e.target.value })} />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField label="Morada" fullWidth required value={address.morada} onChange={e => setAddress({ ...address, morada: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Cidade" fullWidth required value={address.cidade} onChange={e => setAddress({ ...address, cidade: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Distrito" fullWidth required value={address.distrito} onChange={e => setAddress({ ...address, distrito: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="Código-Postal" fullWidth required value={address.codigoPostal} onChange={e => setAddress({ ...address, codigoPostal: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField label="País" fullWidth required value={address.pais} onChange={e => setAddress({ ...address, pais: e.target.value })} />
-              </Grid>
-            </Grid>
-          </Box>
-
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               type="submit"
               variant="contained"
               color="primary"
-              disabled={items.length === 0 || Object.values(address).some((v) => v.trim() === '')}
+              disabled={!currentItem.image_front || !currentItem.size}
             >
-              Submeter Encomenda
+              Add to Cart
             </Button>
           </Box>
         </form>
       </Paper>
-      {/* Previous Orders Grid */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>As Minhas Encomendas</Typography>
-        <Grid container spacing={2}>
-          {orders && orders.length > 0 ? (
-            orders.map((order) => (
-              <Grid item xs={12} sm={6} md={4} key={order._id}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Estado: {order.status}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Data: {new Date(order.created_at).toLocaleDateString()}
-                  </Typography>
-                  {order.items.map((item, idx) => (
-                    <Box key={idx} sx={{ mt: 1 }}>
-                     <img
-                        src={item.image_front.startsWith('data:') ? item.image_front : `data:image/jpeg;base64,${item.image_front}`}
-                        alt={`Item ${idx + 1} Frente`}
-                        style={{ width: '100%', height: '100px', objectFit: 'cover' }}
-                      />
-                      {item.product_type === 'tshirt' && item.image_back && (
-                        <img
-                        src={item.image_back.startsWith('data:') ? item.image_back : `data:image/jpeg;base64,${item.image_back}`}
-                        alt={`Item ${idx + 1} Verso`}
-                        style={{ width: '100%', height: '100px', objectFit: 'cover', marginTop: 4 }}
-                        />
-                      )}
-                      <Typography variant="body2">
-                        Produto: {item.product_type === 'tshirt' ? 'Camisola' : 'Ténis'}
-                      </Typography>
-                      <Typography variant="body2">
-                        Tamanho: {item.size}
-                      </Typography>
-                      {item.player_name && (
-                        <Typography variant="body2">
-                          Nome do Jogador: {item.player_name}
-                        </Typography>
-                      )}
-                    </Box>
-                  ))}
-                </Paper>
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12}>
-              <Typography color="text.secondary">Ainda não tem encomendas.</Typography>
-            </Grid>
-          )}
-        </Grid>
-      </Box>
     </Container>
   );
 };

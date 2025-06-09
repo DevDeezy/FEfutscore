@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OrderForm from './pages/OrderForm';
+import Cart from './pages/Cart';
 import AdminPanel from './pages/AdminPanel';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
@@ -63,6 +64,12 @@ const AppRoutes = () => {
           path="/order" 
           element={
             user ? <OrderForm /> : <Navigate to="/login" replace />
+          } 
+        />
+        <Route 
+          path="/cart" 
+          element={
+            user ? <Cart /> : <Navigate to="/login" replace />
           } 
         />
         <Route 

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "https://diogomendes.me/FEfutscore",
-  "proxy": "cerulean-kleicha-c3f93a.netlify.app",
+  "proxy": "https://diogomendes.me/FEfutscore",
   "dependencies": {
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
