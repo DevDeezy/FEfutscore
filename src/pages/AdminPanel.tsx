@@ -218,7 +218,7 @@ const AdminPanel = () => {
     setOrderStatusLoading(true);
     setOrderStatusError(null);
     try {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder._id || selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
+      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
       setOpenOrderDialog(false);
       dispatch(fetchOrders());
     } catch (err) {
@@ -282,8 +282,8 @@ const AdminPanel = () => {
                 <TableBody>
                   {Array.isArray(orders) && orders.length > 0 ? (
                     orders.map((order, idx) => (
-                      <TableRow key={order._id || order.id || idx}>
-                        <TableCell>{order._id || order.id}</TableCell>
+                      <TableRow key={order.id || idx}>
+                        <TableCell>{order.id}</TableCell>
                         <TableCell>
                           {typeof order.user === 'object'
                             ? ((order.user as any)?.email || (order.user as any)?.id || JSON.stringify(order.user))
@@ -527,7 +527,7 @@ const AdminPanel = () => {
             {selectedOrder && (
               <>
                 <Typography variant="subtitle1" gutterBottom>
-                  Order ID: {selectedOrder._id || selectedOrder.id}
+                  Order ID: {selectedOrder.id}
                 </Typography>
                 <Typography variant="subtitle2" gutterBottom>
                   User: {

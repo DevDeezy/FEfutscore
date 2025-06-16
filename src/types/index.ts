@@ -18,11 +18,12 @@ export interface OrderItem {
 }
 
 export interface Order {
-  _id: string;
-  user: string;
+  id: number;
+  user: any;
   items: OrderItem[];
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   created_at: string;
+  price: number;
 }
 
 export interface AuthState {

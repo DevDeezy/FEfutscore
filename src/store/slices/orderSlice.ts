@@ -89,7 +89,7 @@ const orderSlice = createSlice({
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.orders.findIndex(
-          (order) => order._id === action.payload._id
+          (order) => order.id === action.payload.id
         );
         if (index !== -1) {
           state.orders[index] = action.payload;
@@ -106,7 +106,7 @@ const orderSlice = createSlice({
       .addCase(updateOrderImages.fulfilled, (state, action) => {
         state.loading = false;
         const index = state.orders.findIndex(
-          (order) => order._id === action.payload._id
+          (order) => order.id === action.payload.id
         );
         if (index !== -1) {
           state.orders[index] = action.payload;
