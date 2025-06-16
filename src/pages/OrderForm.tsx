@@ -19,6 +19,8 @@ import { addToCart } from '../store/slices/cartSlice';
 import { OrderItem } from '../types';
 import { AppDispatch, RootState } from '../store';
 import axios from 'axios';
+import { API_BASE_URL } from '../api';
+
 
 const OrderForm = () => {
   const navigate = useNavigate();
@@ -142,7 +144,7 @@ const OrderForm = () => {
       setShirtTypesError(null);
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('/.netlify/functions/getShirtTypes', {
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         setShirtTypes(res.data);
