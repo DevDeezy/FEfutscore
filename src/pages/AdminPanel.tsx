@@ -143,7 +143,7 @@ const AdminPanel = () => {
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deletepack/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPacks(packs.filter((p) => p._id !== id && p.id !== id));
+      setPacks(packs.filter((p) => p.id !== id));
     } catch (err) {
       alert('Failed to delete pack');
     }
@@ -194,10 +194,10 @@ const AdminPanel = () => {
       const token = localStorage.getItem('token');
       if (editingPack) {
         // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack._id || editingPack.id}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack.id}`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPacks(packs.map((p) => (p._id === editingPack._id || p.id === editingPack.id ? res.data : p)));
+        setPacks(packs.map((p) => (p.id === editingPack.id ? res.data : p)));
       } else {
         // Create
         const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createpack`, packForm, {
@@ -421,7 +421,7 @@ const AdminPanel = () => {
                   </TableHead>
                   <TableBody>
                     {packs.map((pack) => (
-                      <TableRow key={pack._id}>
+                      <TableRow key={pack.id}>
                         <TableCell>{pack.name}</TableCell>
                         <TableCell>
                           {pack.items.map((item, idx) => (
@@ -436,7 +436,7 @@ const AdminPanel = () => {
                           <Button onClick={() => handleOpenPackDialog(pack)} sx={{ mr: 1 }}>
                             Edit
                           </Button>
-                          <Button onClick={() => handleDeletePack(pack._id)} color="error">
+                          <Button onClick={() => handleDeletePack(pack.id)} color="error">
                             Delete
                           </Button>
                         </TableCell>

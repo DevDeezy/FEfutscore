@@ -45,7 +45,7 @@ export interface PackItem {
 }
 
 export interface Pack {
-  _id: string;
+  id: number;
   name: string;
   items: PackItem[];
   price: number;
