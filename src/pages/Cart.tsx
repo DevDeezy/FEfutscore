@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -17,6 +17,7 @@ import { RootState } from '../store';
 import { removeFromCart, clearCart } from '../store/slices/cartSlice';
 import { createOrder } from '../store/slices/orderSlice';
 import { AppDispatch } from '../store';
+import axios from 'axios';
 
 const initialAddress = {
   nome: '',
@@ -37,6 +38,7 @@ const Cart = () => {
   const [proofImage, setProofImage] = useState<string>('');
   const [proofError, setProofError] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
+  const [cartPrice, setCartPrice] = useState<number | null>(null);
 
   const handleRemoveItem = (index: number) => {
     dispatch(removeFromCart(index));
@@ -83,6 +85,24 @@ const Cart = () => {
       navigate('/');
     }
   };
+
+  useEffect(() => {
+    const fetchCartPrice = async () => {
+      if (items.length === 0) {
+        setCartPrice(null);
+        return;
+      }
+      try {
+        const res = await axios.post('/.netlify/functions/calculateOrderPrice', {
+          items,
+        });
+        setCartPrice(res.data.price);
+      } catch {
+        setCartPrice(null);
+      }
+    };
+    fetchCartPrice();
+  }, [items]);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -192,6 +212,11 @@ const Cart = () => {
                 </Box>
               )}
             </Box>
+            {cartPrice !== null && (
+              <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
+                Total Price: €{cartPrice.toFixed(2)}
+              </Typography>
+            )}
             <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 variant="outlined"

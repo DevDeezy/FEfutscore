@@ -275,14 +275,15 @@ const AdminPanel = () => {
                     <TableCell>User</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Created At</TableCell>
+                    <TableCell>Price</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {Array.isArray(orders) && orders.length > 0 ? (
                     orders.map((order, idx) => (
-                      <TableRow key={order._id || idx}>
-                        <TableCell>{order._id}</TableCell>
+                      <TableRow key={order._id || order.id || idx}>
+                        <TableCell>{order._id || order.id}</TableCell>
                         <TableCell>
                           {typeof order.user === 'object'
                             ? ((order.user as any)?.email || (order.user as any)?.id || JSON.stringify(order.user))
@@ -290,6 +291,7 @@ const AdminPanel = () => {
                         </TableCell>
                         <TableCell>{order.status}</TableCell>
                         <TableCell>{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</TableCell>
+                        <TableCell>{order.price !== undefined ? `€${order.price.toFixed(2)}` : '-'}</TableCell>
                         <TableCell>
                           <Button
                             size="small"
@@ -307,7 +309,7 @@ const AdminPanel = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
+                      <TableCell colSpan={6} align="center">
                         No orders found.
                       </TableCell>
                     </TableRow>
@@ -539,6 +541,9 @@ const AdminPanel = () => {
                 </Typography>
                 <Typography variant="body2" gutterBottom>
                   Created At: {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : ''}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Price: {selectedOrder.price !== undefined ? `€${selectedOrder.price.toFixed(2)}` : '-'}
                 </Typography>
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="h6">Order Items</Typography>
