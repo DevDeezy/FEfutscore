@@ -18,6 +18,7 @@ import { removeFromCart, clearCart } from '../store/slices/cartSlice';
 import { createOrder } from '../store/slices/orderSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
+import { API_BASE_URL } from '../api';
 
 const initialAddress = {
   nome: '',
@@ -100,7 +101,7 @@ const Cart = () => {
         return;
       }
       try {
-        const res = await axios.post('/.netlify/functions/calculateOrderPrice', {
+        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/calculateOrderPrice`, {
           items: getBackendItems(items),
         });
         setCartPrice(res.data.price);
