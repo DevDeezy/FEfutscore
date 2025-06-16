@@ -141,7 +141,10 @@ const OrderForm = () => {
       setShirtTypesLoading(true);
       setShirtTypesError(null);
       try {
-        const res = await axios.get('/.netlify/functions/getShirtTypes');
+        const token = localStorage.getItem('token');
+        const res = await axios.get('/.netlify/functions/getShirtTypes', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         setShirtTypes(res.data);
       } catch (err) {
         setShirtTypesError('Failed to fetch shirt types');
