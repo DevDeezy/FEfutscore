@@ -65,11 +65,20 @@ const AdminPanel = () => {
   const [orderStatusLoading, setOrderStatusLoading] = useState(false);
   const [orderStatusError, setOrderStatusError] = useState<string | null>(null);
 
+  // Shirt Types state
+  const [shirtTypes, setShirtTypes] = useState<any[]>([]);
+  const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
+  const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
+  const [openShirtTypeDialog, setOpenShirtTypeDialog] = useState(false);
+  const [editingShirtType, setEditingShirtType] = useState<any | null>(null);
+  const [shirtTypeForm, setShirtTypeForm] = useState({ name: '', price: 0 });
+
   // Fetch orders, users, and packs on mount
   useEffect(() => {
     dispatch(fetchOrders());
     fetchUsers();
     fetchPacks();
+    fetchShirtTypes();
     // eslint-disable-next-line
   }, [dispatch]);
 
@@ -249,6 +258,69 @@ const AdminPanel = () => {
     }
   };
 
+  // Shirt Types
+  const fetchShirtTypes = async () => {
+    setShirtTypesLoading(true);
+    setShirtTypesError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShirtTypes(res.data);
+    } catch (err) {
+      setShirtTypesError('Failed to fetch shirt types');
+      setShirtTypes([]);
+    }
+    setShirtTypesLoading(false);
+  };
+
+  const handleOpenShirtTypeDialog = (shirtType: any | null = null) => {
+    setEditingShirtType(shirtType);
+    if (shirtType) {
+      setShirtTypeForm({ name: shirtType.name, price: shirtType.price });
+    } else {
+      setShirtTypeForm({ name: '', price: 0 });
+    }
+    setOpenShirtTypeDialog(true);
+  };
+
+  const handleSaveShirtType = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (editingShirtType) {
+        // Update
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updateShirtType/${editingShirtType.id}`, shirtTypeForm, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setShirtTypes(shirtTypes.map((t) => (t.id === editingShirtType.id ? res.data : t)));
+      } else {
+        // Create
+        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createShirtType`, shirtTypeForm, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setShirtTypes([...shirtTypes, res.data]);
+      }
+      setOpenShirtTypeDialog(false);
+      setEditingShirtType(null);
+    } catch (err) {
+      alert('Failed to save shirt type');
+    }
+  };
+
+  const handleDeleteShirtType = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this shirt type?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteShirtType/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShirtTypes(shirtTypes.filter((t) => t.id !== id));
+    } catch (err) {
+      alert('Failed to delete shirt type');
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
@@ -259,6 +331,7 @@ const AdminPanel = () => {
           <Tab label="Orders" />
           <Tab label="Users" />
           <Tab label="Packs & Prices" />
+          <Tab label="Shirt Types" />
         </Tabs>
         {tab === 0 && (
           <>
@@ -514,6 +587,74 @@ const AdminPanel = () => {
               <DialogActions>
                 <Button onClick={() => setOpenPackDialog(false)}>Cancel</Button>
                 <Button onClick={handleSavePack} variant="contained" color="primary">
+                  Save
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </>
+        )}
+        {tab === 3 && (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button variant="contained" color="primary" onClick={() => handleOpenShirtTypeDialog()}>
+                Add New Shirt Type
+              </Button>
+            </Box>
+            {shirtTypesLoading ? (
+              <CircularProgress />
+            ) : shirtTypesError ? (
+              <Alert severity="error">{shirtTypesError}</Alert>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {shirtTypes.map((type) => (
+                      <TableRow key={type.id}>
+                        <TableCell>{type.name}</TableCell>
+                        <TableCell>€{type.price.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Button onClick={() => handleOpenShirtTypeDialog(type)} sx={{ mr: 1 }}>
+                            Edit
+                          </Button>
+                          <Button onClick={() => handleDeleteShirtType(type.id)} color="error">
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+            <Dialog open={openShirtTypeDialog} onClose={() => setOpenShirtTypeDialog(false)} maxWidth="xs" fullWidth>
+              <DialogTitle>{editingShirtType ? 'Edit Shirt Type' : 'Add Shirt Type'}</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Name"
+                  fullWidth
+                  margin="normal"
+                  value={shirtTypeForm.name}
+                  onChange={(e) => setShirtTypeForm({ ...shirtTypeForm, name: e.target.value })}
+                />
+                <TextField
+                  label="Price"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  value={shirtTypeForm.price}
+                  onChange={(e) => setShirtTypeForm({ ...shirtTypeForm, price: Number(e.target.value) })}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenShirtTypeDialog(false)}>Cancel</Button>
+                <Button onClick={handleSaveShirtType} variant="contained" color="primary">
                   Save
                 </Button>
               </DialogActions>
