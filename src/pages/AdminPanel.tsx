@@ -52,7 +52,7 @@ const AdminPanel = () => {
   const [packsError, setPacksError] = useState<string | null>(null);
   const [openPackDialog, setOpenPackDialog] = useState(false);
   const [editingPack, setEditingPack] = useState<Pack | null>(null);
-  const [packForm, setPackForm] = useState<Omit<Pack, '_id'>>({
+  const [packForm, setPackForm] = useState<Omit<Pack, 'id'>>({
     name: '',
     items: [{ product_type: 'tshirt', quantity: 1, shirt_type: 'New' }],
     price: 0
@@ -136,7 +136,7 @@ const AdminPanel = () => {
     setPacksLoading(false);
   };
 
-  const handleDeletePack = async (id: string) => {
+  const handleDeletePack = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this pack?')) return;
     try {
       const token = localStorage.getItem('token');
@@ -194,7 +194,7 @@ const AdminPanel = () => {
       const token = localStorage.getItem('token');
       if (editingPack) {
         // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack.id}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack.id.toString()}`, packForm, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks(packs.map((p) => (p.id === editingPack.id ? res.data : p)));
