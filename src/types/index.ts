@@ -43,7 +43,8 @@ export interface OrderState {
 export interface PackItem {
   product_type: 'tshirt' | 'shoes';
   quantity: number;
-  shirt_type?: 'Old' | 'New' | 'Icon'; // Only for t-shirts
+  shirt_type_id?: number; // For t-shirts, references ShirtType
+  shirt_type_name?: string; // For display purposes
 }
 
 export interface Pack {

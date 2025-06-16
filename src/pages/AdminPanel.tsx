@@ -54,7 +54,7 @@ const AdminPanel = () => {
   const [editingPack, setEditingPack] = useState<Pack | null>(null);
   const [packForm, setPackForm] = useState<Omit<Pack, 'id'>>({
     name: '',
-    items: [{ product_type: 'tshirt', quantity: 1, shirt_type: 'New' }],
+    items: [{ product_type: 'tshirt', quantity: 1, shirt_type_id: 0, shirt_type_name: '' }],
     price: 0
   });
 
@@ -169,7 +169,7 @@ const AdminPanel = () => {
     } else {
       setPackForm({
         name: '',
-        items: [{ product_type: 'tshirt', quantity: 1, shirt_type: 'New' }],
+        items: [{ product_type: 'tshirt', quantity: 1, shirt_type_id: 0, shirt_type_name: '' }],
         price: 0
       });
     }
@@ -183,14 +183,33 @@ const AdminPanel = () => {
   const handlePackItemChange = (idx: number, field: string, value: any) => {
     setPackForm((prev) => ({
       ...prev,
-      items: prev.items.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
+      items: prev.items.map((item, i) => {
+        if (i !== idx) return item;
+        if (field === 'shirt_type_id') {
+          const selected = shirtTypes.find((t) => t.id === value);
+          return {
+            ...item,
+            shirt_type_id: selected?.id,
+            shirt_type_name: selected?.name,
+          };
+        }
+        return { ...item, [field]: value };
+      }),
     }));
   };
 
   const handleAddPackItem = () => {
     setPackForm((prev) => ({
       ...prev,
-      items: [...prev.items, { product_type: 'tshirt', quantity: 1, shirt_type: 'New' }]
+      items: [
+        ...prev.items,
+        {
+          product_type: 'tshirt',
+          quantity: 1,
+          shirt_type_id: shirtTypes[0]?.id,
+          shirt_type_name: shirtTypes[0]?.name,
+        },
+      ],
     }));
   };
 
@@ -502,7 +521,7 @@ const AdminPanel = () => {
                           {pack.items.map((item, idx) => (
                             <Box key={idx} sx={{ mb: 1 }}>
                               {item.quantity}x {item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}
-                              {item.product_type === 'tshirt' && item.shirt_type && ` (${item.shirt_type})`}
+                              {item.product_type === 'tshirt' && item.shirt_type_name && ` (${item.shirt_type_name})`}
                             </Box>
                           ))}
                         </TableCell>
@@ -558,13 +577,14 @@ const AdminPanel = () => {
                       <FormControl sx={{ minWidth: 120 }}>
                         <InputLabel>Shirt Type</InputLabel>
                         <Select
-                          value={item.shirt_type}
+                          value={item.shirt_type_id ?? ''}
                           label="Shirt Type"
-                          onChange={(e) => handlePackItemChange(idx, 'shirt_type', e.target.value)}
+                          onChange={(e) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
+                          disabled={shirtTypesLoading || shirtTypesError !== null}
                         >
-                          <MenuItem value="Old">Old</MenuItem>
-                          <MenuItem value="New">New</MenuItem>
-                          <MenuItem value="Icon">Icon</MenuItem>
+                          {shirtTypes.map((type) => (
+                            <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                          ))}
                         </Select>
                       </FormControl>
                     )}
