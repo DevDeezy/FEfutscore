@@ -30,7 +30,8 @@ const OrderForm = () => {
     image_back: '',
     size: 'S',
     player_name: '',
-    shirt_type: 'New',
+    shirt_type_id: undefined,
+    shirt_type_name: '',
   });
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
