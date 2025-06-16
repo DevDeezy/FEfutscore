@@ -14,6 +14,7 @@ export interface OrderItem {
   image_back?: string; // Only for t-shirts
   size: 'S' | 'M' | 'L' | 'XL' | '39' | '40' | '41' | '42';
   player_name?: string; // Make playerName optional
+  shirt_type?: 'Old' | 'New' | 'Icon'; // Only for t-shirts
 }
 
 export interface Order {
@@ -35,4 +36,18 @@ export interface OrderState {
   currentOrder: Order | null;
   loading: boolean;
   error: string | null;
+}
+
+export interface PackItem {
+  product_type: 'tshirt' | 'shoes';
+  quantity: number;
+  shirt_type?: 'Old' | 'New' | 'Icon'; // Only for t-shirts
+}
+
+export interface Pack {
+  _id: string;
+  name: string;
+  items: PackItem[];
+  price: number;
+  created_at?: string;
 } 

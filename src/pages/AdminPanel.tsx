@@ -32,6 +32,7 @@ import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import * as XLSX from 'xlsx';
+import { OrderItem, Pack, PackItem } from '../types';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -46,12 +47,16 @@ const AdminPanel = () => {
   const [newUser, setNewUser] = useState({ email: '', password: '', role: 'user' });
 
   // Packs state
-  const [packs, setPacks] = useState<any[]>([]);
+  const [packs, setPacks] = useState<Pack[]>([]);
   const [packsLoading, setPacksLoading] = useState(false);
   const [packsError, setPacksError] = useState<string | null>(null);
   const [openPackDialog, setOpenPackDialog] = useState(false);
-  const [editingPack, setEditingPack] = useState<any | null>(null);
-  const [packForm, setPackForm] = useState({ name: '', items: [{ product_type: 'tshirt', quantity: 1 }], price: 0 });
+  const [editingPack, setEditingPack] = useState<Pack | null>(null);
+  const [packForm, setPackForm] = useState<Omit<Pack, '_id'>>({
+    name: '',
+    items: [{ product_type: 'tshirt', quantity: 1, shirt_type: 'New' }],
+    price: 0
+  });
 
   // Order details dialog state
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
@@ -144,12 +149,20 @@ const AdminPanel = () => {
     }
   };
 
-  const handleOpenPackDialog = (pack: any | null = null) => {
+  const handleOpenPackDialog = (pack: Pack | null = null) => {
     setEditingPack(pack);
     if (pack) {
-      setPackForm({ name: pack.name, items: pack.items, price: pack.price });
+      setPackForm({
+        name: pack.name,
+        items: pack.items,
+        price: pack.price
+      });
     } else {
-      setPackForm({ name: '', items: [{ product_type: 'tshirt', quantity: 1 }], price: 0 });
+      setPackForm({
+        name: '',
+        items: [{ product_type: 'tshirt', quantity: 1, shirt_type: 'New' }],
+        price: 0
+      });
     }
     setOpenPackDialog(true);
   };
@@ -166,7 +179,10 @@ const AdminPanel = () => {
   };
 
   const handleAddPackItem = () => {
-    setPackForm((prev) => ({ ...prev, items: [...prev.items, { product_type: 'tshirt', quantity: 1 }] }));
+    setPackForm((prev) => ({
+      ...prev,
+      items: [...prev.items, { product_type: 'tshirt', quantity: 1, shirt_type: 'New' }]
+    }));
   };
 
   const handleRemovePackItem = (idx: number) => {
@@ -383,51 +399,55 @@ const AdminPanel = () => {
         )}
         {tab === 2 && (
           <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Packs & Prices</Typography>
-              <Button variant="contained" onClick={() => handleOpenPackDialog()}>
-                Add Pack
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Button variant="contained" color="primary" onClick={() => handleOpenPackDialog()}>
+                Add New Pack
               </Button>
             </Box>
-            {packsLoading ? <CircularProgress /> : packsError ? <Alert severity="error">{packsError}</Alert> : null}
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Items</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Array.isArray(packs) && packs.length > 0 ? (
-                    packs.map((pack, idx) => (
-                      <TableRow key={pack._id || pack.id || idx}>
+            {packsLoading ? (
+              <CircularProgress />
+            ) : packsError ? (
+              <Alert severity="error">{packsError}</Alert>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Items</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {packs.map((pack) => (
+                      <TableRow key={pack._id}>
                         <TableCell>{pack.name}</TableCell>
                         <TableCell>
-                          {Array.isArray(pack.items) && pack.items.map((item: any, i: number) => (
-                            <span key={i}>{item.quantity} x {item.product_type}{i < pack.items.length - 1 ? ', ' : ''}</span>
+                          {pack.items.map((item, idx) => (
+                            <Box key={idx} sx={{ mb: 1 }}>
+                              {item.quantity}x {item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}
+                              {item.product_type === 'tshirt' && item.shirt_type && ` (${item.shirt_type})`}
+                            </Box>
                           ))}
                         </TableCell>
                         <TableCell>${pack.price}</TableCell>
                         <TableCell>
-                          <Button size="small" onClick={() => handleOpenPackDialog(pack)}>Edit</Button>
-                          <Button size="small" color="error" onClick={() => handleDeletePack(pack._id || pack.id)}>Delete</Button>
+                          <Button onClick={() => handleOpenPackDialog(pack)} sx={{ mr: 1 }}>
+                            Edit
+                          </Button>
+                          <Button onClick={() => handleDeletePack(pack._id)} color="error">
+                            Delete
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        No packs found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Dialog open={openPackDialog} onClose={() => setOpenPackDialog(false)}>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            <Dialog open={openPackDialog} onClose={() => setOpenPackDialog(false)} maxWidth="md" fullWidth>
               <DialogTitle>{editingPack ? 'Edit Pack' : 'Add Pack'}</DialogTitle>
               <DialogContent>
                 <TextField
@@ -437,9 +457,18 @@ const AdminPanel = () => {
                   value={packForm.name}
                   onChange={(e) => handlePackFormChange('name', e.target.value)}
                 />
+                <TextField
+                  label="Price"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  value={packForm.price}
+                  onChange={(e) => handlePackFormChange('price', Number(e.target.value))}
+                />
+                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Items</Typography>
                 {packForm.items.map((item, idx) => (
-                  <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
-                    <FormControl>
+                  <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                    <FormControl sx={{ minWidth: 120 }}>
                       <InputLabel>Product</InputLabel>
                       <Select
                         value={item.product_type}
@@ -450,29 +479,41 @@ const AdminPanel = () => {
                         <MenuItem value="shoes">Shoes</MenuItem>
                       </Select>
                     </FormControl>
+                    {item.product_type === 'tshirt' && (
+                      <FormControl sx={{ minWidth: 120 }}>
+                        <InputLabel>Shirt Type</InputLabel>
+                        <Select
+                          value={item.shirt_type}
+                          label="Shirt Type"
+                          onChange={(e) => handlePackItemChange(idx, 'shirt_type', e.target.value)}
+                        >
+                          <MenuItem value="Old">Old</MenuItem>
+                          <MenuItem value="New">New</MenuItem>
+                          <MenuItem value="Icon">Icon</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
                     <TextField
-                      label="Qty"
+                      label="Quantity"
                       type="number"
                       value={item.quantity}
                       onChange={(e) => handlePackItemChange(idx, 'quantity', Number(e.target.value))}
-                      sx={{ width: 80 }}
+                      sx={{ width: 100 }}
                     />
-                    <Button onClick={() => handleRemovePackItem(idx)} color="error">Remove</Button>
+                    <Button onClick={() => handleRemovePackItem(idx)} color="error">
+                      Remove
+                    </Button>
                   </Box>
                 ))}
-                <Button onClick={handleAddPackItem} sx={{ mb: 2 }}>Add Item</Button>
-                <TextField
-                  label="Price"
-                  type="number"
-                  fullWidth
-                  margin="normal"
-                  value={packForm.price}
-                  onChange={(e) => handlePackFormChange('price', Number(e.target.value))}
-                />
+                <Button onClick={handleAddPackItem} sx={{ mt: 1 }}>
+                  Add Item
+                </Button>
               </DialogContent>
               <DialogActions>
                 <Button onClick={() => setOpenPackDialog(false)}>Cancel</Button>
-                <Button onClick={handleSavePack} variant="contained">Save</Button>
+                <Button onClick={handleSavePack} variant="contained" color="primary">
+                  Save
+                </Button>
               </DialogActions>
             </Dialog>
           </>

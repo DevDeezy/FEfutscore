@@ -29,6 +29,7 @@ const OrderForm = () => {
     image_back: '',
     size: 'S',
     player_name: '',
+    shirt_type: 'New',
   });
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,7 @@ const OrderForm = () => {
         image_back: '',
         size: 'M',
         player_name: '',
+        shirt_type: 'New',
       });
       navigate('/cart');
     }
@@ -205,6 +207,27 @@ const OrderForm = () => {
                 }
               />
             </Grid>
+            {currentItem.product_type === 'tshirt' && (
+              <Grid item xs={12} sm={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Tipo de Camisola</InputLabel>
+                  <Select
+                    value={currentItem.shirt_type}
+                    label="Tipo de Camisola"
+                    onChange={(e) =>
+                      setCurrentItem({
+                        ...currentItem,
+                        shirt_type: e.target.value as OrderItem['shirt_type'],
+                      })
+                    }
+                  >
+                    <MenuItem value="Old">Old</MenuItem>
+                    <MenuItem value="New">New</MenuItem>
+                    <MenuItem value="Icon">Icon</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
             <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
