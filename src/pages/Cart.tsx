@@ -76,9 +76,16 @@ const Cart = () => {
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
   const canPlaceOrder = items.length > 0 && allFieldsFilled && !!proofImage;
 
+  const getBackendItems = (items: any[]) =>
+    items.map((item) =>
+      item.product_type === 'tshirt'
+        ? { ...item, shirt_type_id: item.shirt_type_id }
+        : item
+    );
+
   const handleSubmitOrder = async () => {
     if (canPlaceOrder && user) {
-      await dispatch(createOrder({ userId: user.id, items, address: { ...address, proofImage } }));
+      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage } }));
       dispatch(clearCart());
       setAddress(initialAddress);
       setProofImage('');
@@ -94,7 +101,7 @@ const Cart = () => {
       }
       try {
         const res = await axios.post('/.netlify/functions/calculateOrderPrice', {
-          items,
+          items: getBackendItems(items),
         });
         setCartPrice(res.data.price);
       } catch {

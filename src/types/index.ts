@@ -14,7 +14,8 @@ export interface OrderItem {
   image_back?: string; // Only for t-shirts
   size: 'S' | 'M' | 'L' | 'XL' | '39' | '40' | '41' | '42';
   player_name?: string; // Make playerName optional
-  shirt_type?: 'Old' | 'New' | 'Icon'; // Only for t-shirts
+  shirt_type_id?: number; // For t-shirts, references ShirtType
+  shirt_type_name?: string; // For display purposes
 }
 
 export interface Order {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice';
 import { OrderItem } from '../types';
 import { AppDispatch, RootState } from '../store';
+import axios from 'axios';
 
 const OrderForm = () => {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ const OrderForm = () => {
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
   const imageBackInputRef = useRef<HTMLInputElement>(null);
+  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string; price: number }[]>([]);
+  const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
+  const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
 
   const tshirtSizes = ['S', 'M', 'L', 'XL'];
 
@@ -116,8 +120,7 @@ const OrderForm = () => {
   };
 
   const handleAddToCart = () => {
-    console.log('Adding to cart:', currentItem);
-    if (currentItem.image_front && currentItem.size) {
+    if (currentItem.image_front && currentItem.size && (currentItem.product_type !== 'tshirt' || currentItem.shirt_type_id)) {
       dispatch(addToCart(currentItem));
       setCurrentItem({
         product_type: 'tshirt',
@@ -125,11 +128,28 @@ const OrderForm = () => {
         image_back: '',
         size: 'M',
         player_name: '',
-        shirt_type: 'New',
+        shirt_type_id: undefined,
+        shirt_type_name: '',
       });
       navigate('/cart');
     }
   };
+
+  useEffect(() => {
+    const fetchShirtTypes = async () => {
+      setShirtTypesLoading(true);
+      setShirtTypesError(null);
+      try {
+        const res = await axios.get('/.netlify/functions/getShirtTypes');
+        setShirtTypes(res.data);
+      } catch (err) {
+        setShirtTypesError('Failed to fetch shirt types');
+        setShirtTypes([]);
+      }
+      setShirtTypesLoading(false);
+    };
+    fetchShirtTypes();
+  }, []);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -212,18 +232,21 @@ const OrderForm = () => {
                 <FormControl fullWidth>
                   <InputLabel>Tipo de Camisola</InputLabel>
                   <Select
-                    value={currentItem.shirt_type}
+                    value={currentItem.shirt_type_id ?? ''}
                     label="Tipo de Camisola"
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const selected = shirtTypes.find((t) => t.id === Number(e.target.value));
                       setCurrentItem({
                         ...currentItem,
-                        shirt_type: e.target.value as OrderItem['shirt_type'],
-                      })
-                    }
+                        shirt_type_id: selected?.id,
+                        shirt_type_name: selected?.name,
+                      });
+                    }}
+                    disabled={shirtTypesLoading || shirtTypesError !== null}
                   >
-                    <MenuItem value="Old">Old</MenuItem>
-                    <MenuItem value="New">New</MenuItem>
-                    <MenuItem value="Icon">Icon</MenuItem>
+                    {shirtTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
