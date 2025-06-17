@@ -15,17 +15,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from './store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
 import { RootState } from './store';
+import theme from './theme';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
+const fontLink = document.createElement('link');
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap';
+fontLink.rel = 'stylesheet';
+document.head.appendChild(fontLink);
 
 const AppRoutes = () => {
   const { user } = useSelector((state: RootState) => state.auth);
@@ -56,7 +51,8 @@ const AppRoutes = () => {
   }
 
   return (
-    <>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -79,7 +75,7 @@ const AppRoutes = () => {
           } 
         />
       </Routes>
-    </>
+    </ThemeProvider>
   );
 };
 
