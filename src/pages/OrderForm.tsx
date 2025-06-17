@@ -268,18 +268,12 @@ const OrderForm = () => {
                 variant="contained"
                 component="label"
                 fullWidth
-                onClick={() => {
-                  if (imageFrontInputRef.current) {
-                    imageFrontInputRef.current.click();
-                  }
-                }}
               >
                 Upload Imagem Frontal
                 <input
                   type="file"
                   hidden
                   accept="image/jpeg,image/png,image/gif"
-                  ref={imageFrontInputRef}
                   onChange={(e) => handleImageChange(e, 'image_front')}
                 />
               </Button>
@@ -299,18 +293,12 @@ const OrderForm = () => {
                   variant="contained"
                   component="label"
                   fullWidth
-                  onClick={() => {
-                    if (imageBackInputRef.current) {
-                      imageBackInputRef.current.click();
-                    }
-                  }}
                 >
                   Upload Imagem Traseira
                   <input
                     type="file"
                     hidden
                     accept="image/jpeg,image/png,image/gif"
-                    ref={imageBackInputRef}
                     onChange={(e) => handleImageChange(e, 'image_back')}
                   />
                 </Button>
