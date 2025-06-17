@@ -16,6 +16,7 @@ import { setUser } from './store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
 import { RootState } from './store';
 import theme from './theme';
+import Footer from './components/Footer';
 
 const fontLink = document.createElement('link');
 fontLink.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap';
@@ -75,6 +76,7 @@ const AppRoutes = () => {
           } 
         />
       </Routes>
+      <Footer />
     </ThemeProvider>
   );
 };
