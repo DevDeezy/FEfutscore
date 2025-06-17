@@ -74,6 +74,7 @@ const OrderForm = () => {
     
     if (!file) {
       console.log('No file selected');
+      if (e.target) e.target.value = '';
       return;
     }
 
@@ -85,6 +86,7 @@ const OrderForm = () => {
       if (field === 'image_back' && imageBackInputRef.current) {
         imageBackInputRef.current.value = '';
       }
+      if (e.target) e.target.value = '';
       return;
     }
 
@@ -96,9 +98,11 @@ const OrderForm = () => {
       if (typeof result === 'string') {
         console.log('Setting image data for:', field);
         setCurrentItem((prev) => ({ ...prev, [field]: result }));
+        if (e.target) e.target.value = '';
       } else {
         console.error('FileReader result is not a string');
         setError('Error processing the image');
+        if (e.target) e.target.value = '';
       }
     };
 
@@ -111,6 +115,7 @@ const OrderForm = () => {
       if (field === 'image_back' && imageBackInputRef.current) {
         imageBackInputRef.current.value = '';
       }
+      if (e.target) e.target.value = '';
     };
 
     try {
@@ -119,6 +124,7 @@ const OrderForm = () => {
     } catch (err) {
       console.error('Error in readAsDataURL:', err);
       setError('Error processing the image file');
+      if (e.target) e.target.value = '';
     }
   };
 
