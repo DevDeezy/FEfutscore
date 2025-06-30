@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -14,6 +15,7 @@ import { API_BASE_URL } from '../api';
 import { loginSuccess } from '../store/slices/authSlice';
 
 const ChangePassword = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const [oldPassword, setOldPassword] = useState('');
@@ -31,6 +33,8 @@ const ChangePassword = () => {
       setError('New passwords do not match.');
       return;
     }
+
+    const wasPasswordResetRequired = user?.password_reset_required;
 
     try {
       await axios.post(
@@ -50,6 +54,11 @@ const ChangePassword = () => {
       }
 
       setSuccess('Password changed successfully!');
+      if (wasPasswordResetRequired) {
+        setTimeout(() => {
+          navigate('/order');
+        }, 1500);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to change password.');
     }
