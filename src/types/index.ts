@@ -59,4 +59,20 @@ export interface Pack {
   items: PackItem[];
   price: number;
   created_at?: string;
+}
+
+export interface ProductType {
+  id: number;
+  name: string;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  image_url: string;
+  available_sizes: string[];
+  productType: ProductType;
+  product_type_id: number;
 } 
