@@ -91,7 +91,7 @@ const ProductManagement = () => {
   };
 
   const handleDeleteProductType = async (productTypeId: number) => {
-    if (window.confirm('Are you sure you want to delete this product type?')) {
+    if (window.confirm('Tem a certeza que quer apagar este tipo de produto?')) {
       try {
         await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteProductType/${productTypeId}`);
         fetchProductTypes();
@@ -126,12 +126,12 @@ const ProductManagement = () => {
   };
 
   const handleDeleteProduct = async (productId: number) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm('Tem a certeza que quer apagar este produto?')) {
       try {
         await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteProduct/${productId}`);
         fetchProducts();
       } catch (err) {
-        setError('Failed to delete product');
+        setError('Falha ao apagar o produto');
       }
     }
   };
@@ -139,9 +139,9 @@ const ProductManagement = () => {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">Product Types</Typography>
+        <Typography variant="h6">Tipos de Produto</Typography>
         <Button variant="contained" onClick={() => setOpenProductTypeDialog(true)}>
-          Add Product Type
+          Adicionar Tipo de Produto
         </Button>
       </Box>
       <TableContainer component={Paper} sx={{ mb: 4 }}>
@@ -149,9 +149,9 @@ const ProductManagement = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Base Type</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Nome</TableCell>
+              <TableCell>Tipo Base</TableCell>
+              <TableCell>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -162,7 +162,7 @@ const ProductManagement = () => {
                 <TableCell>{type.base_type}</TableCell>
                 <TableCell>
                   <Button color="error" onClick={() => handleDeleteProductType(type.id)}>
-                    Delete
+                    Apagar
                   </Button>
                 </TableCell>
               </TableRow>
@@ -172,20 +172,20 @@ const ProductManagement = () => {
       </TableContainer>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">Products</Typography>
+        <Typography variant="h6">Produtos</Typography>
         <Button variant="contained" onClick={() => setOpenProductDialog(true)}>
-          Add Product
+          Adicionar Produto
         </Button>
       </Box>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Base Type</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell>Nome</TableCell>
+              <TableCell>Tipo Base</TableCell>
+              <TableCell>Tipo</TableCell>
+              <TableCell>Preço</TableCell>
+              <TableCell>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -197,7 +197,7 @@ const ProductManagement = () => {
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
                 <TableCell>
                   <Button color="error" onClick={() => handleDeleteProduct(product.id)}>
-                    Delete
+                    Apagar
                   </Button>
                 </TableCell>
               </TableRow>
@@ -208,56 +208,57 @@ const ProductManagement = () => {
 
       {/* Product Type Dialog */}
       <Dialog open={openProductTypeDialog} onClose={() => setOpenProductTypeDialog(false)}>
-        <DialogTitle>Add New Product Type</DialogTitle>
+        <DialogTitle>Adicionar Tipo de Produto</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Product Type Name"
+            label="Nome do Tipo de Produto"
             type="text"
             fullWidth
-            variant="standard"
             value={newProductTypeName}
             onChange={(e) => setNewProductTypeName(e.target.value)}
           />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Base Type</InputLabel>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Tipo Base</InputLabel>
             <Select
               value={newProductTypeBase}
-              label="Base Type"
+              label="Tipo Base"
               onChange={(e) => setNewProductTypeBase(e.target.value)}
             >
-              <MenuItem value="tshirt">T-Shirt</MenuItem>
-              <MenuItem value="shoes">Shoes</MenuItem>
+              <MenuItem value="tshirt">Camisola</MenuItem>
+              <MenuItem value="shoes">Sapatilhas</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenProductTypeDialog(false)}>Cancel</Button>
-          <Button onClick={handleCreateProductType}>Create</Button>
+          <Button onClick={() => setOpenProductTypeDialog(false)}>Cancelar</Button>
+          <Button onClick={handleCreateProductType}>Criar</Button>
         </DialogActions>
       </Dialog>
 
       {/* Product Dialog */}
       <Dialog open={openProductDialog} onClose={() => setOpenProductDialog(false)}>
-        <DialogTitle>Add New Product</DialogTitle>
+        <DialogTitle>Adicionar Produto</DialogTitle>
         <DialogContent>
           <TextField
-            label="Name"
+            label="Nome do Produto"
             fullWidth
             margin="normal"
             value={newProduct.name}
             onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
           />
           <TextField
-            label="Description"
+            label="Descrição"
             fullWidth
             margin="normal"
+            multiline
+            rows={2}
             value={newProduct.description}
             onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
           />
           <TextField
-            label="Price"
+            label="Preço"
             type="number"
             fullWidth
             margin="normal"
@@ -265,35 +266,24 @@ const ProductManagement = () => {
             onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
           />
           <TextField
-            label="Image URL"
+            label="URL da Imagem"
             fullWidth
             margin="normal"
             value={newProduct.image_url}
             onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
           />
           <TextField
-            label="Available Sizes (comma-separated)"
+            label="Tamanhos Disponíveis (separados por vírgula)"
             fullWidth
             margin="normal"
             value={newProduct.available_sizes}
             onChange={(e) => setNewProduct({ ...newProduct, available_sizes: e.target.value })}
           />
           <FormControl fullWidth margin="normal">
-            <InputLabel>Base Type</InputLabel>
-            <Select
-              value={newProduct.base_type}
-              label="Base Type"
-              onChange={(e) => setNewProduct({ ...newProduct, base_type: e.target.value })}
-            >
-              <MenuItem value="tshirt">T-Shirt</MenuItem>
-              <MenuItem value="shoes">Shoes</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Product Type</InputLabel>
+            <InputLabel>Tipo de Produto</InputLabel>
             <Select
               value={newProduct.product_type_id}
-              label="Product Type"
+              label="Tipo de Produto"
               onChange={(e) => setNewProduct({ ...newProduct, product_type_id: e.target.value })}
             >
               {productTypes.map((type) => (
@@ -303,8 +293,8 @@ const ProductManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenProductDialog(false)}>Cancel</Button>
-          <Button onClick={handleCreateProduct}>Create</Button>
+          <Button onClick={() => setOpenProductDialog(false)}>Cancelar</Button>
+          <Button onClick={handleCreateProduct}>Criar</Button>
         </DialogActions>
       </Dialog>
 

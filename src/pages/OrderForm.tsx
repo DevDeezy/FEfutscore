@@ -51,13 +51,13 @@ const OrderForm = () => {
     
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should be less than 5MB');
+      setError('A imagem deve ter menos de 5MB');
       return false;
     }
 
     // Check file type
     if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file');
+      setError('Por favor, carregue um ficheiro de imagem');
       return false;
     }
 
@@ -103,14 +103,14 @@ const OrderForm = () => {
         if (e.target) e.target.value = '';
       } else {
         console.error('FileReader result is not a string');
-        setError('Error processing the image');
+        setError('Erro ao processar a imagem');
         if (e.target) e.target.value = '';
       }
     };
 
     reader.onerror = (event) => {
       console.error('FileReader error:', event);
-      setError('Error reading the image file');
+      setError('Erro ao ler o ficheiro de imagem');
       if (field === 'image_front' && imageFrontInputRef.current) {
         imageFrontInputRef.current.value = '';
       }
@@ -125,7 +125,7 @@ const OrderForm = () => {
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('Error in readAsDataURL:', err);
-      setError('Error processing the image file');
+      setError('Erro ao processar a imagem');
       if (e.target) e.target.value = '';
     }
   };
@@ -170,11 +170,11 @@ const OrderForm = () => {
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Create New Order
+          Criar Novo Pedido
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
+            {error === 'A imagem deve ter menos de 5MB' ? 'A imagem deve ter menos de 5MB' : error === 'Por favor, carregue um ficheiro de imagem' ? 'Por favor, carregue um ficheiro de imagem' : error === 'Erro ao processar a imagem' ? 'Erro ao processar a imagem' : error === 'Erro ao ler o ficheiro de imagem' ? 'Erro ao ler o ficheiro de imagem' : error}
           </Alert>
         )}
         <form onSubmit={(e) => { e.preventDefault(); handleAddToCart(); }}>
@@ -194,7 +194,7 @@ const OrderForm = () => {
                   }
                 >
                   <MenuItem value="tshirt">Camisola</MenuItem>
-                  <MenuItem value="shoes">Ténis</MenuItem>
+                  <MenuItem value="shoes">Sapatilhas</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -272,7 +272,7 @@ const OrderForm = () => {
                 component="label"
                 fullWidth
               >
-                Upload Imagem Frontal
+                Carregar Imagem Frontal
                 <input
                   type="file"
                   hidden
@@ -284,7 +284,7 @@ const OrderForm = () => {
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
                   <img
                     src={currentItem.image_front}
-                    alt="Front"
+                    alt="Frente"
                     style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
                   />
                 </Box>
@@ -297,7 +297,7 @@ const OrderForm = () => {
                   component="label"
                   fullWidth
                 >
-                  Upload Imagem Traseira
+                  Carregar Imagem Traseira
                   <input
                     type="file"
                     hidden
@@ -309,7 +309,7 @@ const OrderForm = () => {
                   <Box sx={{ mt: 2, textAlign: 'center' }}>
                     <img
                       src={currentItem.image_back}
-                      alt="Back"
+                      alt="Costas"
                       style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
                     />
                   </Box>
@@ -324,7 +324,7 @@ const OrderForm = () => {
               color="primary"
               disabled={!currentItem.image_front || !currentItem.size}
             >
-              Add to Cart
+              Adicionar ao Carrinho
             </Button>
           </Box>
         </form>

@@ -46,7 +46,7 @@ const Login = () => {
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Paper sx={{ p: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          Login
+          Entrar
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
@@ -66,7 +66,7 @@ const Login = () => {
           />
           <TextField
             fullWidth
-            label="Password"
+            label="Palavra-passe"
             name="password"
             type="password"
             value={formData.password}
@@ -82,7 +82,7 @@ const Login = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'A entrar...' : 'Entrar'}
             </Button>
           </Box>
         </form>

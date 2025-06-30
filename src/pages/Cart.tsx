@@ -116,11 +116,11 @@ const Cart = () => {
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Shopping Cart
+          Carrinho de Compras
         </Typography>
         {items.length === 0 ? (
           <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
-            Your cart is empty
+            O seu carrinho está vazio
           </Typography>
         ) : (
           <>
@@ -145,17 +145,17 @@ const Cart = () => {
                       )}
                       <Box>
                         <Typography variant="subtitle1">
-                          {item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}
+                          {item.product_type === 'tshirt' ? 'Camisola' : 'Sapatilhas'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Size: {item.size}
+                          Tamanho: {item.size}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Quantity: {item.quantity}
+                          Quantidade: {item.quantity}
                         </Typography>
                         {item.player_name && (
                           <Typography variant="body2" color="text.secondary">
-                            Player Name: {item.player_name}
+                            Nome do Jogador: {item.player_name}
                           </Typography>
                         )}
                       </Box>
@@ -171,39 +171,39 @@ const Cart = () => {
               ))}
             </Grid>
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Shipping Address</Typography>
+              <Typography variant="h6" gutterBottom>Morada de Entrega</Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Name" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
+                  <TextField label="Nome" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Phone" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
+                  <TextField label="Telemóvel" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField label="Address" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
+                  <TextField label="Morada" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="City" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
+                  <TextField label="Cidade" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="District" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
+                  <TextField label="Distrito" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Postal Code" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
+                  <TextField label="Código Postal" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Country" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
+                  <TextField label="País" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
                 </Grid>
               </Grid>
             </Box>
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Proof of Payment</Typography>
+              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento</Typography>
               <Button
                 variant="contained"
                 component="label"
                 sx={{ mb: 2 }}
               >
-                Upload Proof Image
+                Carregar Comprovativo
                 <input
                   type="file"
                   hidden
@@ -217,7 +217,7 @@ const Cart = () => {
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
                   <img
                     src={proofImage}
-                    alt="Proof of Payment"
+                    alt="Comprovativo de Pagamento"
                     style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'contain', border: '1px solid #eee', borderRadius: 4 }}
                   />
                 </Box>
@@ -225,7 +225,7 @@ const Cart = () => {
             </Box>
             {cartPrice !== null && (
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Total Price: €{cartPrice.toFixed(2)}
+                Preço Total: €{cartPrice.toFixed(2)}
               </Typography>
             )}
             <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
@@ -234,7 +234,7 @@ const Cart = () => {
                 color="primary"
                 onClick={() => navigate('/order')}
               >
-                Continue Shopping
+                Continuar a Comprar
               </Button>
               <Button
                 variant="contained"
@@ -242,7 +242,7 @@ const Cart = () => {
                 onClick={handleSubmitOrder}
                 disabled={!canPlaceOrder}
               >
-                Place Order
+                Finalizar Encomenda
               </Button>
             </Box>
           </>

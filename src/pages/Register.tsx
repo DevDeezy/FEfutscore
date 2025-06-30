@@ -43,7 +43,7 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError('As palavras-passe não correspondem');
       return;
     }
     setPasswordError('');
@@ -57,7 +57,7 @@ const Register = () => {
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Paper sx={{ p: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          Register
+          Registar
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
@@ -82,7 +82,7 @@ const Register = () => {
           />
           <TextField
             fullWidth
-            label="Password"
+            label="Palavra-passe"
             name="password"
             type="password"
             value={formData.password}
@@ -92,7 +92,7 @@ const Register = () => {
           />
           <TextField
             fullWidth
-            label="Confirm Password"
+            label="Confirmar Palavra-passe"
             name="confirmPassword"
             type="password"
             value={formData.confirmPassword}
@@ -108,7 +108,7 @@ const Register = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? 'A registar...' : 'Registar'}
             </Button>
           </Box>
         </form>

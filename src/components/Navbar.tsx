@@ -55,7 +55,7 @@ const Navbar = () => {
             component={RouterLink}
             to="/store"
           >
-            Store
+            Loja
           </Button>
           {user ? (
             <>
@@ -64,7 +64,7 @@ const Navbar = () => {
                 component={RouterLink}
                 to="/order"
               >
-                New Order
+                Novo Pedido
               </Button>
               <IconButton
                 color="inherit"
@@ -82,7 +82,7 @@ const Navbar = () => {
                   component={RouterLink}
                   to="/admin"
                 >
-                  Admin Panel
+                  Painel de Admin
                 </Button>
               )}
               <IconButton
@@ -111,9 +111,9 @@ const Navbar = () => {
                 onClose={handleClose}
               >
                 <MenuItem component={RouterLink} to="/change-password" onClick={handleClose}>
-                  Change Password
+                  Mudar Palavra-passe
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                <MenuItem onClick={handleLogout}>Sair</MenuItem>
               </Menu>
             </>
           ) : (
@@ -123,7 +123,7 @@ const Navbar = () => {
                 component={RouterLink}
                 to="/login"
               >
-                Login
+                Entrar
               </Button>
             </>
           )}

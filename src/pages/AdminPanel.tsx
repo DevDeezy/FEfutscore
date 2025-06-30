@@ -101,7 +101,7 @@ const AdminPanel = () => {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (!window.confirm('Tem a certeza que quer apagar este utilizador?')) return;
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteUser/${id}`, {
@@ -109,7 +109,7 @@ const AdminPanel = () => {
       });
       setUsers(users.filter((u) => u._id !== id && u.id !== id));
     } catch (err) {
-      alert('Failed to delete user');
+      alert('Falha ao apagar o utilizador');
     }
   };
 
@@ -125,7 +125,7 @@ const AdminPanel = () => {
       setOpenAddUser(false);
       setNewUser({ email: '', password: '', role: 'user' });
     } catch (err) {
-      alert('Failed to add user');
+      alert('Falha ao adicionar o utilizador');
     }
   };
 
@@ -147,7 +147,7 @@ const AdminPanel = () => {
   };
 
   const handleDeletePack = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this pack?')) return;
+    if (!window.confirm('Tem a certeza que quer apagar este pack?')) return;
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deletepack/${id}`, {
@@ -155,7 +155,7 @@ const AdminPanel = () => {
       });
       setPacks(packs.filter((p) => p.id !== id));
     } catch (err) {
-      alert('Failed to delete pack');
+      alert('Falha ao apagar o pack');
     }
   };
 
@@ -237,7 +237,7 @@ const AdminPanel = () => {
       setOpenPackDialog(false);
       setEditingPack(null);
     } catch (err) {
-      alert('Failed to save pack');
+      alert('Falha ao guardar o pack');
     }
   };
 
@@ -250,10 +250,11 @@ const AdminPanel = () => {
       await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
       setOpenOrderDialog(false);
       dispatch(fetchOrders());
-    } catch (err) {
-      setOrderStatusError('Failed to update order status');
+    } catch (err: any) {
+      setOrderStatusError(err.response?.data?.error || 'Falha ao atualizar o estado');
+    } finally {
+      setOrderStatusLoading(false);
     }
-    setOrderStatusLoading(false);
   };
 
   // Export orders to Excel (call backend endpoint and download file)
@@ -345,32 +346,32 @@ const AdminPanel = () => {
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Admin Panel
+          Painel de Administração
         </Typography>
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-          <Tab label="Orders" />
-          <Tab label="Users" />
-          <Tab label="Packs & Prices" />
-          <Tab label="Shirt Types" />
-          <Tab label="Products" />
+          <Tab label="Encomendas" />
+          <Tab label="Utilizadores" />
+          <Tab label="Packs & Preços" />
+          <Tab label="Tipos de Camisola" />
+          <Tab label="Produtos" />
         </Tabs>
         {tab === 0 && (
           <>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Button variant="contained" color="primary" onClick={handleExportOrders}>
-                Export Orders to Excel
+                Exportar Encomendas para Excel
               </Button>
             </Box>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Order ID</TableCell>
-                    <TableCell>User</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created At</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>ID da Encomenda</TableCell>
+                    <TableCell>Utilizador</TableCell>
+                    <TableCell>Estado</TableCell>
+                    <TableCell>Data de Criação</TableCell>
+                    <TableCell>Preço</TableCell>
+                    <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -383,7 +384,29 @@ const AdminPanel = () => {
                             ? ((order.user as any)?.email || (order.user as any)?.id || JSON.stringify(order.user))
                             : order.user}
                         </TableCell>
-                        <TableCell>{order.status}</TableCell>
+                        <TableCell>
+                          <span
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              color: 'white',
+                              backgroundColor:
+                                order.status === 'pending'
+                                  ? 'orange'
+                                  : order.status === 'processing'
+                                  ? 'blue'
+                                  : order.status === 'completed'
+                                  ? 'green'
+                                  : 'red',
+                            }}
+                          >
+                            {order.status === 'pending' ? 'Pendente' :
+                             order.status === 'processing' ? 'Em Processamento' :
+                             order.status === 'completed' ? 'Concluída' :
+                             order.status === 'cancelled' ? 'Cancelada' :
+                             order.status}
+                          </span>
+                        </TableCell>
                         <TableCell>{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</TableCell>
                         <TableCell>{order.total_price !== undefined ? `€${order.total_price.toFixed(2)}` : '-'}</TableCell>
                         <TableCell>
@@ -396,7 +419,7 @@ const AdminPanel = () => {
                               setOpenOrderDialog(true);
                             }}
                           >
-                            Details
+                            Detalhes
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -416,32 +439,34 @@ const AdminPanel = () => {
         {tab === 1 && (
           <>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Users</Typography>
+              <Typography variant="h6">Utilizadores</Typography>
               <Button variant="contained" onClick={() => setOpenAddUser(true)}>
-                Add User
+                Adicionar Utilizador
               </Button>
             </Box>
-            {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError}</Alert> : null}
+            {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError === 'Failed to fetch users' ? 'Falha ao carregar os utilizadores' : usersError}</Alert> : null}
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>ID</TableCell>
                     <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Created At</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>Função</TableCell>
+                    <TableCell>Data de Criação</TableCell>
+                    <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {Array.isArray(users) && users.length > 0 ? (
                     users.map((user, idx) => (
                       <TableRow key={user._id || user.id || idx}>
+                        <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
                         <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
                         <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
                         <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
                         <TableCell>
                           <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
-                            Delete
+                            Apagar
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -457,17 +482,17 @@ const AdminPanel = () => {
               </Table>
             </TableContainer>
             <Dialog open={openAddUser} onClose={() => setOpenAddUser(false)}>
-              <DialogTitle>Add User</DialogTitle>
+              <DialogTitle>Adicionar Novo Utilizador</DialogTitle>
               <DialogContent>
                 <TextField
-                  label="Email"
+                  label="Endereço de Email"
                   fullWidth
                   margin="normal"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                 />
                 <TextField
-                  label="Password"
+                  label="Palavra-passe"
                   type="password"
                   fullWidth
                   margin="normal"
@@ -475,20 +500,20 @@ const AdminPanel = () => {
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                 />
                 <FormControl fullWidth margin="normal">
-                  <InputLabel>Role</InputLabel>
+                  <InputLabel>Função</InputLabel>
                   <Select
                     value={newUser.role}
-                    label="Role"
+                    label="Função"
                     onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                   >
-                    <MenuItem value="user">User</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
+                    <MenuItem value="user">Utilizador</MenuItem>
+                    <MenuItem value="admin">Administrador</MenuItem>
                   </Select>
                 </FormControl>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setOpenAddUser(false)}>Cancel</Button>
-                <Button onClick={handleAddUser} variant="contained">Add</Button>
+                <Button onClick={() => setOpenAddUser(false)}>Cancelar</Button>
+                <Button onClick={handleAddUser} variant="contained">Adicionar</Button>
               </DialogActions>
             </Dialog>
           </>
@@ -497,22 +522,22 @@ const AdminPanel = () => {
           <>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Button variant="contained" color="primary" onClick={() => handleOpenPackDialog()}>
-                Add New Pack
+                Adicionar Novo Pack
               </Button>
             </Box>
             {packsLoading ? (
               <CircularProgress />
             ) : packsError ? (
-              <Alert severity="error">{packsError}</Alert>
+              <Alert severity="error">{packsError === 'Failed to fetch packs' ? 'Falha ao carregar os packs' : packsError}</Alert>
             ) : (
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Items</TableCell>
-                      <TableCell>Price</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Itens</TableCell>
+                      <TableCell>Preço</TableCell>
+                      <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -522,7 +547,7 @@ const AdminPanel = () => {
                         <TableCell>
                           {pack.items.map((item, idx) => (
                             <Box key={idx} sx={{ mb: 1 }}>
-                              {item.quantity}x {item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}
+                              {item.quantity}x {item.product_type === 'tshirt' ? 'Camisola' : 'Sapatilhas'}
                               {item.product_type === 'tshirt' && item.shirt_type_name && ` (${item.shirt_type_name})`}
                             </Box>
                           ))}
@@ -530,10 +555,10 @@ const AdminPanel = () => {
                         <TableCell>${pack.price}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleOpenPackDialog(pack)} sx={{ mr: 1 }}>
-                            Edit
+                            Editar
                           </Button>
                           <Button onClick={() => handleDeletePack(pack.id)} color="error">
-                            Delete
+                            Apagar
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -544,43 +569,43 @@ const AdminPanel = () => {
             )}
 
             <Dialog open={openPackDialog} onClose={() => setOpenPackDialog(false)} maxWidth="md" fullWidth>
-              <DialogTitle>{editingPack ? 'Edit Pack' : 'Add Pack'}</DialogTitle>
+              <DialogTitle>{editingPack ? 'Editar Pack' : 'Adicionar Novo Pack'}</DialogTitle>
               <DialogContent>
                 <TextField
-                  label="Name"
+                  label="Nome do Pack"
                   fullWidth
                   margin="normal"
                   value={packForm.name}
                   onChange={(e) => handlePackFormChange('name', e.target.value)}
                 />
                 <TextField
-                  label="Price"
+                  label="Preço"
                   type="number"
                   fullWidth
                   margin="normal"
                   value={packForm.price}
                   onChange={(e) => handlePackFormChange('price', Number(e.target.value))}
                 />
-                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Items</Typography>
+                <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Itens</Typography>
                 {packForm.items.map((item, idx) => (
                   <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
                     <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>Product</InputLabel>
+                      <InputLabel>Produto</InputLabel>
                       <Select
                         value={item.product_type}
-                        label="Product"
+                        label="Produto"
                         onChange={(e) => handlePackItemChange(idx, 'product_type', e.target.value)}
                       >
-                        <MenuItem value="tshirt">T-Shirt</MenuItem>
-                        <MenuItem value="shoes">Shoes</MenuItem>
+                        <MenuItem value="tshirt">Camisola</MenuItem>
+                        <MenuItem value="shoes">Sapatilhas</MenuItem>
                       </Select>
                     </FormControl>
                     {item.product_type === 'tshirt' && (
                       <FormControl sx={{ minWidth: 120 }}>
-                        <InputLabel>Shirt Type</InputLabel>
+                        <InputLabel>Tipo de Camisola</InputLabel>
                         <Select
                           value={item.shirt_type_id ?? ''}
-                          label="Shirt Type"
+                          label="Tipo de Camisola"
                           onChange={(e) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
                           disabled={shirtTypesLoading || shirtTypesError !== null}
                         >
@@ -591,25 +616,25 @@ const AdminPanel = () => {
                       </FormControl>
                     )}
                     <TextField
-                      label="Quantity"
+                      label="Quantidade"
                       type="number"
                       value={item.quantity}
                       onChange={(e) => handlePackItemChange(idx, 'quantity', Number(e.target.value))}
                       sx={{ width: 100 }}
                     />
                     <Button onClick={() => handleRemovePackItem(idx)} color="error">
-                      Remove
+                      Remover
                     </Button>
                   </Box>
                 ))}
                 <Button onClick={handleAddPackItem} sx={{ mt: 1 }}>
-                  Add Item
+                  Adicionar Item
                 </Button>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setOpenPackDialog(false)}>Cancel</Button>
+                <Button onClick={() => setOpenPackDialog(false)}>Cancelar</Button>
                 <Button onClick={handleSavePack} variant="contained" color="primary">
-                  Save
+                  Guardar
                 </Button>
               </DialogActions>
             </Dialog>
@@ -619,21 +644,21 @@ const AdminPanel = () => {
           <>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Button variant="contained" color="primary" onClick={() => handleOpenShirtTypeDialog()}>
-                Add New Shirt Type
+                Adicionar Novo Tipo de Camisola
               </Button>
             </Box>
             {shirtTypesLoading ? (
               <CircularProgress />
             ) : shirtTypesError ? (
-              <Alert severity="error">{shirtTypesError}</Alert>
+              <Alert severity="error">{shirtTypesError === 'Failed to fetch shirt types' ? 'Falha ao carregar os tipos de camisola' : shirtTypesError}</Alert>
             ) : (
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Price</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Preço</TableCell>
+                      <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -643,10 +668,10 @@ const AdminPanel = () => {
                         <TableCell>€{type.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleOpenShirtTypeDialog(type)} sx={{ mr: 1 }}>
-                            Edit
+                            Editar
                           </Button>
                           <Button onClick={() => handleDeleteShirtType(type.id)} color="error">
-                            Delete
+                            Apagar
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -656,17 +681,17 @@ const AdminPanel = () => {
               </TableContainer>
             )}
             <Dialog open={openShirtTypeDialog} onClose={() => setOpenShirtTypeDialog(false)} maxWidth="xs" fullWidth>
-              <DialogTitle>{editingShirtType ? 'Edit Shirt Type' : 'Add Shirt Type'}</DialogTitle>
+              <DialogTitle>{editingShirtType ? 'Editar Tipo de Camisola' : 'Adicionar Novo Tipo de Camisola'}</DialogTitle>
               <DialogContent>
                 <TextField
-                  label="Name"
+                  label="Nome"
                   fullWidth
                   margin="normal"
                   value={shirtTypeForm.name}
                   onChange={(e) => setShirtTypeForm({ ...shirtTypeForm, name: e.target.value })}
                 />
                 <TextField
-                  label="Price"
+                  label="Preço"
                   type="number"
                   fullWidth
                   margin="normal"
@@ -675,9 +700,9 @@ const AdminPanel = () => {
                 />
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setOpenShirtTypeDialog(false)}>Cancel</Button>
+                <Button onClick={() => setOpenShirtTypeDialog(false)}>Cancelar</Button>
                 <Button onClick={handleSaveShirtType} variant="contained" color="primary">
-                  Save
+                  Guardar
                 </Button>
               </DialogActions>
             </Dialog>
@@ -688,7 +713,7 @@ const AdminPanel = () => {
         )}
         {/* Order Details Dialog */}
         <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Order Details</DialogTitle>
+          <DialogTitle>Detalhes da Encomenda</DialogTitle>
           <DialogContent>
             {selectedOrder && (
               <>
@@ -712,12 +737,12 @@ const AdminPanel = () => {
                   Price: {selectedOrder.total_price !== undefined ? `€${selectedOrder.total_price.toFixed(2)}` : '-'}
                 </Typography>
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="h6">Order Items</Typography>
+                  <Typography variant="h6">Itens</Typography>
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
                       {selectedOrder.items.map((item: any, idx: number) => (
                         <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
-                          <Typography variant="subtitle2">{item.product_type === 'tshirt' ? 'T-Shirt' : 'Shoes'}</Typography>
+                          <Typography variant="subtitle2">{item.product_type === 'tshirt' ? 'Camisola' : 'Sapatilhas'}</Typography>
                           <Typography variant="body2">Size: {item.size}</Typography>
                           {item.player_name && <Typography variant="body2">Player Name: {item.player_name}</Typography>}
                           {item.image_front && (
@@ -749,16 +774,16 @@ const AdminPanel = () => {
                 </Box>
                 <Box sx={{ mt: 3 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
+                    <InputLabel>Atualizar Estado</InputLabel>
                     <Select
                       value={orderStatus}
-                      label="Status"
+                      label="Atualizar Estado"
                       onChange={(e) => setOrderStatus(e.target.value)}
                     >
-                      <MenuItem value="pending">Pending</MenuItem>
-                      <MenuItem value="processing">Processing</MenuItem>
-                      <MenuItem value="completed">Completed</MenuItem>
-                      <MenuItem value="cancelled">Cancelled</MenuItem>
+                      <MenuItem value="pending">Pendente</MenuItem>
+                      <MenuItem value="processing">Em Processamento</MenuItem>
+                      <MenuItem value="completed">Concluída</MenuItem>
+                      <MenuItem value="cancelled">Cancelada</MenuItem>
                     </Select>
                   </FormControl>
                   {orderStatusError && <Alert severity="error" sx={{ mt: 2 }}>{orderStatusError}</Alert>}
@@ -767,7 +792,7 @@ const AdminPanel = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenOrderDialog(false)}>Close</Button>
+            <Button onClick={() => setOpenOrderDialog(false)}>Fechar</Button>
             <Button
               onClick={handleUpdateOrderStatus}
               variant="contained"

@@ -104,14 +104,14 @@ const Store = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Store
+        Loja
       </Typography>
       <Box sx={{ mb: 4 }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Type</InputLabel>
-          <Select value={selectedType} label="Filter by Type" onChange={handleTypeChange}>
+          <InputLabel>Filtrar por Tipo</InputLabel>
+          <Select value={selectedType} label="Filtrar por Tipo" onChange={handleTypeChange}>
             <MenuItem value="">
-              <em>All</em>
+              <em>Todos</em>
             </MenuItem>
             {productTypes.map((type) => (
               <MenuItem key={type.id} value={type.id}>
@@ -147,7 +147,7 @@ const Store = () => {
                     €{product.price.toFixed(2)}
                   </Typography>
                   <Button variant="contained" sx={{ mt: 2 }} onClick={() => handleOpenDialog(product)}>
-                    Add to Order
+                    Adicionar ao Pedido
                   </Button>
                 </CardContent>
               </Card>
@@ -156,13 +156,13 @@ const Store = () => {
         </Grid>
       )}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Add to Order</DialogTitle>
+        <DialogTitle>Adicionar ao Pedido</DialogTitle>
         <DialogContent>
           {selectedProduct && (
             <>
               <Typography variant="h6">{selectedProduct.name}</Typography>
               <TextField
-                label="Quantity"
+                label="Quantidade"
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10)))}
@@ -170,8 +170,8 @@ const Store = () => {
                 InputProps={{ inputProps: { min: 1 } }}
               />
               <FormControl fullWidth>
-                <InputLabel>Size</InputLabel>
-                <Select value={size} label="Size" onChange={(e) => setSize(e.target.value)}>
+                <InputLabel>Tamanho</InputLabel>
+                <Select value={size} label="Tamanho" onChange={(e) => setSize(e.target.value)}>
                   {selectedProduct.available_sizes.map((s: string) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
@@ -181,8 +181,8 @@ const Store = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleAddToCart} variant="contained">Add to Cart</Button>
+          <Button onClick={handleCloseDialog}>Cancelar</Button>
+          <Button onClick={handleAddToCart} variant="contained">Adicionar ao Carrinho</Button>
         </DialogActions>
       </Dialog>
     </Container>
