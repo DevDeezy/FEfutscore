@@ -85,6 +85,17 @@ const ProductManagement = () => {
     }
   };
 
+  const handleDeleteProductType = async (productTypeId: number) => {
+    if (window.confirm('Are you sure you want to delete this product type?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteProductType/${productTypeId}`);
+        fetchProductTypes();
+      } catch (err: any) {
+        setError(err.response?.data || 'Failed to delete product type');
+      }
+    }
+  };
+
   const handleCreateProduct = async () => {
     try {
       await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, {
@@ -133,6 +144,7 @@ const ProductManagement = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Name</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -140,6 +152,11 @@ const ProductManagement = () => {
               <TableRow key={type.id}>
                 <TableCell>{type.id}</TableCell>
                 <TableCell>{type.name}</TableCell>
+                <TableCell>
+                  <Button color="error" onClick={() => handleDeleteProductType(type.id)}>
+                    Delete
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
