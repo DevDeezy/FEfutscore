@@ -55,6 +55,10 @@ const PreviousOrders: React.FC = () => {
     return <Alert severity="error">{error}</Alert>;
   }
 
+  if (!orders || orders.length === 0) {
+    return null;
+  }
+
   return (
     <Paper elevation={3} sx={{ p: 2, mt: 4 }}>
       <Typography variant="h6" gutterBottom>
@@ -66,12 +70,12 @@ const PreviousOrders: React.FC = () => {
             key={order.id}
             secondaryAction={
               <Button variant="outlined" size="small" onClick={() => handleOpenModal(order)}>
-                Details
+                Detalhes
               </Button>
             }
           >
             <ListItemText
-              primary={`Order #${order.id} - Status: ${order.status}`}
+              primary={`Encomenda #${order.id} - Estado: ${order.status}`}
               secondary={
                 order.total_price != null
                   ? `Total: €${order.total_price.toFixed(2)}`
@@ -90,13 +94,13 @@ const PreviousOrders: React.FC = () => {
           {selectedOrder && (
             <>
               <Typography id="order-details-title" variant="h6" component="h2">
-                Order Details #{selectedOrder.id}
+                Detalhes da Encomenda #{selectedOrder.id}
               </Typography>
               <Typography sx={{ mt: 2 }}>
-                <strong>Status:</strong> {selectedOrder.status}
+                <Typography component="span" sx={{ fontWeight: 'bold' }}>Estado:</Typography> {selectedOrder.status}
               </Typography>
               <Typography>
-                <strong>Total:</strong>{' '}
+                <Typography component="span" sx={{ fontWeight: 'bold' }}>Total:</Typography>{' '}
                 {selectedOrder.total_price != null
                   ? `€${selectedOrder.total_price.toFixed(2)}`
                   : '-'}
@@ -110,14 +114,14 @@ const PreviousOrders: React.FC = () => {
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
                         <Typography>
-                          <strong>Product:</strong> {item.product_type}
+                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Produto:</Typography> {item.product_type}
                         </Typography>
                         <Typography>
-                          <strong>Size:</strong> {item.size}
+                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Tamanho:</Typography> {item.size}
                         </Typography>
                         {item.player_name && (
                           <Typography>
-                            <strong>Player Name:</strong> {item.player_name}
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Nome do Jogador:</Typography> {item.player_name}
                           </Typography>
                         )}
                       </Grid>

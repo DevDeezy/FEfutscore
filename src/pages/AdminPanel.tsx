@@ -31,7 +31,9 @@ import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
-import { OrderItem, Pack, PackItem } from '../types';
+// @ts-ignore
+import { saveAs } from 'file-saver';
+import { Order, OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
 
 const AdminPanel = () => {
@@ -93,7 +95,7 @@ const AdminPanel = () => {
       });
       setUsers(res.data);
     } catch (err: any) {
-      setUsersError('Failed to fetch users');
+      setUsersError('Falha ao carregar os utilizadores');
       setUsers([]);
     }
     setUsersLoading(false);
@@ -139,7 +141,7 @@ const AdminPanel = () => {
       });
       setPacks(res.data);
     } catch (err: any) {
-      setPacksError('Failed to fetch packs');
+      setPacksError('Falha ao carregar os packs');
       setPacks([]);
     }
     setPacksLoading(false);
@@ -247,6 +249,13 @@ const AdminPanel = () => {
     setOrderStatusError(null);
     try {
       await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
+      // Optimistically update local state
+      const updatedOrders = orders.map((o) =>
+        o.id === selectedOrder.id ? { ...o, status: orderStatus } : o
+      );
+      // This part is tricky because Redux state is immutable.
+      // A better way is to refetch orders or have the slice update the state.
+      // For now, let's just close the dialog.
       setOpenOrderDialog(false);
       dispatch(fetchOrders());
     } catch (err: any) {
@@ -259,11 +268,10 @@ const AdminPanel = () => {
   // Export orders to Excel (call backend endpoint and download file)
   const handleExportOrders = async () => {
     if (orders.length === 0) {
-      alert('No orders to export.');
+      alert('Não há encomendas para exportar.');
       return;
     }
     try {
-      const { saveAs } = await import('file-saver');
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_BASE_URL}/.netlify/functions/exportorders`,
@@ -276,7 +284,7 @@ const AdminPanel = () => {
       saveAs(new Blob([response.data]), 'encomendas.xlsx');
     } catch (err) {
       console.error('Error exporting orders:', err);
-      alert('Failed to export orders. See console for details.');
+      alert('Falha ao exportar encomendas. Veja a consola para mais detalhes.');
     }
   };
 
@@ -290,8 +298,8 @@ const AdminPanel = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setShirtTypes(res.data);
-    } catch (err) {
-      setShirtTypesError('Failed to fetch shirt types');
+    } catch (err: any) {
+      setShirtTypesError('Falha ao carregar os tipos de camisola');
       setShirtTypes([]);
     }
     setShirtTypesLoading(false);
@@ -299,48 +307,51 @@ const AdminPanel = () => {
 
   const handleOpenShirtTypeDialog = (shirtType: any | null = null) => {
     setEditingShirtType(shirtType);
-    if (shirtType) {
-      setShirtTypeForm({ name: shirtType.name, price: shirtType.price });
-    } else {
-      setShirtTypeForm({ name: '', price: 0 });
-    }
+    setShirtTypeForm(shirtType ? { name: shirtType.name, price: shirtType.price } : { name: '', price: 0 });
     setOpenShirtTypeDialog(true);
   };
 
   const handleSaveShirtType = async () => {
     try {
       const token = localStorage.getItem('token');
+      const method = editingShirtType ? 'put' : 'post';
+      const url = editingShirtType
+        ? `${API_BASE_URL}/.netlify/functions/updateShirtType/${editingShirtType.id}`
+        : `${API_BASE_URL}/.netlify/functions/createShirtType`;
+
+      const res = await axios[method](url, shirtTypeForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
       if (editingShirtType) {
-        // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updateShirtType/${editingShirtType.id}`, shirtTypeForm, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setShirtTypes(shirtTypes.map((t) => (t.id === editingShirtType.id ? res.data : t)));
+        setShirtTypes(shirtTypes.map(st => st.id === editingShirtType.id ? res.data : st));
       } else {
-        // Create
-        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createShirtType`, shirtTypeForm, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
         setShirtTypes([...shirtTypes, res.data]);
       }
       setOpenShirtTypeDialog(false);
       setEditingShirtType(null);
     } catch (err) {
-      alert('Failed to save shirt type');
+      alert('Falha ao guardar o tipo de camisola');
     }
   };
 
   const handleDeleteShirtType = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this shirt type?')) return;
+    if (!window.confirm('Tem a certeza que quer apagar este tipo de camisola?')) return;
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteShirtType/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setShirtTypes(shirtTypes.filter((t) => t.id !== id));
+      setShirtTypes(shirtTypes.filter(st => st.id !== id));
     } catch (err) {
-      alert('Failed to delete shirt type');
+      alert('Falha ao apagar o tipo de camisola');
     }
+  };
+
+  const handleOpenOrderDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setOrderStatus(order.status);
+    setOpenOrderDialog(true);
   };
 
   return (
@@ -349,7 +360,7 @@ const AdminPanel = () => {
         <Typography variant="h4" gutterBottom>
           Painel de Administração
         </Typography>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+        <Tabs value={tab} onChange={(_: any, v: number) => setTab(v)} sx={{ mb: 2 }}>
           <Tab label="Encomendas" />
           <Tab label="Utilizadores" />
           <Tab label="Packs & Preços" />
@@ -376,62 +387,43 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {Array.isArray(orders) && orders.length > 0 ? (
-                    orders.map((order, idx) => (
-                      <TableRow key={order.id || idx}>
-                        <TableCell>{order.id}</TableCell>
-                        <TableCell>
-                          {typeof order.user === 'object'
-                            ? ((order.user as any)?.email || (order.user as any)?.id || JSON.stringify(order.user))
-                            : order.user}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '12px',
-                              color: 'white',
-                              backgroundColor:
-                                order.status === 'pending'
-                                  ? 'orange'
-                                  : order.status === 'processing'
-                                  ? 'blue'
-                                  : order.status === 'completed'
-                                  ? 'green'
-                                  : 'red',
-                            }}
-                          >
-                            {order.status === 'pending' ? 'Pendente' :
-                             order.status === 'processing' ? 'Em Processamento' :
-                             order.status === 'completed' ? 'Concluída' :
-                             order.status === 'cancelled' ? 'Cancelada' :
-                             order.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</TableCell>
-                        <TableCell>{order.total_price !== undefined ? `€${order.total_price.toFixed(2)}` : '-'}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setOrderStatus(order.status);
-                              setOpenOrderDialog(true);
-                            }}
-                          >
-                            Detalhes
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">
-                        No orders found.
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>{order.id}</TableCell>
+                      <TableCell>{order.user?.email}</TableCell>
+                      <TableCell>
+                        <Typography
+                          component="span"
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            color: 'white',
+                            backgroundColor:
+                              order.status === 'pending'
+                                ? 'orange'
+                                : order.status === 'processing'
+                                ? 'blue'
+                                : order.status === 'completed'
+                                ? 'green'
+                                : 'red',
+                          }}
+                        >
+                          {order.status === 'pending' ? 'Pendente' :
+                           order.status === 'processing' ? 'Em Processamento' :
+                           order.status === 'completed' ? 'Concluída' :
+                           order.status === 'cancelled' ? 'Cancelada' :
+                           order.status}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
+                      <TableCell>€{order.total_price.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleOpenOrderDialog(order)}>
+                          Detalhes
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -445,7 +437,7 @@ const AdminPanel = () => {
                 Adicionar Utilizador
               </Button>
             </Box>
-            {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError === 'Failed to fetch users' ? 'Falha ao carregar os utilizadores' : usersError}</Alert> : null}
+            {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError}</Alert> : null}
             <TableContainer>
               <Table>
                 <TableHead>
@@ -458,27 +450,19 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {Array.isArray(users) && users.length > 0 ? (
-                    users.map((user, idx) => (
-                      <TableRow key={user._id || user.id || idx}>
-                        <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
-                        <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
-                        <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
-                        <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
-                        <TableCell>
-                          <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
-                            Apagar
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        No users found.
+                  {users.map((user, idx) => (
+                    <TableRow key={user._id || user.id || idx}>
+                      <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
+                      <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
+                      <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
+                      <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
+                      <TableCell>
+                        <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
+                          Apagar
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -487,10 +471,11 @@ const AdminPanel = () => {
               <DialogContent>
                 <TextField
                   label="Endereço de Email"
+                  type="email"
                   fullWidth
                   margin="normal"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewUser({ ...newUser, email: e.target.value })}
                 />
                 <TextField
                   label="Palavra-passe"
@@ -498,14 +483,14 @@ const AdminPanel = () => {
                   fullWidth
                   margin="normal"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewUser({ ...newUser, password: e.target.value })}
                 />
                 <FormControl fullWidth margin="normal">
                   <InputLabel>Função</InputLabel>
                   <Select
                     value={newUser.role}
                     label="Função"
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                    onChange={(e: any) => setNewUser({ ...newUser, role: e.target.value })}
                   >
                     <MenuItem value="user">Utilizador</MenuItem>
                     <MenuItem value="admin">Administrador</MenuItem>
@@ -529,7 +514,7 @@ const AdminPanel = () => {
             {packsLoading ? (
               <CircularProgress />
             ) : packsError ? (
-              <Alert severity="error">{packsError === 'Failed to fetch packs' ? 'Falha ao carregar os packs' : packsError}</Alert>
+              <Alert severity="error">{packsError}</Alert>
             ) : (
               <TableContainer>
                 <Table>
@@ -553,7 +538,7 @@ const AdminPanel = () => {
                             </Box>
                           ))}
                         </TableCell>
-                        <TableCell>${pack.price}</TableCell>
+                        <TableCell>€{pack.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleOpenPackDialog(pack)} sx={{ mr: 1 }}>
                             Editar
@@ -577,7 +562,7 @@ const AdminPanel = () => {
                   fullWidth
                   margin="normal"
                   value={packForm.name}
-                  onChange={(e) => handlePackFormChange('name', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackFormChange('name', e.target.value)}
                 />
                 <TextField
                   label="Preço"
@@ -585,7 +570,7 @@ const AdminPanel = () => {
                   fullWidth
                   margin="normal"
                   value={packForm.price}
-                  onChange={(e) => handlePackFormChange('price', Number(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackFormChange('price', Number(e.target.value))}
                 />
                 <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Itens</Typography>
                 {packForm.items.map((item, idx) => (
@@ -595,7 +580,7 @@ const AdminPanel = () => {
                       <Select
                         value={item.product_type}
                         label="Produto"
-                        onChange={(e) => handlePackItemChange(idx, 'product_type', e.target.value)}
+                        onChange={(e: any) => handlePackItemChange(idx, 'product_type', e.target.value)}
                       >
                         <MenuItem value="tshirt">Camisola</MenuItem>
                         <MenuItem value="shoes">Sapatilhas</MenuItem>
@@ -607,7 +592,7 @@ const AdminPanel = () => {
                         <Select
                           value={item.shirt_type_id ?? ''}
                           label="Tipo de Camisola"
-                          onChange={(e) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
+                          onChange={(e: any) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
                           disabled={shirtTypesLoading || shirtTypesError !== null}
                         >
                           {shirtTypes.map((type) => (
@@ -619,9 +604,10 @@ const AdminPanel = () => {
                     <TextField
                       label="Quantidade"
                       type="number"
-                      value={item.quantity}
-                      onChange={(e) => handlePackItemChange(idx, 'quantity', Number(e.target.value))}
                       sx={{ width: 100 }}
+                      value={item.quantity}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackItemChange(idx, 'quantity', Number(e.target.value))}
+                      InputProps={{ inputProps: { min: 1 } }}
                     />
                     <Button onClick={() => handleRemovePackItem(idx)} color="error">
                       Remover
@@ -651,7 +637,7 @@ const AdminPanel = () => {
             {shirtTypesLoading ? (
               <CircularProgress />
             ) : shirtTypesError ? (
-              <Alert severity="error">{shirtTypesError === 'Failed to fetch shirt types' ? 'Falha ao carregar os tipos de camisola' : shirtTypesError}</Alert>
+              <Alert severity="error">{shirtTypesError}</Alert>
             ) : (
               <TableContainer>
                 <Table>
@@ -689,7 +675,7 @@ const AdminPanel = () => {
                   fullWidth
                   margin="normal"
                   value={shirtTypeForm.name}
-                  onChange={(e) => setShirtTypeForm({ ...shirtTypeForm, name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShirtTypeForm({ ...shirtTypeForm, name: e.target.value })}
                 />
                 <TextField
                   label="Preço"
@@ -697,7 +683,7 @@ const AdminPanel = () => {
                   fullWidth
                   margin="normal"
                   value={shirtTypeForm.price}
-                  onChange={(e) => setShirtTypeForm({ ...shirtTypeForm, price: Number(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShirtTypeForm({ ...shirtTypeForm, price: Number(e.target.value) })}
                 />
               </DialogContent>
               <DialogActions>
@@ -709,101 +695,77 @@ const AdminPanel = () => {
             </Dialog>
           </>
         )}
-        {tab === 4 && (
-          <ProductManagement />
-        )}
-        {/* Order Details Dialog */}
-        <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Detalhes da Encomenda</DialogTitle>
-          <DialogContent>
-            {selectedOrder && (
-              <>
-                <Typography variant="subtitle1" gutterBottom>
-                  Order ID: {selectedOrder.id}
-                </Typography>
-                <Typography variant="subtitle2" gutterBottom>
-                  User: {
-                    typeof selectedOrder.user === 'object'
-                      ? ((selectedOrder.user as any)?.email || (selectedOrder.user as any)?.id || JSON.stringify(selectedOrder.user))
-                      : selectedOrder.user
-                  }
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                  Status: {selectedOrder.status}
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                  Created At: {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : ''}
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                  Price: {selectedOrder.total_price !== undefined ? `€${selectedOrder.total_price.toFixed(2)}` : '-'}
-                </Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="h6">Itens</Typography>
-                  {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
-                      {selectedOrder.items.map((item: any, idx: number) => (
-                        <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
-                          <Typography variant="subtitle2">{item.product_type === 'tshirt' ? 'Camisola' : 'Sapatilhas'}</Typography>
-                          <Typography variant="body2">Size: {item.size}</Typography>
-                          {item.player_name && <Typography variant="body2">Player Name: {item.player_name}</Typography>}
-                          {item.image_front && (
-                            <Box sx={{ mt: 1 }}>
-                              <Typography variant="caption">Front Image:</Typography>
-                              <img
-                                src={item.image_front}
-                                alt="Front"
-                                style={{ width: 120, height: 120, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 4 }}
-                              />
-                            </Box>
-                          )}
-                          {item.product_type === 'tshirt' && item.image_back && (
-                            <Box sx={{ mt: 1 }}>
-                              <Typography variant="caption">Back Image:</Typography>
-                              <img
-                                src={item.image_back}
-                                alt="Back"
-                                style={{ width: 120, height: 120, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 4 }}
-                              />
-                            </Box>
-                          )}
-                        </Box>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Typography>No items found for this order.</Typography>
-                  )}
-                </Box>
-                <Box sx={{ mt: 3 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Atualizar Estado</InputLabel>
-                    <Select
-                      value={orderStatus}
-                      label="Atualizar Estado"
-                      onChange={(e) => setOrderStatus(e.target.value)}
-                    >
-                      <MenuItem value="pending">Pendente</MenuItem>
-                      <MenuItem value="processing">Em Processamento</MenuItem>
-                      <MenuItem value="completed">Concluída</MenuItem>
-                      <MenuItem value="cancelled">Cancelada</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {orderStatusError && <Alert severity="error" sx={{ mt: 2 }}>{orderStatusError}</Alert>}
-                </Box>
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenOrderDialog(false)}>Fechar</Button>
-            <Button
-              onClick={handleUpdateOrderStatus}
-              variant="contained"
-              disabled={orderStatusLoading || !selectedOrder || orderStatus === selectedOrder.status}
-            >
-              {orderStatusLoading ? 'Saving...' : 'Save Status'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {tab === 4 && <ProductManagement />}
       </Paper>
+      {/* Order Details Dialog */}
+      <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Detalhes da Encomenda</DialogTitle>
+        <DialogContent>
+          {selectedOrder && (
+            <Box>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Morada de Entrega
+              </Typography>
+              <Box>
+                <Typography component="p">{selectedOrder.address_nome}</Typography>
+                <Typography component="p">{selectedOrder.address_morada}</Typography>
+                <Typography component="p">{selectedOrder.address_codigo_postal} {selectedOrder.address_cidade}, {selectedOrder.address_distrito}</Typography>
+                <Typography component="p">{selectedOrder.address_pais}</Typography>
+                <Typography component="p">Telemóvel: {selectedOrder.address_telemovel}</Typography>
+              </Box>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6">Itens da Encomenda</Typography>
+                {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+                    {selectedOrder.items.map((item: any, idx: number) => (
+                      <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
+                        <Typography variant="subtitle2">{item.name || (item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas')}</Typography>
+                        <Typography variant="body2">Tamanho: {item.size}</Typography>
+                        <Typography variant="body2">Quantidade: {item.quantity || 1}</Typography>
+                        {item.player_name && <Typography variant="body2">Nome do Jogador: {item.player_name}</Typography>}
+                        {(item.image_front || item.image_back) && (
+                           <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                            {item.image_front && <Box component="img" src={item.image_front} alt="frente" sx={{ height: 60 }} />}
+                            {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60 }} />}
+                           </Box>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                ) : <Typography>Não há itens nesta encomenda.</Typography>}
+              </Box>
+
+              <Box sx={{ mt: 3 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Atualizar Estado</InputLabel>
+                  <Select
+                    value={orderStatus}
+                    label="Atualizar Estado"
+                    onChange={(e: any) => setOrderStatus(e.target.value)}
+                  >
+                    <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="processing">Em Processamento</MenuItem>
+                    <MenuItem value="completed">Concluída</MenuItem>
+                    <MenuItem value="cancelled">Cancelada</MenuItem>
+                  </Select>
+                </FormControl>
+                {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenOrderDialog(false)}>Fechar</Button>
+          <Button
+            onClick={handleUpdateOrderStatus}
+            variant="contained"
+            disabled={orderStatusLoading}
+          >
+            {orderStatusLoading ? <CircularProgress size={24} /> : 'Atualizar Estado'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

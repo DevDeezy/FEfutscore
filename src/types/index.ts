@@ -21,15 +21,24 @@ export interface OrderItem {
   player_name?: string;
   shirt_type_id?: number;
   shirt_type_name?: string;
+  id: string;
 }
 
 export interface Order {
-  id: number;
-  user: any;
+  id: string;
+  user_id: string;
+  user?: { email: string };
   items: OrderItem[];
+  total_price: number;
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   created_at: string;
-  total_price: number;
+  address_nome: string;
+  address_morada: string;
+  address_cidade: string;
+  address_distrito: string;
+  address_pais: string;
+  address_codigo_postal: string;
+  address_telemovel: string;
 }
 
 export interface AuthState {

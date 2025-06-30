@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  SelectChangeEvent,
 } from '@mui/material';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -55,6 +56,7 @@ const Store = () => {
   const handleAddToCart = () => {
     if (!selectedProduct) return;
     const cartItem: OrderItem = {
+      id: `${selectedProduct.id}-${size}`,
       product_id: selectedProduct.id,
       product_type: selectedProduct.productType.base_type,
       name: selectedProduct.name,
@@ -96,9 +98,9 @@ const Store = () => {
     }
   };
 
-  const handleTypeChange = (event: any) => {
-    setSelectedType(event.target.value);
-    fetchProducts(event.target.value);
+  const handleTypeChange = (event: SelectChangeEvent) => {
+    setSelectedType(event.target.value as string);
+    fetchProducts(event.target.value as string);
   };
 
   return (
@@ -111,7 +113,7 @@ const Store = () => {
           <InputLabel>Filtrar por Tipo</InputLabel>
           <Select value={selectedType} label="Filtrar por Tipo" onChange={handleTypeChange}>
             <MenuItem value="">
-              <em>Todos</em>
+              <Typography sx={{ fontStyle: 'italic' }}>Todos</Typography>
             </MenuItem>
             {productTypes.map((type) => (
               <MenuItem key={type.id} value={type.id}>
@@ -165,13 +167,13 @@ const Store = () => {
                 label="Quantidade"
                 type="number"
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10)))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(Math.max(1, parseInt(e.target.value, 10)))}
                 sx={{ mt: 2, mb: 2 }}
                 InputProps={{ inputProps: { min: 1 } }}
               />
               <FormControl fullWidth>
                 <InputLabel>Tamanho</InputLabel>
-                <Select value={size} label="Tamanho" onChange={(e) => setSize(e.target.value)}>
+                <Select value={size} label="Tamanho" onChange={(e: any) => setSize(e.target.value)}>
                   {selectedProduct.available_sizes.map((s: string) => (
                     <MenuItem key={s} value={s}>{s}</MenuItem>
                   ))}
