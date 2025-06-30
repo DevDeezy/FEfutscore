@@ -31,7 +31,8 @@ import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
-import * as XLSX from 'xlsx';
+// @ts-ignore
+import { saveAs } from 'file-saver';
 import { OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
 
@@ -259,23 +260,24 @@ const AdminPanel = () => {
 
   // Export orders to Excel (call backend endpoint and download file)
   const handleExportOrders = async () => {
+    if (orders.length === 0) {
+      alert('No orders to export.');
+      return;
+    }
     try {
-      const response = await fetch('https://befutscore.netlify.app/.netlify/functions/exportorders', {
-        method: 'GET',
-      });
-      if (!response.ok) throw new Error('Failed to generate Excel');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'orders_with_images.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${API_BASE_URL}/.netlify/functions/exportorders`,
+        { orders },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob',
+        }
+      );
+      saveAs(new Blob([response.data]), 'encomendas.xlsx');
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      alert('Failed to export orders: ' + message);
+      console.error('Error exporting orders:', err);
+      alert('Failed to export orders. See console for details.');
     }
   };
 
