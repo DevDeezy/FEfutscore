@@ -32,6 +32,7 @@ const OrderForm = () => {
     image_front: '',
     image_back: '',
     size: 'S',
+    quantity: 1,
     player_name: '',
     shirt_type_id: undefined,
     shirt_type_name: '',
@@ -137,6 +138,7 @@ const OrderForm = () => {
         image_front: '',
         image_back: '',
         size: 'M',
+        quantity: 1,
         player_name: '',
         shirt_type_id: undefined,
         shirt_type_name: '',
@@ -186,7 +188,7 @@ const OrderForm = () => {
                   onChange={(e) =>
                     setCurrentItem({
                       ...currentItem,
-                      product_type: e.target.value as OrderItem['product_type'],
+                      product_type: e.target.value as string,
                       size: e.target.value === 'shoes' ? '42' : 'S',
                     })
                   }
@@ -204,7 +206,7 @@ const OrderForm = () => {
                   label="Tamanho"
                   inputProps={{ min: 30, max: 50 }}
                   value={currentItem.size}
-                  onChange={e => setCurrentItem({ ...currentItem, size: e.target.value as OrderItem['size'] })}
+                  onChange={e => setCurrentItem({ ...currentItem, size: e.target.value as string })}
                   required
                 />
               ) : (
@@ -216,7 +218,7 @@ const OrderForm = () => {
                     onChange={(e) =>
                       setCurrentItem({
                         ...currentItem,
-                        size: e.target.value as OrderItem['size'],
+                        size: e.target.value as string,
                       })
                     }
                   >
