@@ -150,6 +150,9 @@ const Cart = () => {
                         <Typography variant="body2" color="text.secondary">
                           Size: {item.size}
                         </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Quantity: {item.quantity}
+                        </Typography>
                         {item.player_name && (
                           <Typography variant="body2" color="text.secondary">
                             Player Name: {item.player_name}
