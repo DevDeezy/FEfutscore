@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrders } from '../../store/slices/orderSlice';
-import { RootState, AppDispatch } from '../../store';
+import { fetchOrders } from '../store/slices/orderSlice';
+import { RootState, AppDispatch } from '../store';
 import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress, Alert } from '@mui/material';
 
 const PreviousOrders: React.FC = () => {
