@@ -24,7 +24,7 @@ export interface Order {
   items: OrderItem[];
   status: 'pending' | 'processing' | 'completed' | 'cancelled';
   created_at: string;
-  price: number;
+  total_price: number;
 }
 
 export interface AuthState {

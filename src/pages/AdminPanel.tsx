@@ -383,7 +383,7 @@ const AdminPanel = () => {
                         </TableCell>
                         <TableCell>{order.status}</TableCell>
                         <TableCell>{order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</TableCell>
-                        <TableCell>{order.price !== undefined ? `€${order.price.toFixed(2)}` : '-'}</TableCell>
+                        <TableCell>{order.total_price !== undefined ? `€${order.total_price.toFixed(2)}` : '-'}</TableCell>
                         <TableCell>
                           <Button
                             size="small"
@@ -704,7 +704,7 @@ const AdminPanel = () => {
                   Created At: {selectedOrder.created_at ? new Date(selectedOrder.created_at).toLocaleDateString() : ''}
                 </Typography>
                 <Typography variant="body2" gutterBottom>
-                  Price: {selectedOrder.price !== undefined ? `€${selectedOrder.price.toFixed(2)}` : '-'}
+                  Price: {selectedOrder.total_price !== undefined ? `€${selectedOrder.total_price.toFixed(2)}` : '-'}
                 </Typography>
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="h6">Order Items</Typography>
