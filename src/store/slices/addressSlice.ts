@@ -24,9 +24,31 @@ export const removeAddress = createAsyncThunk(
   }
 );
 
+export interface Address {
+  id: number;
+  userId: number;
+  nome: string;
+  telemovel: string;
+  morada: string;
+  cidade: string;
+  distrito: string;
+  codigoPostal: string;
+  pais: string;
+}
+
+interface AddressState {
+  addresses: Address[];
+  loading: boolean;
+}
+
+const initialState: AddressState = {
+  addresses: [],
+  loading: false,
+};
+
 const addressSlice = createSlice({
   name: 'address',
-  initialState: { addresses: [], loading: false },
+  initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -38,11 +60,11 @@ const addressSlice = createSlice({
         state.addresses.unshift(action.payload);
       })
       .addCase(editAddress.fulfilled, (state, action) => {
-        const idx = state.addresses.findIndex((a: any) => a.id === action.payload.id);
+        const idx = state.addresses.findIndex((a) => a.id === action.payload.id);
         if (idx !== -1) state.addresses[idx] = action.payload;
       })
       .addCase(removeAddress.fulfilled, (state, action) => {
-        state.addresses = state.addresses.filter((a: any) => a.id !== action.payload);
+        state.addresses = state.addresses.filter((a) => a.id !== action.payload);
       });
   },
 });
