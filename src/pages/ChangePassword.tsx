@@ -37,7 +37,7 @@ const ChangePassword = () => {
     const wasPasswordResetRequired = user?.password_reset_required;
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${API_BASE_URL}/.netlify/functions/changepassword`,
         { oldPassword, newPassword },
         {
@@ -47,11 +47,8 @@ const ChangePassword = () => {
         }
       );
 
-      // We need to update the user state in redux to reflect password_reset_required: false
-      if(user) {
-        const updatedUser = { ...user, password_reset_required: false };
-        dispatch(loginSuccess({ user: updatedUser, token: token! }));
-      }
+      const { user: updatedUser, token: newToken } = response.data;
+      dispatch(loginSuccess({ user: updatedUser, token: newToken }));
 
       setSuccess('Password changed successfully!');
       if (wasPasswordResetRequired) {
