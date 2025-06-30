@@ -24,6 +24,8 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -40,6 +42,8 @@ const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { orders } = useSelector((state: RootState) => state.order);
   const [tab, setTab] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -74,6 +78,8 @@ const AdminPanel = () => {
   const [openShirtTypeDialog, setOpenShirtTypeDialog] = useState(false);
   const [editingShirtType, setEditingShirtType] = useState<any | null>(null);
   const [shirtTypeForm, setShirtTypeForm] = useState({ name: '', price: 0 });
+
+  const fullScreenDialog = useMediaQuery(theme.breakpoints.down('md'));
 
   // Fetch orders, users, and packs on mount
   useEffect(() => {
@@ -355,27 +361,36 @@ const AdminPanel = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Painel de Administração
-        </Typography>
-        <Tabs value={tab} onChange={(_: any, v: number) => setTab(v)} sx={{ mb: 2 }}>
-          <Tab label="Encomendas" />
+    <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Painel de Administração
+      </Typography>
+      <Paper>
+        <Tabs
+          value={tab}
+          onChange={(e, v) => setTab(v)}
+          indicatorColor="primary"
+          textColor="primary"
+          variant={isMobile ? 'scrollable' : 'fullWidth'}
+          scrollButtons="auto"
+          aria-label="Admin tabs"
+        >
+          <Tab label="Pedidos" />
           <Tab label="Utilizadores" />
           <Tab label="Packs & Preços" />
           <Tab label="Tipos de Camisola" />
           <Tab label="Produtos" />
         </Tabs>
+
+        {/* Orders Tab */}
         {tab === 0 && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button variant="contained" color="primary" onClick={handleExportOrders}>
-                Exportar Encomendas para Excel
-              </Button>
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <Typography variant="h6">Todos os Pedidos</Typography>
+              <Button variant="contained" onClick={handleExportOrders} sx={{ mt: isMobile ? 2 : 0 }}>Exportar para CSV</Button>
             </Box>
-            <TableContainer>
-              <Table>
+            <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell>ID da Encomenda</TableCell>
@@ -427,19 +442,17 @@ const AdminPanel = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </>
+          </Box>
         )}
         {tab === 1 && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Utilizadores</Typography>
-              <Button variant="contained" onClick={() => setOpenAddUser(true)}>
-                Adicionar Utilizador
-              </Button>
+              <Button variant="contained" onClick={() => setOpenAddUser(true)} sx={{ mt: isMobile ? 2 : 0 }}>Adicionar Utilizador</Button>
             </Box>
             {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError}</Alert> : null}
-            <TableContainer>
-              <Table>
+            <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+              <Table stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
@@ -466,7 +479,7 @@ const AdminPanel = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-            <Dialog open={openAddUser} onClose={() => setOpenAddUser(false)}>
+            <Dialog open={openAddUser} onClose={() => setOpenAddUser(false)} fullScreen={fullScreenDialog}>
               <DialogTitle>Adicionar Novo Utilizador</DialogTitle>
               <DialogContent>
                 <TextField
@@ -502,22 +515,17 @@ const AdminPanel = () => {
                 <Button onClick={handleAddUser} variant="contained">Adicionar</Button>
               </DialogActions>
             </Dialog>
-          </>
+          </Box>
         )}
         {tab === 2 && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button variant="contained" color="primary" onClick={() => handleOpenPackDialog()}>
-                Adicionar Novo Pack
-              </Button>
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <Typography variant="h6">Packs</Typography>
+              <Button variant="contained" onClick={() => handleOpenPackDialog(null)} sx={{ mt: isMobile ? 2 : 0 }}>Adicionar Pack</Button>
             </Box>
-            {packsLoading ? (
-              <CircularProgress />
-            ) : packsError ? (
-              <Alert severity="error">{packsError}</Alert>
-            ) : (
-              <TableContainer>
-                <Table>
+            {packsLoading ? <CircularProgress /> : packsError ? <Alert severity="error">{packsError}</Alert> :
+              <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Nome</TableCell>
@@ -552,10 +560,9 @@ const AdminPanel = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            )}
-
-            <Dialog open={openPackDialog} onClose={() => setOpenPackDialog(false)} maxWidth="md" fullWidth>
-              <DialogTitle>{editingPack ? 'Editar Pack' : 'Adicionar Novo Pack'}</DialogTitle>
+            }
+            <Dialog open={openPackDialog} onClose={() => setOpenPackDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
+              <DialogTitle>{editingPack ? 'Editar' : 'Criar'} Pack</DialogTitle>
               <DialogContent>
                 <TextField
                   label="Nome do Pack"
@@ -625,22 +632,17 @@ const AdminPanel = () => {
                 </Button>
               </DialogActions>
             </Dialog>
-          </>
+          </Box>
         )}
         {tab === 3 && (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Button variant="contained" color="primary" onClick={() => handleOpenShirtTypeDialog()}>
-                Adicionar Novo Tipo de Camisola
-              </Button>
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <Typography variant="h6">Tipos de Camisola</Typography>
+              <Button variant="contained" onClick={() => handleOpenShirtTypeDialog(null)} sx={{ mt: isMobile ? 2 : 0 }}>Adicionar Tipo</Button>
             </Box>
-            {shirtTypesLoading ? (
-              <CircularProgress />
-            ) : shirtTypesError ? (
-              <Alert severity="error">{shirtTypesError}</Alert>
-            ) : (
-              <TableContainer>
-                <Table>
+            {shirtTypesLoading ? <CircularProgress /> : shirtTypesError ? <Alert severity="error">{shirtTypesError}</Alert> :
+              <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+                <Table stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Nome</TableCell>
@@ -666,9 +668,9 @@ const AdminPanel = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            )}
-            <Dialog open={openShirtTypeDialog} onClose={() => setOpenShirtTypeDialog(false)} maxWidth="xs" fullWidth>
-              <DialogTitle>{editingShirtType ? 'Editar Tipo de Camisola' : 'Adicionar Novo Tipo de Camisola'}</DialogTitle>
+            }
+            <Dialog open={openShirtTypeDialog} onClose={() => setOpenShirtTypeDialog(false)} fullScreen={fullScreenDialog}>
+              <DialogTitle>{editingShirtType ? 'Editar' : 'Criar'} Tipo de Camisola</DialogTitle>
               <DialogContent>
                 <TextField
                   label="Nome"
@@ -693,13 +695,18 @@ const AdminPanel = () => {
                 </Button>
               </DialogActions>
             </Dialog>
-          </>
+          </Box>
         )}
-        {tab === 4 && <ProductManagement />}
+        {tab === 4 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <ProductManagement />
+          </Box>
+        )}
       </Paper>
-      {/* Order Details Dialog */}
-      <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Detalhes da Encomenda</DialogTitle>
+      
+      {/* Dialogs */}
+      <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
+        <DialogTitle>Detalhes do Pedido</DialogTitle>
         <DialogContent>
           {selectedOrder && (
             <Box>

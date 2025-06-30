@@ -10,6 +10,8 @@ import {
   IconButton,
   TextField,
   Alert,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useDispatch, useSelector } from 'react-redux';
@@ -40,6 +42,9 @@ const Cart = () => {
   const [proofError, setProofError] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
   const [cartPrice, setCartPrice] = useState<number | null>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleRemoveItem = (index: number) => {
     dispatch(removeFromCart(index));
@@ -127,8 +132,8 @@ const Cart = () => {
             <Grid container spacing={2}>
               {items.map((item, index) => (
                 <Grid item xs={12} key={index}>
-                  <Paper sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Paper sx={{ p: 2, display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                       {item.image_front && (
                         <img
                           src={item.image_front}
@@ -143,9 +148,9 @@ const Cart = () => {
                           style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 4, border: '1px solid #eee', marginRight: 16 }}
                         />
                       )}
-                      <Box>
+                      <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="subtitle1">
-                          {item.product_type === 'tshirt' ? 'Camisola' : 'Sapatilhas'}
+                          {item.product_type === 'tshirt' ? 'Camisola' : (item.name || 'Produto')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Tamanho: {item.size}
@@ -163,6 +168,7 @@ const Cart = () => {
                     <IconButton
                       color="error"
                       onClick={() => handleRemoveItem(index)}
+                      sx={{ mt: isMobile ? 2 : 0 }}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -228,11 +234,12 @@ const Cart = () => {
                 Preço Total: €{cartPrice.toFixed(2)}
               </Typography>
             )}
-            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Box sx={{ mt: 4, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 variant="outlined"
                 color="primary"
-                onClick={() => navigate('/order')}
+                onClick={() => navigate('/store')}
+                fullWidth={isMobile}
               >
                 Continuar a Comprar
               </Button>
@@ -241,6 +248,7 @@ const Cart = () => {
                 color="primary"
                 onClick={handleSubmitOrder}
                 disabled={!canPlaceOrder}
+                fullWidth={isMobile}
               >
                 Finalizar Encomenda
               </Button>

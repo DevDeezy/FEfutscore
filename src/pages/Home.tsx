@@ -10,11 +10,21 @@ const Home = () => {
   return (
     <Container maxWidth="md" sx={{ mt: 8 }}>
       <Box sx={{ textAlign: 'center' }}>
-        <Typography variant="h2" component="h1" gutterBottom>
+        <Typography
+          variant="h2"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontSize: {
+              xs: '2.5rem',
+              sm: '3.75rem',
+            },
+          }}
+        >
           Welcome to FutScore
         </Typography>
         <Typography variant="h5" color="text.secondary" paragraph>
-          sports merchandise store
+          Your one-stop shop for custom sports merchandise.
         </Typography>
         {!user && (
           <Box sx={{ mt: 4 }}>

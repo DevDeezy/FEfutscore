@@ -21,6 +21,8 @@ import {
   DialogActions,
   TextField,
   SelectChangeEvent,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -39,6 +41,9 @@ const Store = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState('');
+
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleOpenDialog = (product: any) => {
     setSelectedProduct(product);
@@ -157,7 +162,7 @@ const Store = () => {
           ))}
         </Grid>
       )}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullScreen={fullScreen}>
         <DialogTitle>Adicionar ao Pedido</DialogTitle>
         <DialogContent>
           {selectedProduct && (
