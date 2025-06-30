@@ -20,6 +20,7 @@ import { OrderItem } from '../types';
 import { AppDispatch, RootState } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
+import PreviousOrders from '../components/PreviousOrders';
 
 
 const OrderForm = () => {
@@ -326,6 +327,7 @@ const OrderForm = () => {
           </Box>
         </form>
       </Paper>
+      <PreviousOrders />
     </Container>
   );
 };

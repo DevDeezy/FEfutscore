@@ -22,10 +22,13 @@ export const createOrder = createAsyncThunk(
   }
 );
 
-export const fetchOrders = createAsyncThunk('order/fetchAll', async () => {
-  const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders`);
-  return response.data;
-});
+export const fetchOrders = createAsyncThunk(
+  'order/fetchAll',
+  async (userId: number) => {
+    const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?userId=${userId}`);
+    return response.data;
+  }
+);
 
 export const updateOrderStatus = createAsyncThunk(
   'order/updateStatus',
