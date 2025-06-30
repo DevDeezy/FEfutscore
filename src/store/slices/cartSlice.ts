@@ -34,9 +34,23 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (state, action: PayloadAction<OrderItem>) => {
       const newItem = action.payload;
-      const existingItem = state.items.find(
-        (item) => item.product_id === newItem.product_id && item.size === newItem.size
-      );
+      let existingItem;
+
+      if (newItem.product_id) {
+        // It's a store product
+        existingItem = state.items.find(
+          (item) => item.product_id === newItem.product_id && item.size === newItem.size
+        );
+      } else {
+        // It's a custom t-shirt
+        existingItem = state.items.find(
+          (item) =>
+            !item.product_id && // Ensure it's also a custom item
+            item.size === newItem.size &&
+            item.player_name === newItem.player_name &&
+            item.shirt_type_id === newItem.shirt_type_id
+        );
+      }
 
       if (existingItem) {
         existingItem.quantity += newItem.quantity;

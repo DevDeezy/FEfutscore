@@ -56,7 +56,7 @@ const Store = () => {
     if (!selectedProduct) return;
     const cartItem: OrderItem = {
       product_id: selectedProduct.id,
-      product_type: selectedProduct.productType.name,
+      product_type: selectedProduct.productType.base_type,
       name: selectedProduct.name,
       price: selectedProduct.price,
       image_front: selectedProduct.image_url,
