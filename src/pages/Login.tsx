@@ -56,9 +56,9 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Email"
+            label="Nome de Utilizador"
             name="email"
-            type="email"
+            type="text"
             value={formData.email}
             onChange={handleChange}
             margin="normal"
