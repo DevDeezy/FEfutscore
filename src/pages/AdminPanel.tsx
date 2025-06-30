@@ -31,8 +31,6 @@ import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
-// @ts-ignore
-import { saveAs } from 'file-saver';
 import { OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
 
@@ -265,6 +263,7 @@ const AdminPanel = () => {
       return;
     }
     try {
+      const { saveAs } = await import('file-saver');
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_BASE_URL}/.netlify/functions/exportorders`,
