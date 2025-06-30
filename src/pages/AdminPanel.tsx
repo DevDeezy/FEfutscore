@@ -267,7 +267,7 @@ const AdminPanel = () => {
     } catch (err: any) {
       setOrderStatusError(err.response?.data?.error || 'Falha ao atualizar o estado');
     } finally {
-      setOrderStatusLoading(false);
+    setOrderStatusLoading(false);
     }
   };
 
@@ -362,9 +362,9 @@ const AdminPanel = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" gutterBottom>
         Painel de Administração
-      </Typography>
+        </Typography>
       <Paper>
         <Tabs
           value={tab}
@@ -404,9 +404,9 @@ const AdminPanel = () => {
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell>{order.id}</TableCell>
+                        <TableCell>{order.id}</TableCell>
                       <TableCell>{order.user?.email}</TableCell>
-                      <TableCell>
+                        <TableCell>
                         <Typography
                           component="span"
                           style={{
@@ -432,10 +432,10 @@ const AdminPanel = () => {
                       </TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                       <TableCell>€{order.total_price.toFixed(2)}</TableCell>
-                      <TableCell>
+                        <TableCell>
                         <Button onClick={() => handleOpenOrderDialog(order)}>
                           Detalhes
-                        </Button>
+                          </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -464,15 +464,15 @@ const AdminPanel = () => {
                 </TableHead>
                 <TableBody>
                   {users.map((user, idx) => (
-                    <TableRow key={user._id || user.id || idx}>
+                      <TableRow key={user._id || user.id || idx}>
                       <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
-                      <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
-                      <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
-                      <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
-                      <TableCell>
-                        <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
+                        <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
+                        <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
+                        <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
+                        <TableCell>
+                          <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
                           Apagar
-                        </Button>
+                          </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -707,12 +707,12 @@ const AdminPanel = () => {
       {/* Dialogs */}
       <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
         <DialogTitle>Detalhes do Pedido</DialogTitle>
-        <DialogContent>
-          {selectedOrder && (
+          <DialogContent>
+            {selectedOrder && (
             <Box>
               <Typography variant="h6" sx={{ mb: 1 }}>
                 Morada de Entrega
-              </Typography>
+                </Typography>
               <Box>
                 <Typography component="p">{selectedOrder.address_nome}</Typography>
                 <Typography component="p">{selectedOrder.address_morada}</Typography>
@@ -723,10 +723,10 @@ const AdminPanel = () => {
 
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6">Itens da Encomenda</Typography>
-                {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
-                    {selectedOrder.items.map((item: any, idx: number) => (
-                      <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
+                  {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+                      {selectedOrder.items.map((item: any, idx: number) => (
+                        <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
                         <Typography variant="subtitle2">{item.name || (item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas')}</Typography>
                         <Typography variant="body2">Tamanho: {item.size}</Typography>
                         <Typography variant="body2">Quantidade: {item.quantity || 1}</Typography>
@@ -735,44 +735,44 @@ const AdminPanel = () => {
                            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
                             {item.image_front && <Box component="img" src={item.image_front} alt="frente" sx={{ height: 60 }} />}
                             {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60 }} />}
-                           </Box>
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
                 ) : <Typography>Não há itens nesta encomenda.</Typography>}
-              </Box>
+                </Box>
 
-              <Box sx={{ mt: 3 }}>
-                <FormControl fullWidth>
+                <Box sx={{ mt: 3 }}>
+                  <FormControl fullWidth>
                   <InputLabel>Atualizar Estado</InputLabel>
-                  <Select
-                    value={orderStatus}
+                    <Select
+                      value={orderStatus}
                     label="Atualizar Estado"
                     onChange={(e: any) => setOrderStatus(e.target.value)}
-                  >
+                    >
                     <MenuItem value="pending">Pendente</MenuItem>
                     <MenuItem value="processing">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
                     <MenuItem value="cancelled">Cancelada</MenuItem>
-                  </Select>
-                </FormControl>
+                    </Select>
+                  </FormControl>
                 {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
               </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
+                </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
           <Button onClick={() => setOpenOrderDialog(false)}>Fechar</Button>
-          <Button
-            onClick={handleUpdateOrderStatus}
-            variant="contained"
+            <Button
+              onClick={handleUpdateOrderStatus}
+              variant="contained"
             disabled={orderStatusLoading}
-          >
+            >
             {orderStatusLoading ? <CircularProgress size={24} /> : 'Atualizar Estado'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </Button>
+          </DialogActions>
+        </Dialog>
     </Container>
   );
 };

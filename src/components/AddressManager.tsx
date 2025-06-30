@@ -35,13 +35,21 @@ const AddressManager = ({ userId, onSelect }: { userId: number, onSelect?: (addr
   return (
     <div>
       <h2>Moradas</h2>
+      {onSelect && <div style={{ marginBottom: 8, fontWeight: 'bold' }}>Selecione uma morada para usar no pedido:</div>}
       <ul>
         {addresses.map((a: any) => (
-          <li key={a.id}>
+          <li key={a.id} style={{ marginBottom: 8 }}>
             {a.nome}, {a.morada}, {a.cidade}, {a.distrito}, {a.codigoPostal}, {a.pais}, {a.telemovel}
-            <button onClick={() => handleEdit(a)}>Editar</button>
-            <button onClick={() => handleDelete(a.id)}>Eliminar</button>
-            {onSelect && <button onClick={() => onSelect(a)}>Usar esta morada</button>}
+            <button onClick={() => handleEdit(a)} style={{ marginLeft: 8 }}>Editar</button>
+            <button onClick={() => handleDelete(a.id)} style={{ marginLeft: 4 }}>Eliminar</button>
+            {onSelect && (
+              <button
+                onClick={() => onSelect(a)}
+                style={{ marginLeft: 8, background: '#1976d2', color: 'white', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                Usar esta morada
+              </button>
+            )}
           </li>
         ))}
       </ul>

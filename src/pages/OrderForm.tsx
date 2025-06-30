@@ -53,11 +53,11 @@ const OrderForm = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
+    const reader = new FileReader();
       reader.onloadend = () => {
         if (side === 'front') {
           setCurrentItem({ ...currentItem, image_front: reader.result as string });
-        } else {
+      } else {
           setCurrentItem({ ...currentItem, image_back: reader.result as string });
         }
       };
@@ -71,19 +71,19 @@ const OrderForm = () => {
       setError('Precisa de estar autenticado para adicionar ao carrinho.');
       return;
     }
-    dispatch(addToCart(currentItem));
+      dispatch(addToCart(currentItem));
     // Reset form after submission
-    setCurrentItem({
+      setCurrentItem({
       id: '',
-      product_type: 'tshirt',
-      image_front: '',
-      image_back: '',
+        product_type: 'tshirt',
+        image_front: '',
+        image_back: '',
       size: 'S',
       quantity: 1,
-      player_name: '',
-      shirt_type_id: undefined,
-      shirt_type_name: '',
-    });
+        player_name: '',
+        shirt_type_id: undefined,
+        shirt_type_name: '',
+      });
     alert('Item adicionado ao carrinho!');
   };
 
@@ -130,30 +130,30 @@ const OrderForm = () => {
             {currentItem.product_type === 'tshirt' && (
               <>
                 <Grid item xs={12} sm={6}>
-                  <TextField
+                <TextField
                     label="Nome do Jogador (Opcional)"
-                    fullWidth
-                    value={currentItem.player_name}
+                fullWidth
+                value={currentItem.player_name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, player_name: e.target.value })}
-                  />
-                </Grid>
+              />
+            </Grid>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Tipo de Camisola</InputLabel>
-                    <Select
+                <FormControl fullWidth>
+                  <InputLabel>Tipo de Camisola</InputLabel>
+                  <Select
                       value={currentItem.shirt_type_id?.toString() ?? ''}
-                      label="Tipo de Camisola"
+                    label="Tipo de Camisola"
                       onChange={(e: SelectChangeEvent) => {
                         const selectedId = Number(e.target.value);
                         const selected = shirtTypes.find((t) => t.id === selectedId);
-                        setCurrentItem({
-                          ...currentItem,
-                          shirt_type_id: selected?.id,
-                          shirt_type_name: selected?.name,
-                        });
-                      }}
-                      disabled={shirtTypesLoading || shirtTypesError !== null}
-                    >
+                      setCurrentItem({
+                        ...currentItem,
+                        shirt_type_id: selected?.id,
+                        shirt_type_name: selected?.name,
+                      });
+                    }}
+                    disabled={shirtTypesLoading || shirtTypesError !== null}
+                  >
                       {shirtTypesLoading ? (
                         <MenuItem value="">
                           <CircularProgress size={20} />
@@ -165,9 +165,9 @@ const OrderForm = () => {
                           </MenuItem>
                         ))
                       )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                  </Select>
+                </FormControl>
+              </Grid>
               </>
             )}
 
@@ -196,10 +196,10 @@ const OrderForm = () => {
                 value={currentItem.quantity}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, quantity: parseInt(e.target.value, 10) })}
                 InputProps={{ inputProps: { min: 1 } }}
-              />
+                  />
             </Grid>
             
-            <Grid item xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <Button variant="outlined" component="label">
                   Carregar Imagem da Frente
                   <Box
@@ -228,7 +228,7 @@ const OrderForm = () => {
                         />
                     </Button>
                     {currentItem.image_back && <Box component="img" src={currentItem.image_back} alt="preview trás" sx={{ height: 100, marginLeft: 16 }} />}
-                </Grid>
+              </Grid>
             )}
 
             <Grid item xs={12}>
@@ -237,7 +237,7 @@ const OrderForm = () => {
               </Button>
             </Grid>
           </Grid>
-        </Box>
+          </Box>
       </Paper>
       {/* <PreviousOrders /> */}
     </Container>

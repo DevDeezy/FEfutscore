@@ -21,6 +21,7 @@ import {
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import MenuIcon from '@mui/icons-material/Menu';
+import HomeIcon from '@mui/icons-material/Home';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { logout } from '../store/slices/authSlice';
@@ -67,6 +68,9 @@ const Navbar = () => {
            <Button color="inherit" component={RouterLink} to="/previous-orders" onClick={isMobile ? handleDrawerToggle : undefined}>
                 Meus Pedidos
             </Button>
+          <Button color="inherit" component={RouterLink} to="/moradas" onClick={isMobile ? handleDrawerToggle : undefined}>
+            Minhas Moradas
+          </Button>
           {user.role === 'admin' && (
             <Button color="inherit" component={RouterLink} to="/admin" onClick={isMobile ? handleDrawerToggle : undefined}>
               Painel de Admin
@@ -93,6 +97,9 @@ const Navbar = () => {
             </ListItemButton>
             <ListItemButton component={RouterLink} to="/previous-orders">
                 <ListItemText primary="Meus Pedidos" />
+            </ListItemButton>
+            <ListItemButton component={RouterLink} to="/moradas">
+              <ListItemText primary="Minhas Moradas" />
             </ListItemButton>
             {user.role === 'admin' && (
               <ListItemButton component={RouterLink} to="/admin">
@@ -173,6 +180,10 @@ const Navbar = () => {
                         open={Boolean(anchorEl)}
                         onClose={handleClose}
                     >
+                        <MenuItem component={RouterLink} to="/moradas" onClick={handleClose}>
+                          <HomeIcon fontSize="small" style={{ marginRight: 8 }} />
+                          Minhas Moradas
+                        </MenuItem>
                         <MenuItem component={RouterLink} to="/change-password" onClick={handleClose}>
                         Mudar Palavra-passe
                         </MenuItem>
