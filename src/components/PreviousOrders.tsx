@@ -15,7 +15,7 @@ import {
   Modal,
   Grid,
 } from '@mui/material';
-import { Order, OrderItem } from '../../types';
+import { Order, OrderItem } from '../types';
 
 const modalStyle = {
   position: 'absolute' as 'absolute',
