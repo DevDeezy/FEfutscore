@@ -39,7 +39,7 @@ const Navbar = () => {
   };
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4 }}>
       <Toolbar>
         <Typography
           variant="h6"

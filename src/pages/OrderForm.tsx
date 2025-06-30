@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -13,6 +12,8 @@ import {
   Box,
   Grid,
   Alert,
+  CircularProgress,
+  SelectChangeEvent,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice';
@@ -22,9 +23,13 @@ import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import PreviousOrders from '../components/PreviousOrders';
 
+interface ShirtType {
+  id: number;
+  name: string;
+  price: number;
+}
 
 const OrderForm = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const [currentItem, setCurrentItem] = useState<OrderItem>({
@@ -41,29 +46,9 @@ const OrderForm = () => {
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
   const imageBackInputRef = useRef<HTMLInputElement>(null);
-  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string; price: number }[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<ShirtType[]>([]);
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
-
-  const tshirtSizes = ['S', 'M', 'L', 'XL'];
-
-  const validateImage = (file: File): boolean => {
-    console.log('Validating file:', file.name, file.type, file.size);
-    
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('A imagem deve ter menos de 5MB');
-      return false;
-    }
-
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      setError('Por favor, carregue um ficheiro de imagem');
-      return false;
-    }
-
-    return true;
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
     const file = e.target.files?.[0];
@@ -107,17 +92,15 @@ const OrderForm = () => {
       setShirtTypesLoading(true);
       setShirtTypesError(null);
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`);
         setShirtTypes(res.data);
       } catch (err) {
-        setShirtTypesError('Failed to fetch shirt types');
-        setShirtTypes([]);
+        setShirtTypesError('Falha ao carregar os tipos de camisola');
+      } finally {
+        setShirtTypesLoading(false);
       }
-      setShirtTypesLoading(false);
     };
+
     fetchShirtTypes();
   }, []);
 
@@ -136,7 +119,7 @@ const OrderForm = () => {
                 <Select
                   value={currentItem.product_type}
                   label="Tipo de Produto"
-                  onChange={(e: any) => setCurrentItem({ ...currentItem, product_type: e.target.value })}
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, product_type: e.target.value as 'tshirt' | 'shoes' })}
                 >
                   <MenuItem value="tshirt">Camisola</MenuItem>
                   <MenuItem value="shoes">Sapatilhas</MenuItem>
@@ -145,14 +128,47 @@ const OrderForm = () => {
             </Grid>
 
             {currentItem.product_type === 'tshirt' && (
-              <Grid item xs={12}>
-                <TextField
-                  label="Nome do Jogador (Opcional)"
-                  fullWidth
-                  value={currentItem.player_name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, player_name: e.target.value })}
-                />
-              </Grid>
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Nome do Jogador (Opcional)"
+                    fullWidth
+                    value={currentItem.player_name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, player_name: e.target.value })}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Tipo de Camisola</InputLabel>
+                    <Select
+                      value={currentItem.shirt_type_id?.toString() ?? ''}
+                      label="Tipo de Camisola"
+                      onChange={(e: SelectChangeEvent) => {
+                        const selectedId = Number(e.target.value);
+                        const selected = shirtTypes.find((t) => t.id === selectedId);
+                        setCurrentItem({
+                          ...currentItem,
+                          shirt_type_id: selected?.id,
+                          shirt_type_name: selected?.name,
+                        });
+                      }}
+                      disabled={shirtTypesLoading || shirtTypesError !== null}
+                    >
+                      {shirtTypesLoading ? (
+                        <MenuItem value="">
+                          <CircularProgress size={20} />
+                        </MenuItem>
+                      ) : (
+                        shirtTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </>
             )}
 
             <Grid item xs={12} sm={6}>
@@ -161,7 +177,7 @@ const OrderForm = () => {
                 <Select
                   value={currentItem.size}
                   label="Tamanho"
-                  onChange={(e: any) => setCurrentItem({ ...currentItem, size: e.target.value })}
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, size: e.target.value })}
                 >
                   <MenuItem value="S">S</MenuItem>
                   <MenuItem value="M">M</MenuItem>
@@ -223,7 +239,7 @@ const OrderForm = () => {
           </Grid>
         </Box>
       </Paper>
-      <PreviousOrders />
+      {/* <PreviousOrders /> */}
     </Container>
   );
 };
