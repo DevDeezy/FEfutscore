@@ -10,13 +10,17 @@ export interface User {
 }
 
 export interface OrderItem {
-  product_type: 'tshirt' | 'shoes';
-  image_front: string;
-  image_back?: string; // Only for t-shirts
-  size: 'S' | 'M' | 'L' | 'XL' | '39' | '40' | '41' | '42';
-  player_name?: string; // Make playerName optional
-  shirt_type_id?: number; // For t-shirts, references ShirtType
-  shirt_type_name?: string; // For display purposes
+  product_id?: number;
+  name?: string;
+  price?: number;
+  product_type: string;
+  image_front?: string;
+  image_back?: string;
+  size: string;
+  quantity: number;
+  player_name?: string;
+  shirt_type_id?: number;
+  shirt_type_name?: string;
 }
 
 export interface Order {

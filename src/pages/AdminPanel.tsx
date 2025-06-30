@@ -33,6 +33,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import * as XLSX from 'xlsx';
 import { OrderItem, Pack, PackItem } from '../types';
+import ProductManagement from '../components/ProductManagement';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -351,6 +352,7 @@ const AdminPanel = () => {
           <Tab label="Users" />
           <Tab label="Packs & Prices" />
           <Tab label="Shirt Types" />
+          <Tab label="Products" />
         </Tabs>
         {tab === 0 && (
           <>
@@ -680,6 +682,9 @@ const AdminPanel = () => {
               </DialogActions>
             </Dialog>
           </>
+        )}
+        {tab === 4 && (
+          <ProductManagement />
         )}
         {/* Order Details Dialog */}
         <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>

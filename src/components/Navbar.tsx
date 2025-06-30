@@ -50,6 +50,13 @@ const Navbar = () => {
           FutScore
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/store"
+          >
+            Store
+          </Button>
           {user ? (
             <>
               <Button
