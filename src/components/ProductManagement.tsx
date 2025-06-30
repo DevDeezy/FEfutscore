@@ -108,6 +108,17 @@ const ProductManagement = () => {
     }
   };
 
+  const handleDeleteProduct = async (productId: number) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteProduct/${productId}`);
+        fetchProducts();
+      } catch (err) {
+        setError('Failed to delete product');
+      }
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -148,6 +159,7 @@ const ProductManagement = () => {
               <TableCell>Name</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Price</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -156,6 +168,11 @@ const ProductManagement = () => {
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Button color="error" onClick={() => handleDeleteProduct(product.id)}>
+                    Delete
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
