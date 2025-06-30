@@ -1,10 +1,11 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { AuthState } from '../../types';
+import { AuthState, User } from '../../types';
 import { API_BASE_URL } from '../../api';
 
 const initialState: AuthState = {
   user: null,
+  token: localStorage.getItem('token'),
   loading: false,
   error: null,
 };
@@ -38,8 +39,16 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.loading = false;
+      state.error = null;
+      localStorage.setItem('token', action.payload.token);
+    },
     logout: (state) => {
       state.user = null;
+      state.token = null;
       state.error = null;
       localStorage.removeItem('token');
     },
@@ -60,6 +69,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+        state.token = action.payload.token;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -71,7 +81,7 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        // Don't set user on register, force login
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -80,5 +90,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, setUser } = authSlice.actions;
+export const { loginSuccess, logout, clearError, setUser } = authSlice.actions;
 export default authSlice.reducer; 

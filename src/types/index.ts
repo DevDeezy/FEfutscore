@@ -6,6 +6,7 @@ export interface User {
   role: 'user' | 'admin';
   created_at: string;
   token: string;
+  password_reset_required?: boolean;
 }
 
 export interface OrderItem {
@@ -29,6 +30,7 @@ export interface Order {
 
 export interface AuthState {
   user: User | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
 }
