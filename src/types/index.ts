@@ -64,6 +64,7 @@ export interface Pack {
 export interface ProductType {
   id: number;
   name: string;
+  base_type: string;
 }
 
 export interface Product {

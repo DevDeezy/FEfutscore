@@ -34,6 +34,7 @@ const ProductManagement = () => {
 
   const [openProductTypeDialog, setOpenProductTypeDialog] = useState(false);
   const [newProductTypeName, setNewProductTypeName] = useState('');
+  const [newProductTypeBase, setNewProductTypeBase] = useState('tshirt');
 
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const [newProduct, setNewProduct] = useState({
@@ -41,6 +42,7 @@ const ProductManagement = () => {
     description: '',
     price: 0,
     image_url: '',
+    base_type: 'tshirt',
     available_sizes: '',
     product_type_id: '',
   });
@@ -76,7 +78,10 @@ const ProductManagement = () => {
 
   const handleCreateProductType = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, { name: newProductTypeName });
+      await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, {
+        name: newProductTypeName,
+        base_type: newProductTypeBase,
+      });
       setOpenProductTypeDialog(false);
       setNewProductTypeName('');
       fetchProductTypes();
@@ -110,6 +115,7 @@ const ProductManagement = () => {
         description: '',
         price: 0,
         image_url: '',
+        base_type: 'tshirt',
         available_sizes: '',
         product_type_id: '',
       });
@@ -144,6 +150,7 @@ const ProductManagement = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell>Name</TableCell>
+              <TableCell>Base Type</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -152,6 +159,7 @@ const ProductManagement = () => {
               <TableRow key={type.id}>
                 <TableCell>{type.id}</TableCell>
                 <TableCell>{type.name}</TableCell>
+                <TableCell>{type.base_type}</TableCell>
                 <TableCell>
                   <Button color="error" onClick={() => handleDeleteProductType(type.id)}>
                     Delete
@@ -174,6 +182,7 @@ const ProductManagement = () => {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
+              <TableCell>Base Type</TableCell>
               <TableCell>Type</TableCell>
               <TableCell>Price</TableCell>
               <TableCell>Actions</TableCell>
@@ -183,6 +192,7 @@ const ProductManagement = () => {
             {products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
+                <TableCell>{product.productType.base_type}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
                 <TableCell>
@@ -210,6 +220,17 @@ const ProductManagement = () => {
             value={newProductTypeName}
             onChange={(e) => setNewProductTypeName(e.target.value)}
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Base Type</InputLabel>
+            <Select
+              value={newProductTypeBase}
+              label="Base Type"
+              onChange={(e) => setNewProductTypeBase(e.target.value)}
+            >
+              <MenuItem value="tshirt">T-Shirt</MenuItem>
+              <MenuItem value="shoes">Shoes</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenProductTypeDialog(false)}>Cancel</Button>
@@ -257,6 +278,17 @@ const ProductManagement = () => {
             value={newProduct.available_sizes}
             onChange={(e) => setNewProduct({ ...newProduct, available_sizes: e.target.value })}
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Base Type</InputLabel>
+            <Select
+              value={newProduct.base_type}
+              label="Base Type"
+              onChange={(e) => setNewProduct({ ...newProduct, base_type: e.target.value })}
+            >
+              <MenuItem value="tshirt">T-Shirt</MenuItem>
+              <MenuItem value="shoes">Shoes</MenuItem>
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Product Type</InputLabel>
             <Select
