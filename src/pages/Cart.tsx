@@ -12,15 +12,22 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  ToggleButton,
+  ToggleButtonGroup,
+  Divider,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import EditIcon from '@mui/icons-material/Edit';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { removeFromCart, clearCart } from '../store/slices/cartSlice';
 import { createOrder } from '../store/slices/orderSlice';
+import { getAddresses } from '../store/slices/addressSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
+import AddressManager from '../components/AddressManager';
 
 const initialAddress = {
   nome: '',
@@ -37,7 +44,10 @@ const Cart = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items } = useSelector((state: RootState) => state.cart);
   const { user } = useSelector((state: RootState) => state.auth);
+  const { addresses } = useSelector((state: RootState) => state.address);
   const [address, setAddress] = useState(initialAddress);
+  const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const [addressMode, setAddressMode] = useState<'manual' | 'saved'>('manual');
   const [proofImage, setProofImage] = useState<string>('');
   const [proofError, setProofError] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +62,26 @@ const Cart = () => {
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress({ ...address, [e.target.name]: e.target.value });
+  };
+
+  const handleAddressModeChange = (event: React.MouseEvent<HTMLElement>, newMode: 'manual' | 'saved' | null) => {
+    if (newMode !== null) {
+      setAddressMode(newMode);
+      if (newMode === 'manual') {
+        setSelectedAddress(null);
+        setAddress(initialAddress);
+      } else {
+        // Load saved addresses if not already loaded
+        if (user && addresses.length === 0) {
+          dispatch(getAddresses(user.id));
+        }
+      }
+    }
+  };
+
+  const handleSelectAddress = (selectedAddr: any) => {
+    setSelectedAddress(selectedAddr);
+    setAddress(selectedAddr);
   };
 
   const handleProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +124,7 @@ const Cart = () => {
       await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage } }));
       dispatch(clearCart());
       setAddress(initialAddress);
+      setSelectedAddress(null);
       setProofImage('');
       navigate('/');
     }
@@ -176,32 +207,70 @@ const Cart = () => {
                 </Grid>
               ))}
             </Grid>
+            
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Morada de Entrega</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Nome" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
+              <Typography variant="h6" gutterBottom>
+                Morada de Entrega
+              </Typography>
+              
+              <ToggleButtonGroup
+                value={addressMode}
+                exclusive
+                onChange={handleAddressModeChange}
+                aria-label="address mode"
+                sx={{ mb: 2 }}
+              >
+                <ToggleButton value="manual" aria-label="manual address">
+                  <EditIcon sx={{ mr: 1 }} />
+                  Preencher Manualmente
+                </ToggleButton>
+                <ToggleButton value="saved" aria-label="saved addresses">
+                  <LocationOnIcon sx={{ mr: 1 }} />
+                  Moradas Guardadas
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              {addressMode === 'manual' ? (
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Nome" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Telemóvel" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField label="Morada" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Cidade" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Distrito" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="Código Postal" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField label="País" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Telemóvel" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField label="Morada" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Cidade" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Distrito" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="Código Postal" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField label="País" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
-                </Grid>
-              </Grid>
+              ) : (
+                <Box>
+                  {user && (
+                    <AddressManager 
+                      userId={user.id} 
+                      onSelect={handleSelectAddress}
+                    />
+                  )}
+                  {selectedAddress && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                      Morada selecionada: {selectedAddress.nome} - {selectedAddress.morada}, {selectedAddress.cidade}
+                    </Alert>
+                  )}
+                </Box>
+              )}
             </Box>
+
             <Box sx={{ mt: 4 }}>
               <Typography variant="h6" gutterBottom>Comprovativo de Pagamento</Typography>
               <Button

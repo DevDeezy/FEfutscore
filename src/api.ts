@@ -1,34 +1,37 @@
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://befutscore.netlify.app'; 
 
+import axios from 'axios';
+
 // Address API
 export async function fetchAddresses(userId: number) {
-  const res = await fetch(`/api/getaddresses?userId=${userId}`);
-  return res.json();
+  const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getaddresses?userId=${userId}`);
+  return response.data;
 }
 
 export async function createAddress(address: any) {
-  const res = await fetch('/api/createaddress', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(address),
+  const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createaddress`, address, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
-  return res.json();
+  return response.data;
 }
 
 export async function updateAddress(address: any) {
-  const res = await fetch('/api/updateaddress', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(address),
+  const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateaddress`, address, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
-  return res.json();
+  return response.data;
 }
 
 export async function deleteAddress(id: number, userId: number) {
-  const res = await fetch('/api/deleteaddress', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, userId }),
+  const response = await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteaddress`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: { id, userId },
   });
-  return res;
+  return response.data;
 } 

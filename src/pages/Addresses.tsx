@@ -1,21 +1,35 @@
 import React from 'react';
 import AddressManager from '../components/AddressManager';
 import { useAppSelector } from '../store';
+import { Container, Typography, Alert } from '@mui/material';
 
 const Addresses: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
-  console.log('user in Addresses page:', user);
-  if (!user) return <div>Por favor, faça login para gerir as suas moradas.</div>;
+  
+  if (!user) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="info">
+          Por favor, faça login para gerir as suas moradas.
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 24 }}>
-      <h1>Gestão de Moradas</h1>
+    <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Gestão de Moradas
+      </Typography>
+      
       {user.id ? (
         <AddressManager userId={user.id} />
       ) : (
-        <div>Utilizador não encontrado. (user.id está undefined)</div>
+        <Alert severity="error">
+          Utilizador não encontrado. (user.id está undefined)
+        </Alert>
       )}
-    </div>
+    </Container>
   );
 };
 
