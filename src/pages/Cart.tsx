@@ -162,7 +162,15 @@ const Cart = () => {
 
   // Handler to edit/fill the manual form with a saved address (like AddressManager)
   const handleEdit = (addr: any) => {
-    setAddress(addr);
+    setAddress({
+      nome: addr.nome || '',
+      telemovel: addr.telemovel || '',
+      morada: addr.morada || '',
+      cidade: addr.cidade || '',
+      distrito: addr.distrito || '',
+      codigoPostal: addr.codigoPostal || '',
+      pais: addr.pais || 'Portugal',
+    });
   };
 
   return (
