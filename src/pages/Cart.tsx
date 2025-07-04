@@ -240,6 +240,34 @@ const Cart = () => {
                             Nome do Jogador: {item.player_name}
                           </Typography>
                         )}
+                        {/* PATCH IMAGES SECTION */}
+                        {(item.patch_images ?? []).length > 0 && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                              Patches:
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {(item.patch_images ?? []).map((img: string, idx: number) => (
+                                <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
+                                  <img src={img} alt={`patch ${idx + 1}`} style={{ height: 40, border: '1px solid #ccc', borderRadius: 4 }} />
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
+                                    onClick={() => {
+                                      // Remove patch image from item
+                                      const newImages = (item.patch_images ?? []).filter((_: string, i: number) => i !== idx);
+                                      handleCartItemFieldChange(index, 'patch_images', newImages as any);
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                        {/* END PATCH IMAGES SECTION */}
                         <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
                           <InputLabel>Sexo</InputLabel>
                           <Select

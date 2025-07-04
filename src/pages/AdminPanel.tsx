@@ -785,6 +785,22 @@ const AdminPanel = () => {
                             {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60 }} />}
                             </Box>
                           )}
+                        {/* PATCH IMAGES SECTION */}
+                        {(item.patch_images ?? []).length > 0 && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                              Patches:
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {(item.patch_images ?? []).map((img: string, pidx: number) => (
+                                <Box key={pidx} sx={{ display: 'inline-block' }}>
+                                  <Box component="img" src={img} alt={`patch ${pidx + 1}`} sx={{ height: 40, border: '1px solid #ccc', borderRadius: 1 }} />
+                                </Box>
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+                        {/* END PATCH IMAGES SECTION */}
                         </Box>
                       ))}
                     </Box>

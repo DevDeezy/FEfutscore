@@ -25,6 +25,7 @@ export interface OrderItem {
   sexo?: string;
   ano?: string;
   numero?: string;
+  patch_images?: string[];
 }
 
 export interface Order {

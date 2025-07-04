@@ -47,10 +47,12 @@ const OrderForm = () => {
     sexo: 'Neutro',
     ano: '21/22',
     numero: '',
+    patch_images: [],
   });
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
   const imageBackInputRef = useRef<HTMLInputElement>(null);
+  const patchInputRef = useRef<HTMLInputElement>(null);
   const [shirtTypes, setShirtTypes] = useState<ShirtType[]>([]);
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
@@ -68,6 +70,33 @@ const OrderForm = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handlePatchImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const readers: Promise<string>[] = Array.from(files).map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      });
+      Promise.all(readers).then(images => {
+        setCurrentItem(prev => ({
+          ...prev,
+          patch_images: [...(prev.patch_images || []), ...images],
+        }));
+      });
+    }
+  };
+
+  const handleRemovePatchImage = (idx: number) => {
+    setCurrentItem(prev => ({
+      ...prev,
+      patch_images: (prev.patch_images || []).filter((_, i) => i !== idx),
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -91,6 +120,7 @@ const OrderForm = () => {
         sexo: 'Neutro',
         ano: '21/22',
         numero: '',
+        patch_images: [],
       });
     alert('Item adicionado ao carrinho!');
   };
@@ -238,6 +268,36 @@ const OrderForm = () => {
                     {currentItem.image_back && <Box component="img" src={currentItem.image_back} alt="preview trás" sx={{ height: 100, marginLeft: 16 }} />}
               </Grid>
             )}
+
+            <Grid item xs={12} sm={6}>
+              <Button variant="outlined" component="label">
+                Carregar Imagem do Patch
+                <Box
+                  component="input"
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  multiple
+                  ref={patchInputRef}
+                  onChange={handlePatchImagesChange}
+                />
+              </Button>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                {(currentItem.patch_images || []).map((img, idx) => (
+                  <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
+                    <Box component="img" src={img} alt={`patch ${idx + 1}`} sx={{ height: 60, border: '1px solid #ccc', borderRadius: 1 }} />
+                    <Button
+                      size="small"
+                      color="error"
+                      sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
+                      onClick={() => handleRemovePatchImage(idx)}
+                    >
+                      X
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
