@@ -125,7 +125,7 @@ const AddressManager = ({ userId, onSelect }: { userId: number, onSelect?: (addr
                   <Button
                     variant="contained"
                     size="small"
-                    onClick={() => handleSelect(address)}
+                    onClick={() => handleEdit(address)}
                     startIcon={<CheckIcon />}
                   >
                     Usar
