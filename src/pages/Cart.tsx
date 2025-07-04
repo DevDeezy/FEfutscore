@@ -160,8 +160,8 @@ const Cart = () => {
     }
   }, [dispatch, user]);
 
-  // Handler to use a saved address to fill the manual form
-  const handleUseAddress = (addr: any) => {
+  // Handler to edit/fill the manual form with a saved address (like AddressManager)
+  const handleEdit = (addr: any) => {
     setAddress(addr);
   };
 
@@ -269,7 +269,7 @@ const Cart = () => {
                                 <Button
                                   variant="contained"
                                   size="small"
-                                  onClick={() => handleUseAddress(addr)}
+                                  onClick={() => handleEdit(addr)}
                                   startIcon={<Check />}
                                 >
                                   Usar
