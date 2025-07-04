@@ -229,23 +229,6 @@ const Cart = () => {
               <Typography variant="h6" gutterBottom>
                 Morada de Entrega
               </Typography>
-              
-              <ToggleButtonGroup
-                value={addressMode}
-                exclusive
-                onChange={handleAddressModeChange}
-                aria-label="address mode"
-                sx={{ mb: 2 }}
-              >
-                <ToggleButton value="manual" aria-label="manual address">
-                  <EditIcon sx={{ mr: 1 }} />
-                  Preencher Manualmente
-                </ToggleButton>
-                <ToggleButton value="saved" aria-label="saved addresses">
-                  <LocationOnIcon sx={{ mr: 1 }} />
-                  Moradas Guardadas
-                </ToggleButton>
-              </ToggleButtonGroup>
 
               {addressMode === 'manual' ? (
                 <>
