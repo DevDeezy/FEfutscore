@@ -32,6 +32,8 @@ interface ShirtType {
 const OrderForm = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
+  const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
+  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
   const [currentItem, setCurrentItem] = useState<OrderItem>({
     id: '',
     product_type: 'tshirt',
@@ -42,6 +44,9 @@ const OrderForm = () => {
     player_name: '',
     shirt_type_id: undefined,
     shirt_type_name: '',
+    sexo: 'Neutro',
+    ano: '21/22',
+    numero: '',
   });
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +88,9 @@ const OrderForm = () => {
         player_name: '',
         shirt_type_id: undefined,
         shirt_type_name: '',
+        sexo: 'Neutro',
+        ano: '21/22',
+        numero: '',
       });
     alert('Item adicionado ao carrinho!');
   };
@@ -230,6 +238,41 @@ const OrderForm = () => {
                     {currentItem.image_back && <Box component="img" src={currentItem.image_back} alt="preview trás" sx={{ height: 100, marginLeft: 16 }} />}
               </Grid>
             )}
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Sexo</InputLabel>
+                <Select
+                  value={currentItem.sexo || 'Neutro'}
+                  label="Sexo"
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, sexo: e.target.value })}
+                >
+                  {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Ano</InputLabel>
+                <Select
+                  value={currentItem.ano || '21/22'}
+                  label="Ano"
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, ano: e.target.value })}
+                >
+                  {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Número"
+                fullWidth
+                value={currentItem.numero || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, numero: e.target.value })}
+              />
+            </Grid>
 
             <Grid item xs={12}>
               <Button type="submit" variant="contained" color="primary" fullWidth size="large">

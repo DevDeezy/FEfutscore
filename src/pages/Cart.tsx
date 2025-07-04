@@ -19,13 +19,17 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import EditIcon from '@mui/icons-material/Edit';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { removeFromCart, clearCart } from '../store/slices/cartSlice';
+import { removeFromCart, clearCart, updateCartItem } from '../store/slices/cartSlice';
 import { createOrder } from '../store/slices/orderSlice';
 import { getAddresses } from '../store/slices/addressSlice';
 import { AppDispatch } from '../store';
@@ -43,6 +47,9 @@ const initialAddress = {
   codigoPostal: '',
   telemovel: '',
 };
+
+const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
+const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -179,6 +186,14 @@ const Cart = () => {
     });
   };
 
+  const handleCartItemFieldChange = (index: number, field: string, value: string) => {
+    const updatedItems = items.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    );
+    localStorage.setItem('cart', JSON.stringify({ items: updatedItems }));
+    dispatch(updateCartItem({ index, field, value }));
+  };
+
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
@@ -225,6 +240,34 @@ const Cart = () => {
                             Nome do Jogador: {item.player_name}
                           </Typography>
                         )}
+                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
+                          <InputLabel>Sexo</InputLabel>
+                          <Select
+                            value={item.sexo || 'Neutro'}
+                            label="Sexo"
+                            onChange={e => handleCartItemFieldChange(index, 'sexo', e.target.value)}
+                          >
+                            {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                          </Select>
+                        </FormControl>
+                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
+                          <InputLabel>Ano</InputLabel>
+                          <Select
+                            value={item.ano || '21/22'}
+                            label="Ano"
+                            onChange={e => handleCartItemFieldChange(index, 'ano', e.target.value)}
+                          >
+                            {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          label="Número"
+                          fullWidth
+                          margin="dense"
+                          value={item.numero || ''}
+                          onChange={e => handleCartItemFieldChange(index, 'numero', e.target.value)}
+                          sx={{ mt: 1 }}
+                        />
                       </Box>
                     </Box>
                     <IconButton

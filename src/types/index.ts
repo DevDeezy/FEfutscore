@@ -22,6 +22,9 @@ export interface OrderItem {
   shirt_type_id?: number;
   shirt_type_name?: string;
   id: string;
+  sexo?: string;
+  ano?: string;
+  numero?: string;
 }
 
 export interface Order {

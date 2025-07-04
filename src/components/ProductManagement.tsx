@@ -37,6 +37,8 @@ const ProductManagement = () => {
   const [newProductTypeBase, setNewProductTypeBase] = useState('tshirt');
 
   const [openProductDialog, setOpenProductDialog] = useState(false);
+  const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
+  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -45,6 +47,9 @@ const ProductManagement = () => {
     base_type: 'tshirt',
     available_sizes: '',
     product_type_id: '',
+    sexo: 'Neutro',
+    ano: '21/22',
+    numero: '',
   });
 
   useEffect(() => {
@@ -108,6 +113,9 @@ const ProductManagement = () => {
         price: Number(newProduct.price),
         product_type_id: Number(newProduct.product_type_id),
         available_sizes: newProduct.available_sizes.split(',').map(s => s.trim()),
+        sexo: newProduct.sexo,
+        ano: newProduct.ano,
+        numero: newProduct.numero,
       });
       setOpenProductDialog(false);
       setNewProduct({
@@ -118,6 +126,9 @@ const ProductManagement = () => {
         base_type: 'tshirt',
         available_sizes: '',
         product_type_id: '',
+        sexo: 'Neutro',
+        ano: '21/22',
+        numero: '',
       });
       fetchProducts();
     } catch (err) {
@@ -291,6 +302,33 @@ const ProductManagement = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Sexo</InputLabel>
+            <Select
+              value={newProduct.sexo}
+              label="Sexo"
+              onChange={e => setNewProduct({ ...newProduct, sexo: e.target.value })}
+            >
+              {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Ano</InputLabel>
+            <Select
+              value={newProduct.ano}
+              label="Ano"
+              onChange={e => setNewProduct({ ...newProduct, ano: e.target.value })}
+            >
+              {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Número"
+            fullWidth
+            margin="normal"
+            value={newProduct.numero}
+            onChange={e => setNewProduct({ ...newProduct, numero: e.target.value })}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenProductDialog(false)}>Cancelar</Button>
