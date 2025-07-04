@@ -48,7 +48,7 @@ const ProductManagement = () => {
     available_sizes: '',
     product_type_id: '',
     sexo: 'Neutro',
-    ano: '21/22',
+    ano: '25/26',
     numero: '',
   });
 
@@ -127,7 +127,7 @@ const ProductManagement = () => {
         available_sizes: '',
         product_type_id: '',
         sexo: 'Neutro',
-        ano: '21/22',
+        ano: '25/26',
         numero: '',
       });
       fetchProducts();

@@ -45,7 +45,7 @@ const OrderForm = () => {
     shirt_type_id: undefined,
     shirt_type_name: '',
     sexo: 'Neutro',
-    ano: '21/22',
+    ano: '25/26',
     numero: '',
     patch_images: [],
   });
@@ -118,7 +118,7 @@ const OrderForm = () => {
         shirt_type_id: undefined,
         shirt_type_name: '',
         sexo: 'Neutro',
-        ano: '21/22',
+        ano: '25/26',
         numero: '',
         patch_images: [],
       });
