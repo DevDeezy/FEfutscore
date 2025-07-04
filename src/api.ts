@@ -1,6 +1,6 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://befutscore.netlify.app'; 
-
 import axios from 'axios';
+
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://befutscore.netlify.app'; 
 
 // Address API
 export async function fetchAddresses(userId: number) {
