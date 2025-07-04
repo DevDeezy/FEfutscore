@@ -32,7 +32,7 @@ import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import AddressManager from '../components/AddressManager';
-import { CheckIcon } from '@mui/icons-material';
+import Check from '@mui/icons-material/Check';
 
 const initialAddress = {
   nome: '',
@@ -270,7 +270,7 @@ const Cart = () => {
                                   variant="contained"
                                   size="small"
                                   onClick={() => handleUseAddress(addr)}
-                                  startIcon={<CheckIcon />}
+                                  startIcon={<Check />}
                                 >
                                   Usar
                                 </Button>
