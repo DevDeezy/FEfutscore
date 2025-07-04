@@ -20,7 +20,7 @@ import Footer from './components/Footer';
 import ChangePassword from './pages/ChangePassword';
 import Store from './pages/Store';
 import Addresses from './pages/Addresses';
-import PreviousOrders from './pages/PreviousOrders';
+import PreviousOrders from './components/PreviousOrders';
 
 const fontLink = document.createElement('link');
 fontLink.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap';
