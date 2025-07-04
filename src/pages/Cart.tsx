@@ -15,6 +15,10 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -28,6 +32,7 @@ import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import AddressManager from '../components/AddressManager';
+import { CheckIcon } from '@mui/icons-material';
 
 const initialAddress = {
   nome: '',
@@ -148,6 +153,18 @@ const Cart = () => {
     fetchCartPrice();
   }, [items]);
 
+  // Fetch addresses on mount if user exists
+  useEffect(() => {
+    if (user) {
+      dispatch(getAddresses(user.id));
+    }
+  }, [dispatch, user]);
+
+  // Handler to use a saved address to fill the manual form
+  const handleUseAddress = (addr: any) => {
+    setAddress(addr);
+  };
+
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
       <Paper sx={{ p: 3 }}>
@@ -231,41 +248,82 @@ const Cart = () => {
               </ToggleButtonGroup>
 
               {addressMode === 'manual' ? (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="Nome" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
+                <>
+                  {/* List of saved addresses to use for autofill */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                      Usar uma morada guardada:
+                    </Typography>
+                    {addresses.length === 0 ? (
+                      <Typography variant="body2">Nenhuma morada guardada.</Typography>
+                    ) : (
+                      <List>
+                        {addresses.map((addr: any) => (
+                          <Paper key={addr.id} sx={{ mb: 1, p: 1 }}>
+                            <ListItem disablePadding>
+                              <ListItemText
+                                primary={addr.nome}
+                                secondary={`${addr.morada}, ${addr.cidade}, ${addr.distrito}, ${addr.codigoPostal}, ${addr.pais} - ${addr.telemovel}`}
+                              />
+                              <ListItemSecondaryAction>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() => handleUseAddress(addr)}
+                                  startIcon={<CheckIcon />}
+                                >
+                                  Usar
+                                </Button>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                          </Paper>
+                        ))}
+                      </List>
+                    )}
+                  </Box>
+                  {/* Manual address form */}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Nome" name="nome" fullWidth required value={address.nome} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Telemóvel" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField label="Morada" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Cidade" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Distrito" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="Código Postal" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField label="País" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="Telemóvel" name="telemovel" fullWidth required value={address.telemovel} onChange={handleAddressChange} />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField label="Morada" name="morada" fullWidth required value={address.morada} onChange={handleAddressChange} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="Cidade" name="cidade" fullWidth required value={address.cidade} onChange={handleAddressChange} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="Distrito" name="distrito" fullWidth required value={address.distrito} onChange={handleAddressChange} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="Código Postal" name="codigoPostal" fullWidth required value={address.codigoPostal} onChange={handleAddressChange} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField label="País" name="pais" fullWidth required value={address.pais} onChange={handleAddressChange} />
-                  </Grid>
-                </Grid>
+                </>
               ) : (
+                // In saved mode, just show the list of addresses (no edit, no add, no delete)
                 <Box>
-                  {user && (
-                    <AddressManager 
-                      userId={user.id} 
-                      onSelect={handleSelectAddress}
-                    />
-                  )}
-                  {selectedAddress && (
-                    <Alert severity="success" sx={{ mt: 2 }}>
-                      Morada selecionada: {selectedAddress.nome} - {selectedAddress.morada}, {selectedAddress.cidade}
-                    </Alert>
+                  {addresses.length === 0 ? (
+                    <Typography variant="body2">Nenhuma morada guardada.</Typography>
+                  ) : (
+                    <List>
+                      {addresses.map((addr: any) => (
+                        <Paper key={addr.id} sx={{ mb: 1, p: 1 }}>
+                          <ListItem disablePadding>
+                            <ListItemText
+                              primary={addr.nome}
+                              secondary={`${addr.morada}, ${addr.cidade}, ${addr.distrito}, ${addr.codigoPostal}, ${addr.pais} - ${addr.telemovel}`}
+                            />
+                          </ListItem>
+                        </Paper>
+                      ))}
+                    </List>
                   )}
                 </Box>
               )}
