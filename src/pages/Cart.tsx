@@ -54,6 +54,7 @@ const Cart = () => {
   const [selectedAddress, setSelectedAddress] = useState<any>(null);
   const [addressMode, setAddressMode] = useState<'manual' | 'saved'>('manual');
   const [proofImage, setProofImage] = useState<string>('');
+  const [proofReference, setProofReference] = useState<string>('');
   const [proofError, setProofError] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
   const [cartPrice, setCartPrice] = useState<number | null>(null);
@@ -114,8 +115,13 @@ const Cart = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleReferenceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProofReference(e.target.value);
+  };
+
+  const proofProvided = !!proofImage || proofReference.trim() !== '';
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-  const canPlaceOrder = items.length > 0 && allFieldsFilled && !!proofImage;
+  const canPlaceOrder = items.length > 0 && allFieldsFilled && proofProvided;
 
   const getBackendItems = (items: any[]) =>
     items.map((item) =>
@@ -126,11 +132,11 @@ const Cart = () => {
 
   const handleSubmitOrder = async () => {
     if (canPlaceOrder && user) {
-      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage } }));
+      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage, proofReference } }));
       dispatch(clearCart());
       setAddress(initialAddress);
-      setSelectedAddress(null);
       setProofImage('');
+      setProofReference('');
       navigate('/');
     }
   };
@@ -346,6 +352,14 @@ const Cart = () => {
                   />
                 </Box>
               )}
+              <TextField
+                label="Referência do Comprovativo"
+                fullWidth
+                value={proofReference}
+                onChange={handleReferenceChange}
+                sx={{ mt: 2 }}
+                placeholder="Insira a referência do comprovativo se não anexar imagem"
+              />
             </Box>
             {cartPrice !== null && (
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
