@@ -252,23 +252,6 @@ const OrderForm = () => {
                 {currentItem.image_front && <Box component="img" src={currentItem.image_front} alt="preview frente" sx={{ height: 100, marginLeft: 16 }} />}
             </Grid>
 
-            {currentItem.product_type === 'tshirt' && (
-                <Grid item xs={12} sm={6}>
-                    <Button variant="outlined" component="label">
-                        Carregar Imagem de Trás
-                        <Box
-                            component="input"
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            ref={imageBackInputRef}
-                            onChange={(e) => handleImageChange(e, 'back')}
-                        />
-                    </Button>
-                    {currentItem.image_back && <Box component="img" src={currentItem.image_back} alt="preview trás" sx={{ height: 100, marginLeft: 16 }} />}
-              </Grid>
-            )}
-
             <Grid item xs={12} sm={6}>
               <Button variant="outlined" component="label">
                 Carregar Imagem do Patch

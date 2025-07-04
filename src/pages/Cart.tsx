@@ -268,34 +268,15 @@ const Cart = () => {
                           </Box>
                         )}
                         {/* END PATCH IMAGES SECTION */}
-                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
-                          <InputLabel>Sexo</InputLabel>
-                          <Select
-                            value={item.sexo || 'Neutro'}
-                            label="Sexo"
-                            onChange={e => handleCartItemFieldChange(index, 'sexo', e.target.value)}
-                          >
-                            {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-                          </Select>
-                        </FormControl>
-                        <FormControl fullWidth margin="dense" sx={{ mt: 1 }}>
-                          <InputLabel>Ano</InputLabel>
-                          <Select
-                            value={item.ano || '21/22'}
-                            label="Ano"
-                            onChange={e => handleCartItemFieldChange(index, 'ano', e.target.value)}
-                          >
-                            {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-                          </Select>
-                        </FormControl>
-                        <TextField
-                          label="Número"
-                          fullWidth
-                          margin="dense"
-                          value={item.numero || ''}
-                          onChange={e => handleCartItemFieldChange(index, 'numero', e.target.value)}
-                          sx={{ mt: 1 }}
-                        />
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          Sexo: {item.sexo || 'Neutro'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Ano: {item.ano || '21/22'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Número: {item.numero || '-'}
+                        </Typography>
                       </Box>
                     </Box>
                     <IconButton
