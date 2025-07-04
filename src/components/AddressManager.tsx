@@ -66,6 +66,13 @@ const AddressManager = ({ userId, onSelect }: { userId: number, onSelect?: (addr
     dispatch(removeAddress({ id, userId }));
   };
 
+  const handleSelect = (address: any) => {
+    // In select mode, fill the form for editing (like pencil)
+    setEditing(address);
+    setForm(address);
+    if (onSelect) onSelect(address);
+  };
+
   const handleCancel = () => {
     setEditing(null);
     setForm({ 
@@ -114,31 +121,34 @@ const AddressManager = ({ userId, onSelect }: { userId: number, onSelect?: (addr
                 secondary={`${address.morada}, ${address.cidade}, ${address.distrito}, ${address.codigoPostal}, ${address.pais} - ${address.telemovel}`}
               />
               <ListItemSecondaryAction>
-                <IconButton 
-                  edge="end" 
-                  aria-label="edit" 
-                  onClick={() => handleEdit(address)}
-                  sx={{ mr: 1 }}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton 
-                  edge="end" 
-                  aria-label="delete" 
-                  onClick={() => handleDelete(address.id)}
-                  sx={{ mr: 1 }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-                {onSelect && (
+                {onSelect ? (
                   <Button
                     variant="contained"
                     size="small"
-                    onClick={() => onSelect(address)}
+                    onClick={() => handleSelect(address)}
                     startIcon={<CheckIcon />}
                   >
                     Usar
                   </Button>
+                ) : (
+                  <>
+                    <IconButton 
+                      edge="end" 
+                      aria-label="edit" 
+                      onClick={() => handleEdit(address)}
+                      sx={{ mr: 1 }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton 
+                      edge="end" 
+                      aria-label="delete" 
+                      onClick={() => handleDelete(address.id)}
+                      sx={{ mr: 1 }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </>
                 )}
               </ListItemSecondaryAction>
             </ListItem>
