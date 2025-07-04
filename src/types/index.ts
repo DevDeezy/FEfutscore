@@ -30,7 +30,7 @@ export interface Order {
   user?: { email: string };
   items: OrderItem[];
   total_price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento';
   created_at: string;
   address_nome: string;
   address_morada: string;

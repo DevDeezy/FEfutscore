@@ -81,6 +81,9 @@ const AdminPanel = () => {
 
   const fullScreenDialog = useMediaQuery(theme.breakpoints.down('md'));
 
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [exporting, setExporting] = useState(false);
+
   // Fetch orders, users, and packs on mount
   useEffect(() => {
     dispatch(fetchOrders());
@@ -271,27 +274,42 @@ const AdminPanel = () => {
     }
   };
 
-  // Export orders to Excel (call backend endpoint and download file)
+  // Add to CSV handler
+  const handleAddToCSV = async (orderId: string) => {
+    try {
+      await dispatch(updateOrderStatus({ orderId, status: 'CSV' }));
+      dispatch(fetchOrders());
+    } catch (err) {
+      alert('Falha ao marcar encomenda para CSV');
+    }
+  };
+
+  // Export only orders with status 'CSV'
   const handleExportOrders = async () => {
-    if (orders.length === 0) {
-      alert('Não há encomendas para exportar.');
+    const csvOrders = orders.filter((o) => o.status === 'CSV');
+    if (csvOrders.length === 0) {
+      alert('Não há encomendas marcadas para exportar.');
       return;
     }
+    setExporting(true);
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_BASE_URL}/.netlify/functions/exportorders`,
-        { orders },
+        { orders: csvOrders },
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob',
         }
       );
       saveAs(new Blob([response.data]), 'encomendas.xlsx');
+      // After export, refresh orders (their status will be updated by backend)
+      dispatch(fetchOrders());
     } catch (err) {
       console.error('Error exporting orders:', err);
       alert('Falha ao exportar encomendas. Veja a consola para mais detalhes.');
     }
+    setExporting(false);
   };
 
   // Shirt Types
@@ -360,6 +378,9 @@ const AdminPanel = () => {
     setOpenOrderDialog(true);
   };
 
+  // Filtered orders
+  const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Typography variant="h4" gutterBottom>
@@ -387,7 +408,26 @@ const AdminPanel = () => {
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Todos os Pedidos</Typography>
-              <Button variant="contained" onClick={handleExportOrders} sx={{ mt: isMobile ? 2 : 0 }}>Exportar para CSV</Button>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Filtrar por Estado</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    label="Filtrar por Estado"
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <MenuItem value="all">Todos</MenuItem>
+                    <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="CSV">CSV</MenuItem>
+                    <MenuItem value="Em Processamento">Em Processamento</MenuItem>
+                    <MenuItem value="completed">Concluída</MenuItem>
+                    <MenuItem value="cancelled">Cancelada</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button variant="contained" onClick={handleExportOrders} sx={{ mt: isMobile ? 2 : 0 }} disabled={exporting}>
+                  Exportar para CSV
+                </Button>
+              </Box>
             </Box>
             <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
@@ -402,11 +442,11 @@ const AdminPanel = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {orders.map((order) => (
+                  {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                        <TableCell>{order.id}</TableCell>
+                      <TableCell>{order.id}</TableCell>
                       <TableCell>{order.user?.email}</TableCell>
-                        <TableCell>
+                      <TableCell>
                         <Typography
                           component="span"
                           style={{
@@ -416,26 +456,34 @@ const AdminPanel = () => {
                             backgroundColor:
                               order.status === 'pending'
                                 ? 'orange'
-                                : order.status === 'processing'
+                                : order.status === 'Em Processamento'
                                 ? 'blue'
                                 : order.status === 'completed'
                                 ? 'green'
+                                : order.status === 'CSV'
+                                ? 'brown'
                                 : 'red',
                           }}
                         >
                           {order.status === 'pending' ? 'Pendente' :
-                           order.status === 'processing' ? 'Em Processamento' :
-                           order.status === 'completed' ? 'Concluída' :
-                           order.status === 'cancelled' ? 'Cancelada' :
-                           order.status}
+                            order.status === 'Em Processamento' ? 'Em Processamento' :
+                            order.status === 'completed' ? 'Concluída' :
+                            order.status === 'CSV' ? 'CSV' :
+                            order.status === 'cancelled' ? 'Cancelada' :
+                            order.status}
                         </Typography>
                       </TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                       <TableCell>€{order.total_price.toFixed(2)}</TableCell>
-                        <TableCell>
-                        <Button onClick={() => handleOpenOrderDialog(order)}>
+                      <TableCell>
+                        <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
+                        </Button>
+                        {order.status !== 'CSV' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                          <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined">
+                            Adicionar ao CSV
                           </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
