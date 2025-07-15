@@ -58,6 +58,14 @@ const OrderForm = () => {
   const [shirtTypes, setShirtTypes] = useState<ShirtType[]>([]);
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
+  const [anoInput, setAnoInput] = useState('');
+  const getFormattedAno = (input: string) => {
+    if (!/^[0-9]{2}$/.test(input)) return '';
+    const first = input;
+    let second = (parseInt(first, 10) + 1).toString().padStart(2, '0');
+    if (first === '99') second = '00';
+    return `${first}/${second}`;
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
     const file = e.target.files?.[0];
@@ -179,18 +187,24 @@ const OrderForm = () => {
             </Grid>
             {/* Ano */}
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Ano</InputLabel>
-                <Select
-                  value={currentItem.ano}
-                  label="Ano"
-                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, ano: e.target.value })}
-                >
-                  {anoOptions.map((ano) => (
-                    <MenuItem key={ano} value={ano}>{ano}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                label="Ano"
+                value={currentItem.ano}
+                onChange={e => {
+                  let val = e.target.value.replace(/[^0-9]/g, '');
+                  if (val.length > 2) val = val.slice(0, 2);
+                  let formatted = val;
+                  if (val.length === 2) {
+                    let second = (parseInt(val, 10) + 1).toString().padStart(2, '0');
+                    if (val === '99') second = '00';
+                    formatted = `${val}/${second}`;
+                  }
+                  setCurrentItem({ ...currentItem, ano: formatted });
+                }}
+                inputProps={{ maxLength: 5 }}
+                fullWidth
+                placeholder="25/26"
+              />
             </Grid>
             {/* Tipo de Camisola */}
             <Grid item xs={12} sm={6}>

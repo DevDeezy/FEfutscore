@@ -221,15 +221,23 @@ const Store = () => {
                 </Select>
               </FormControl>
               <TextField
-                label="Ano (2 dígitos)"
-                value={anoInput}
+                label="Ano"
+                value={getFormattedAno(anoInput)}
                 onChange={e => {
-                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+                  let val = e.target.value.replace(/[^0-9]/g, '');
+                  if (val.length > 2) val = val.slice(0, 2);
+                  let formatted = val;
+                  if (val.length === 2) {
+                    let second = (parseInt(val, 10) + 1).toString().padStart(2, '0');
+                    if (val === '99') second = '00';
+                    formatted = `${val}/${second}`;
+                  }
                   setAnoInput(val);
                 }}
+                inputProps={{ maxLength: 5 }}
+                fullWidth
+                placeholder="25/26"
                 sx={{ mt: 2 }}
-                inputProps={{ maxLength: 2 }}
-                helperText={getFormattedAno(anoInput) ? `Ano salvo: ${getFormattedAno(anoInput)}` : 'Ex: 25 vira 25/26'}
               />
               <TextField
                 label="Nome do Jogador (Opcional)"
