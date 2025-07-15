@@ -12,7 +12,7 @@ const initialState: OrderState = {
 
 export const createOrder = createAsyncThunk(
   'order/create',
-  async (orderData: { userId: number; items: any[]; address: any }) => {
+  async (orderData: { userId: number; items: any[]; address: any; paymentMethod?: string }) => {
     const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createorder`, orderData, {
       headers: {
         'Content-Type': 'application/json',

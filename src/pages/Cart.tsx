@@ -65,6 +65,7 @@ const Cart = () => {
   const [proofError, setProofError] = useState<string | null>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
   const [cartPrice, setCartPrice] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState('Revolut');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -139,11 +140,12 @@ const Cart = () => {
 
   const handleSubmitOrder = async () => {
     if (canPlaceOrder && user) {
-      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage, proofReference } }));
+      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage, proofReference }, paymentMethod }));
       dispatch(clearCart());
       setAddress(initialAddress);
       setProofImage('');
       setProofReference('');
+      setPaymentMethod('Revolut');
       navigate('/');
     }
   };
@@ -235,6 +237,18 @@ const Cart = () => {
                         <Typography variant="body2" color="text.secondary">
                           Quantidade: {item.quantity}
                         </Typography>
+                        {/* Price per item */}
+                        {typeof item.price === 'number' && (
+                          <Typography variant="body2" color="text.secondary">
+                            Preço unitário: €{item.price.toFixed(2)}
+                          </Typography>
+                        )}
+                        {/* Subtotal for this item */}
+                        {typeof item.price === 'number' && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                            Subtotal: €{(item.price * item.quantity).toFixed(2)}
+                          </Typography>
+                        )}
                         {item.player_name && (
                           <Typography variant="body2" color="text.secondary">
                             Nome do Jogador: {item.player_name}
@@ -380,6 +394,20 @@ const Cart = () => {
 
             <Box sx={{ mt: 4 }}>
               <Typography variant="h6" gutterBottom>Comprovativo de Pagamento</Typography>
+              {/* Payment Method Selection */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="payment-method-label">Método de Pagamento</InputLabel>
+                <Select
+                  labelId="payment-method-label"
+                  value={paymentMethod}
+                  label="Método de Pagamento"
+                  onChange={e => setPaymentMethod(e.target.value)}
+                >
+                  <MenuItem value="Revolut">Revolut</MenuItem>
+                  <MenuItem value="PayPal">PayPal</MenuItem>
+                  <MenuItem value="Bank Transfer">Transferência Bancária</MenuItem>
+                </Select>
+              </FormControl>
               <Button
                 variant="contained"
                 component="label"
