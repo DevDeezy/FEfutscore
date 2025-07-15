@@ -14,6 +14,7 @@ import {
   Alert,
   CircularProgress,
   SelectChangeEvent,
+  Checkbox,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice';
@@ -48,6 +49,7 @@ const OrderForm = () => {
     ano: '25/26',
     numero: '',
     patch_images: [],
+    anuncios: false,
   });
   const [error, setError] = useState<string | null>(null);
   const imageFrontInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +131,7 @@ const OrderForm = () => {
       ano: '25/26',
       numero: '',
       patch_images: [],
+      anuncios: false,
     });
     alert('Item adicionado ao carrinho!');
   };
@@ -159,64 +162,84 @@ const OrderForm = () => {
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3}>
+            {/* Carregar Imagem da Frente */}
             <Grid item xs={12}>
+              <Button variant="outlined" component="label">
+                Carregar Imagem da Frente
+                <Box
+                  component="input"
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  ref={imageFrontInputRef}
+                  onChange={(e) => handleImageChange(e, 'front')}
+                />
+              </Button>
+              {currentItem.image_front && <Box component="img" src={currentItem.image_front} alt="preview frente" sx={{ height: 100, marginLeft: 16 }} />}
+            </Grid>
+            {/* Ano */}
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Tipo de Produto</InputLabel>
+                <InputLabel>Ano</InputLabel>
                 <Select
-                  value={currentItem.product_type}
-                  label="Tipo de Produto"
-                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, product_type: e.target.value as 'tshirt' | 'shoes' })}
+                  value={currentItem.ano}
+                  label="Ano"
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, ano: e.target.value })}
                 >
-                  <MenuItem value="tshirt">Camisola</MenuItem>
-                  <MenuItem value="shoes">Sapatilhas</MenuItem>
+                  {anoOptions.map((ano) => (
+                    <MenuItem key={ano} value={ano}>{ano}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
-
-            {currentItem.product_type === 'tshirt' && (
-              <>
-                <Grid item xs={12} sm={6}>
-                <TextField
-                    label="Nome do Jogador (Opcional)"
-                fullWidth
-                value={currentItem.player_name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, player_name: e.target.value })}
-              />
+            {/* Tipo de Camisola */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Tipo de Camisola</InputLabel>
+                <Select
+                  value={currentItem.shirt_type_id?.toString() ?? ''}
+                  label="Tipo de Camisola"
+                  onChange={(e: SelectChangeEvent) => {
+                    const selectedId = Number(e.target.value);
+                    const selected = shirtTypes.find((t) => t.id === selectedId);
+                    setCurrentItem({
+                      ...currentItem,
+                      shirt_type_id: selected?.id,
+                      shirt_type_name: selected?.name,
+                    });
+                  }}
+                  disabled={shirtTypesLoading || shirtTypesError !== null}
+                >
+                  {shirtTypesLoading ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} />
+                    </MenuItem>
+                  ) : (
+                    shirtTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id.toString()}>
+                        {type.name}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
             </Grid>
-                <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Tipo de Camisola</InputLabel>
-                  <Select
-                      value={currentItem.shirt_type_id?.toString() ?? ''}
-                    label="Tipo de Camisola"
-                      onChange={(e: SelectChangeEvent) => {
-                        const selectedId = Number(e.target.value);
-                        const selected = shirtTypes.find((t) => t.id === selectedId);
-                      setCurrentItem({
-                        ...currentItem,
-                        shirt_type_id: selected?.id,
-                        shirt_type_name: selected?.name,
-                      });
-                    }}
-                    disabled={shirtTypesLoading || shirtTypesError !== null}
-                  >
-                      {shirtTypesLoading ? (
-                        <MenuItem value="">
-                          <CircularProgress size={20} />
-                        </MenuItem>
-                      ) : (
-                        shirtTypes.map((type) => (
-                          <MenuItem key={type.id} value={type.id.toString()}>
-                            {type.name}
-                          </MenuItem>
-                        ))
-                      )}
-                  </Select>
-                </FormControl>
-              </Grid>
-              </>
-            )}
-
+            {/* Sexo */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Sexo</InputLabel>
+                <Select
+                  value={currentItem.sexo}
+                  label="Sexo"
+                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, sexo: e.target.value })}
+                >
+                  {sexoOptions.map((sexo) => (
+                    <MenuItem key={sexo} value={sexo}>{sexo}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            {/* Tamanho */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Tamanho</InputLabel>
@@ -233,7 +256,7 @@ const OrderForm = () => {
                 </Select>
               </FormControl>
             </Grid>
-
+            {/* Quantidade */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Quantidade"
@@ -242,25 +265,37 @@ const OrderForm = () => {
                 value={currentItem.quantity}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, quantity: parseInt(e.target.value, 10) })}
                 InputProps={{ inputProps: { min: 1 } }}
-                  />
+              />
             </Grid>
-            
-              <Grid item xs={12} sm={6}>
-                <Button variant="outlined" component="label">
-                  Carregar Imagem da Frente
-                  <Box
-                    component="input"
-                    type="file"
-                    hidden
-                    accept="image/*"
-                    ref={imageFrontInputRef}
-                    onChange={(e) => handleImageChange(e, 'front')}
-                  />
-                </Button>
-                {currentItem.image_front && <Box component="img" src={currentItem.image_front} alt="preview frente" sx={{ height: 100, marginLeft: 16 }} />}
-            </Grid>
-
+            {/* Personalização: Nome e Número */}
             <Grid item xs={12} sm={6}>
+              <TextField
+                label="Nome do Jogador (Opcional)"
+                fullWidth
+                value={currentItem.player_name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, player_name: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Número (Opcional)"
+                fullWidth
+                value={currentItem.numero}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, numero: e.target.value })}
+              />
+            </Grid>
+            {/* Anúncios */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Checkbox
+                  checked={!!currentItem.anuncios}
+                  onChange={e => setCurrentItem({ ...currentItem, anuncios: e.target.checked })}
+                />
+                <Typography>Com Anúncios</Typography>
+              </Box>
+            </Grid>
+            {/* Patches */}
+            <Grid item xs={12}>
               <Button variant="outlined" component="label">
                 Carregar Imagem do Patch
                 <Box
@@ -288,41 +323,6 @@ const OrderForm = () => {
                   </Box>
                 ))}
               </Box>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Sexo</InputLabel>
-                <Select
-                  value={currentItem.sexo || 'Neutro'}
-                  label="Sexo"
-                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, sexo: e.target.value })}
-                >
-                  {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Ano</InputLabel>
-                <Select
-                  value={currentItem.ano || '21/22'}
-                  label="Ano"
-                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, ano: e.target.value })}
-                >
-                  {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Número"
-                fullWidth
-                value={currentItem.numero || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentItem({ ...currentItem, numero: e.target.value })}
-              />
             </Grid>
 
             <Grid item xs={12}>

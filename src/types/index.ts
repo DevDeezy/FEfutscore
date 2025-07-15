@@ -26,6 +26,7 @@ export interface OrderItem {
   ano?: string;
   numero?: string;
   patch_images?: string[];
+  anuncios?: boolean;
 }
 
 export interface Order {
