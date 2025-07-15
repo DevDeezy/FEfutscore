@@ -47,6 +47,7 @@ const Store = () => {
   const [sexo, setSexo] = useState('Masculino');
   const [patchImages, setPatchImages] = useState<string[]>([]);
   const [anoInput, setAnoInput] = useState('');
+  const [anoLocked, setAnoLocked] = useState(false);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -67,6 +68,7 @@ const Store = () => {
     setSexo('Masculino');
     setPatchImages([]);
     setAnoInput('');
+    setAnoLocked(false);
     setOpenDialog(true);
   };
 
@@ -222,22 +224,26 @@ const Store = () => {
               </FormControl>
               <TextField
                 label="Ano"
-                value={getFormattedAno(anoInput)}
+                value={anoLocked ? getFormattedAno(anoInput) : anoInput}
                 onChange={e => {
                   let val = e.target.value.replace(/[^0-9]/g, '');
-                  if (val.length > 2) val = val.slice(0, 2);
-                  let formatted = val;
-                  if (val.length === 2) {
-                    let second = (parseInt(val, 10) + 1).toString().padStart(2, '0');
-                    if (val === '99') second = '00';
-                    formatted = `${val}/${second}`;
+                  if (!anoLocked) {
+                    if (val.length > 2) val = val.slice(0, 2);
+                    setAnoInput(val);
+                    if (val.length === 2) setAnoLocked(true);
+                  } else {
+                    // If user deletes, unlock
+                    if (val.length < 2) {
+                      setAnoLocked(false);
+                      setAnoInput(val);
+                    }
                   }
-                  setAnoInput(val);
                 }}
-                inputProps={{ maxLength: 5 }}
+                inputProps={{ maxLength: anoLocked ? 5 : 2 }}
                 fullWidth
-                placeholder="25/26"
+                placeholder="25"
                 sx={{ mt: 2 }}
+                onFocus={() => { if (anoLocked) setAnoLocked(false); }}
               />
               <TextField
                 label="Nome do Jogador (Opcional)"
