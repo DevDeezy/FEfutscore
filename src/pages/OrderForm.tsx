@@ -105,23 +105,31 @@ const OrderForm = () => {
       setError('Precisa de estar autenticado para adicionar ao carrinho.');
       return;
     }
-      dispatch(addToCart(currentItem));
+    // Set price for custom t-shirt from selected shirt type
+    let itemToAdd = { ...currentItem };
+    if (itemToAdd.product_type === 'tshirt' && itemToAdd.shirt_type_id) {
+      const selectedType = shirtTypes.find((t) => t.id === itemToAdd.shirt_type_id);
+      if (selectedType) {
+        itemToAdd.price = selectedType.price;
+      }
+    }
+    dispatch(addToCart(itemToAdd));
     // Reset form after submission
-      setCurrentItem({
+    setCurrentItem({
       id: '',
-        product_type: 'tshirt',
-        image_front: '',
-        image_back: '',
+      product_type: 'tshirt',
+      image_front: '',
+      image_back: '',
       size: 'S',
       quantity: 1,
-        player_name: '',
-        shirt_type_id: undefined,
-        shirt_type_name: '',
-        sexo: 'Neutro',
-        ano: '25/26',
-        numero: '',
-        patch_images: [],
-      });
+      player_name: '',
+      shirt_type_id: undefined,
+      shirt_type_name: '',
+      sexo: 'Neutro',
+      ano: '25/26',
+      numero: '',
+      patch_images: [],
+    });
     alert('Item adicionado ao carrinho!');
   };
 

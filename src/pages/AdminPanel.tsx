@@ -26,6 +26,7 @@ import {
   Alert,
   useTheme,
   useMediaQuery,
+  Checkbox,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -83,6 +84,35 @@ const AdminPanel = () => {
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [exporting, setExporting] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<
+    'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | ''
+  >('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrderIds((prev) =>
+      prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
+    );
+  };
+  const handleSelectAllOrders = (checked: boolean) => {
+    setSelectedOrderIds(checked ? filteredOrders.map((o) => o.id) : []);
+  };
+  const handleBulkStatusChange = (e: any) => setBulkStatus(e.target.value);
+  const handleApplyBulkStatus = async () => {
+    if (!bulkStatus || selectedOrderIds.length === 0) return;
+    setBulkLoading(true);
+    try {
+      for (const orderId of selectedOrderIds) {
+        await dispatch(updateOrderStatus({ orderId, status: bulkStatus }));
+      }
+      setSelectedOrderIds([]);
+      setBulkStatus('');
+      dispatch(fetchOrders());
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   // Fetch orders, users, and packs on mount
   useEffect(() => {
@@ -429,10 +459,47 @@ const AdminPanel = () => {
                 </Button>
               </Box>
             </Box>
+            {/* Bulk status update controls */}
+            {statusFilter === 'all' && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Alterar Estado Selecionados</InputLabel>
+                  <Select
+                    value={bulkStatus}
+                    label="Alterar Estado Selecionados"
+                    onChange={handleBulkStatusChange}
+                  >
+                    <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="processing">Em Processamento</MenuItem>
+                    <MenuItem value="completed">Concluída</MenuItem>
+                    <MenuItem value="cancelled">Cancelada</MenuItem>
+                    <MenuItem value="CSV">CSV</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  disabled={bulkLoading || !bulkStatus || selectedOrderIds.length === 0}
+                  onClick={handleApplyBulkStatus}
+                >
+                  {bulkLoading ? 'A atualizar...' : 'Aplicar Estado'}
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedOrderIds.length} selecionado(s)
+                </Typography>
+              </Box>
+            )}
             <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={selectedOrderIds.length > 0 && selectedOrderIds.length < filteredOrders.length}
+                        checked={filteredOrders.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                        onChange={e => handleSelectAllOrders(e.target.checked)}
+                      />
+                    </TableCell>
                     <TableCell>ID da Encomenda</TableCell>
                     <TableCell>Utilizador</TableCell>
                     <TableCell>Estado</TableCell>
@@ -443,7 +510,13 @@ const AdminPanel = () => {
                 </TableHead>
                 <TableBody>
                   {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
+                    <TableRow key={order.id} selected={selectedOrderIds.includes(order.id)}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedOrderIds.includes(order.id)}
+                          onChange={() => handleSelectOrder(order.id)}
+                        />
+                      </TableCell>
                       <TableCell>{order.id}</TableCell>
                       <TableCell>{order.user?.email}</TableCell>
                       <TableCell>
