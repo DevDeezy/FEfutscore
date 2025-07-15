@@ -43,6 +43,7 @@ const ProductManagement = () => {
     name: '',
     description: '',
     price: 0,
+    cost_price: 0,
     image_url: '',
     base_type: 'tshirt',
     available_sizes: '',
@@ -111,6 +112,7 @@ const ProductManagement = () => {
       await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, {
         ...newProduct,
         price: Number(newProduct.price),
+        cost_price: Number(newProduct.cost_price),
         product_type_id: Number(newProduct.product_type_id),
         available_sizes: newProduct.available_sizes.split(',').map(s => s.trim()),
         sexo: newProduct.sexo,
@@ -122,6 +124,7 @@ const ProductManagement = () => {
         name: '',
         description: '',
         price: 0,
+        cost_price: 0,
         image_url: '',
         base_type: 'tshirt',
         available_sizes: '',
@@ -196,6 +199,7 @@ const ProductManagement = () => {
               <TableCell>Tipo Base</TableCell>
               <TableCell>Tipo</TableCell>
               <TableCell>Preço</TableCell>
+              <TableCell>Preço Custo</TableCell>
               <TableCell>Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -206,6 +210,7 @@ const ProductManagement = () => {
                 <TableCell>{product.productType.base_type}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
+                <TableCell>€{product.cost_price ? product.cost_price.toFixed(2) : '-'}</TableCell>
                 <TableCell>
                   <Button color="error" onClick={() => handleDeleteProduct(product.id)}>
                     Apagar
@@ -275,6 +280,14 @@ const ProductManagement = () => {
             margin="normal"
             value={newProduct.price}
             onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
+          />
+          <TextField
+            label="Preço Custo"
+            type="number"
+            fullWidth
+            margin="normal"
+            value={newProduct.cost_price}
+            onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })}
           />
           <TextField
             label="URL da Imagem"

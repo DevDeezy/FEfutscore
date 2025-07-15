@@ -62,7 +62,8 @@ const AdminPanel = () => {
   const [packForm, setPackForm] = useState<Omit<Pack, 'id'>>({
     name: '',
     items: [{ product_type: 'tshirt', quantity: 1, shirt_type_id: 0, shirt_type_name: '' }],
-    price: 0
+    price: 0,
+    cost_price: 0,
   });
 
   // Order details dialog state
@@ -78,7 +79,7 @@ const AdminPanel = () => {
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
   const [openShirtTypeDialog, setOpenShirtTypeDialog] = useState(false);
   const [editingShirtType, setEditingShirtType] = useState<any | null>(null);
-  const [shirtTypeForm, setShirtTypeForm] = useState({ name: '', price: 0 });
+  const [shirtTypeForm, setShirtTypeForm] = useState({ name: '', price: 0, cost_price: 0 });
 
   const fullScreenDialog = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -205,13 +206,15 @@ const AdminPanel = () => {
       setPackForm({
         name: pack.name,
         items: pack.items,
-        price: pack.price
+        price: pack.price,
+        cost_price: pack.cost_price || 0,
       });
     } else {
       setPackForm({
         name: '',
         items: [{ product_type: 'tshirt', quantity: 1, shirt_type_id: 0, shirt_type_name: '' }],
-        price: 0
+        price: 0,
+        cost_price: 0,
       });
     }
     setOpenPackDialog(true);
@@ -361,7 +364,7 @@ const AdminPanel = () => {
 
   const handleOpenShirtTypeDialog = (shirtType: any | null = null) => {
     setEditingShirtType(shirtType);
-    setShirtTypeForm(shirtType ? { name: shirtType.name, price: shirtType.price } : { name: '', price: 0 });
+    setShirtTypeForm(shirtType ? { name: shirtType.name, price: shirtType.price, cost_price: shirtType.cost_price || 0 } : { name: '', price: 0, cost_price: 0 });
     setOpenShirtTypeDialog(true);
   };
 
@@ -652,6 +655,7 @@ const AdminPanel = () => {
                       <TableCell>Nome</TableCell>
                       <TableCell>Itens</TableCell>
                       <TableCell>Preço</TableCell>
+                      <TableCell>Preço Custo</TableCell>
                       <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
@@ -668,6 +672,7 @@ const AdminPanel = () => {
                           ))}
                         </TableCell>
                         <TableCell>€{pack.price.toFixed(2)}</TableCell>
+                        <TableCell>€{pack.cost_price ? pack.cost_price.toFixed(2) : '-'}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleOpenPackDialog(pack)} sx={{ mr: 1 }}>
                             Editar
@@ -699,6 +704,14 @@ const AdminPanel = () => {
                   margin="normal"
                   value={packForm.price}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackFormChange('price', Number(e.target.value))}
+                />
+                <TextField
+                  label="Preço Custo"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  value={packForm.cost_price}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePackFormChange('cost_price', Number(e.target.value))}
                 />
                 <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Itens</Typography>
                 {packForm.items.map((item, idx) => (
@@ -768,6 +781,7 @@ const AdminPanel = () => {
                     <TableRow>
                       <TableCell>Nome</TableCell>
                       <TableCell>Preço</TableCell>
+                      <TableCell>Preço Custo</TableCell>
                       <TableCell>Ações</TableCell>
                     </TableRow>
                   </TableHead>
@@ -776,6 +790,7 @@ const AdminPanel = () => {
                       <TableRow key={type.id}>
                         <TableCell>{type.name}</TableCell>
                         <TableCell>€{type.price.toFixed(2)}</TableCell>
+                        <TableCell>€{type.cost_price ? type.cost_price.toFixed(2) : '-'}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleOpenShirtTypeDialog(type)} sx={{ mr: 1 }}>
                             Editar
@@ -807,6 +822,14 @@ const AdminPanel = () => {
                   margin="normal"
                   value={shirtTypeForm.price}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShirtTypeForm({ ...shirtTypeForm, price: Number(e.target.value) })}
+                />
+                <TextField
+                  label="Preço Custo"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  value={shirtTypeForm.cost_price}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShirtTypeForm({ ...shirtTypeForm, cost_price: Number(e.target.value) })}
                 />
               </DialogContent>
               <DialogActions>

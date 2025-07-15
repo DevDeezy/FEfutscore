@@ -72,6 +72,7 @@ export interface Pack {
   name: string;
   items: PackItem[];
   price: number;
+  cost_price?: number;
   created_at?: string;
 }
 
@@ -79,6 +80,7 @@ export interface ProductType {
   id: number;
   name: string;
   base_type: string;
+  cost_price?: number;
 }
 
 export interface Product {
@@ -86,6 +88,7 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
+  cost_price?: number;
   image_url: string;
   available_sizes: string[];
   productType: ProductType;
