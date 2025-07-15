@@ -46,9 +46,18 @@ const Store = () => {
   const [playerNumber, setPlayerNumber] = useState('');
   const [sexo, setSexo] = useState('Masculino');
   const [patchImages, setPatchImages] = useState<string[]>([]);
+  const [anoInput, setAnoInput] = useState('');
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  const getFormattedAno = (input: string) => {
+    if (!/^[0-9]{2}$/.test(input)) return '';
+    const first = input;
+    let second = (parseInt(first, 10) + 1).toString().padStart(2, '0');
+    if (first === '99') second = '00';
+    return `${first}/${second}`;
+  };
 
   const handleOpenDialog = (product: any) => {
     setSelectedProduct(product);
@@ -57,6 +66,7 @@ const Store = () => {
     setPlayerNumber('');
     setSexo('Masculino');
     setPatchImages([]);
+    setAnoInput('');
     setOpenDialog(true);
   };
 
@@ -89,6 +99,7 @@ const Store = () => {
 
   const handleAddToCart = () => {
     if (!selectedProduct) return;
+    const ano = getFormattedAno(anoInput);
     const cartItem: OrderItem = {
       id: `${selectedProduct.id}-${size}`,
       product_id: selectedProduct.id,
@@ -102,6 +113,7 @@ const Store = () => {
       numero: playerNumber,
       sexo,
       patch_images: patchImages,
+      ano,
     };
     dispatch(addToCart(cartItem));
     handleCloseDialog();
@@ -208,6 +220,17 @@ const Store = () => {
                   <MenuItem value="Feminino">Feminino</MenuItem>
                 </Select>
               </FormControl>
+              <TextField
+                label="Ano (2 dígitos)"
+                value={anoInput}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 2);
+                  setAnoInput(val);
+                }}
+                sx={{ mt: 2 }}
+                inputProps={{ maxLength: 2 }}
+                helperText={getFormattedAno(anoInput) ? `Ano salvo: ${getFormattedAno(anoInput)}` : 'Ex: 25 vira 25/26'}
+              />
               <TextField
                 label="Nome do Jogador (Opcional)"
                 fullWidth
