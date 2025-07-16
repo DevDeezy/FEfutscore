@@ -7,6 +7,7 @@ export interface User {
   created_at: string;
   token: string;
   password_reset_required?: boolean;
+  instagramName?: string;
 }
 
 export interface OrderItem {
@@ -32,7 +33,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   user_id: string;
-  user?: { email: string };
+  user?: { email: string; instagramName?: string };
   items: OrderItem[];
   total_price: number;
   status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento';

@@ -521,7 +521,7 @@ const AdminPanel = () => {
                         />
                       </TableCell>
                       <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.user?.email}</TableCell>
+                      <TableCell>{order.user?.email}${order.user?.instagramName ? ' (' + order.user.instagramName + ')' : ''}</TableCell>
                       <TableCell>
                         <Typography
                           component="span"
