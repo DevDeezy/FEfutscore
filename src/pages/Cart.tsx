@@ -408,6 +408,21 @@ const Cart = () => {
                   <MenuItem value="Bank Transfer">Transferência Bancária</MenuItem>
                 </Select>
               </FormControl>
+              {paymentMethod === 'Revolut' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Envie o pagamento para o número Revolut: <b>+351 912 345 678</b>
+                </Alert>
+              )}
+              {paymentMethod === 'PayPal' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Envie o pagamento para o email PayPal: <b>pagamentos@futscore.com</b>
+                </Alert>
+              )}
+              {paymentMethod === 'Bank Transfer' && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Envie o pagamento para o IBAN: <b>PT50 0002 0123 1234 5678 9015 4</b>
+                </Alert>
+              )}
               <Button
                 variant="contained"
                 component="label"
