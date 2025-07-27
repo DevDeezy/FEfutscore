@@ -36,7 +36,7 @@ export interface Order {
   user?: { email: string; instagramName?: string };
   items: OrderItem[];
   total_price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento';
   created_at: string;
   address_nome: string;
   address_morada: string;

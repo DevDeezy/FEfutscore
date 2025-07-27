@@ -16,6 +16,7 @@ import {
   Grid,
 } from '@mui/material';
 import { Order, OrderItem } from '../types';
+import PaymentProofModal from './PaymentProofModal';
 
 const modalStyle = {
   position: 'absolute' as 'absolute',
@@ -37,9 +38,21 @@ const PreviousOrders: React.FC = () => {
   const { orders, loading, error } = useSelector((state: RootState) => state.order);
   const { user } = useSelector((state: RootState) => state.auth);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
 
   const handleOpenModal = (order: Order) => setSelectedOrder(order);
   const handleCloseModal = () => setSelectedOrder(null);
+  
+  const handleOpenPaymentModal = (order: Order) => {
+    setSelectedOrderForPayment(order);
+    setPaymentModalOpen(true);
+  };
+  
+  const handleClosePaymentModal = () => {
+    setPaymentModalOpen(false);
+    setSelectedOrderForPayment(null);
+  };
 
   useEffect(() => {
     if (user) {
@@ -69,17 +82,36 @@ const PreviousOrders: React.FC = () => {
           <ListItem
             key={order.id}
             secondaryAction={
-              <Button variant="outlined" size="small" onClick={() => handleOpenModal(order)}>
-                Detalhes
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {order.status === 'Em pagamento' && (
+                  <Button 
+                    variant="contained" 
+                    color="warning" 
+                    size="small" 
+                    onClick={() => handleOpenPaymentModal(order)}
+                  >
+                    Adicionar Pagamento
+                  </Button>
+                )}
+                <Button variant="outlined" size="small" onClick={() => handleOpenModal(order)}>
+                  Detalhes
+                </Button>
+              </Box>
             }
           >
             <ListItemText
               primary={`Encomenda #${order.id} - Estado: ${order.status}`}
               secondary={
-                order.total_price != null
-                  ? `Total: €${order.total_price.toFixed(2)}`
-                  : 'Total: -'
+                <>
+                  {order.total_price != null
+                    ? `Total: €${order.total_price.toFixed(2)}`
+                    : 'Total: -'}
+                  {order.status === 'Em pagamento' && (
+                    <Typography variant="body2" color="error" sx={{ mt: 0.5 }}>
+                      ⚠️ Pagamento pendente - Adicione a prova de pagamento
+                    </Typography>
+                  )}
+                </>
               }
             />
           </ListItem>
@@ -166,6 +198,14 @@ const PreviousOrders: React.FC = () => {
           )}
         </Box>
       </Modal>
+      
+      {selectedOrderForPayment && (
+        <PaymentProofModal
+          open={paymentModalOpen}
+          onClose={handleClosePaymentModal}
+          order={selectedOrderForPayment}
+        />
+      )}
     </Paper>
   );
 };

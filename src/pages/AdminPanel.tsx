@@ -72,6 +72,9 @@ const AdminPanel = () => {
   const [orderStatus, setOrderStatus] = useState('');
   const [orderStatusLoading, setOrderStatusLoading] = useState(false);
   const [orderStatusError, setOrderStatusError] = useState<string | null>(null);
+  const [orderPrice, setOrderPrice] = useState<number>(0);
+  const [orderPriceLoading, setOrderPriceLoading] = useState(false);
+  const [orderPriceError, setOrderPriceError] = useState<string | null>(null);
 
   // Shirt Types state
   const [shirtTypes, setShirtTypes] = useState<any[]>([]);
@@ -87,7 +90,7 @@ const AdminPanel = () => {
   const [exporting, setExporting] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<
-    'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | ''
+    'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento' | ''
   >('');
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -290,7 +293,7 @@ const AdminPanel = () => {
     setOrderStatusLoading(true);
     setOrderStatusError(null);
     try {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' }));
+      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' | 'Para analizar' | 'Em pagamento' }));
       // Optimistically update local state
       const updatedOrders = orders.map((o) =>
         o.id === selectedOrder.id ? { ...o, status: orderStatus } : o
@@ -304,6 +307,42 @@ const AdminPanel = () => {
       setOrderStatusError(err.response?.data?.error || 'Falha ao atualizar o estado');
     } finally {
     setOrderStatusLoading(false);
+    }
+  };
+
+  // Update order price
+  const handleUpdateOrderPrice = async () => {
+    if (!selectedOrder) return;
+    setOrderPriceLoading(true);
+    setOrderPriceError(null);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderprice/${selectedOrder.id}`, 
+        { total_price: orderPrice },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      dispatch(fetchOrders());
+      setOrderPriceError(null);
+    } catch (err: any) {
+      setOrderPriceError(err.response?.data?.error || 'Falha ao atualizar o preço');
+    } finally {
+      setOrderPriceLoading(false);
+    }
+  };
+
+  // Change status to "Em pagamento"
+  const handleChangeToPayment = async () => {
+    if (!selectedOrder) return;
+    setOrderStatusLoading(true);
+    setOrderStatusError(null);
+    try {
+      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: 'Em pagamento' }));
+      setOpenOrderDialog(false);
+      dispatch(fetchOrders());
+    } catch (err: any) {
+      setOrderStatusError(err.response?.data?.error || 'Falha ao alterar o estado');
+    } finally {
+      setOrderStatusLoading(false);
     }
   };
 
@@ -408,6 +447,7 @@ const AdminPanel = () => {
   const handleOpenOrderDialog = (order: Order) => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
+    setOrderPrice(order.total_price);
     setOpenOrderDialog(true);
   };
 
@@ -451,6 +491,8 @@ const AdminPanel = () => {
                   >
                     <MenuItem value="all">Todos</MenuItem>
                     <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
+                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
                     <MenuItem value="CSV">CSV</MenuItem>
                     <MenuItem value="Em Processamento">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
@@ -473,6 +515,8 @@ const AdminPanel = () => {
                     onChange={handleBulkStatusChange}
                   >
                     <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
+                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
                     <MenuItem value="processing">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
                     <MenuItem value="cancelled">Cancelada</MenuItem>
@@ -529,19 +573,25 @@ const AdminPanel = () => {
                             padding: '4px 8px',
                             borderRadius: '12px',
                             color: 'white',
-                            backgroundColor:
-                              order.status === 'pending'
-                                ? 'orange'
-                                : order.status === 'Em Processamento'
-                                ? 'blue'
-                                : order.status === 'completed'
-                                ? 'green'
-                                : order.status === 'CSV'
-                                ? 'brown'
-                                : 'red',
+                                                      backgroundColor:
+                            order.status === 'pending'
+                              ? 'orange'
+                              : order.status === 'Para analizar'
+                              ? 'purple'
+                              : order.status === 'Em pagamento'
+                              ? 'red'
+                              : order.status === 'Em Processamento'
+                              ? 'blue'
+                              : order.status === 'completed'
+                              ? 'green'
+                              : order.status === 'CSV'
+                              ? 'brown'
+                              : 'red',
                           }}
                         >
                           {order.status === 'pending' ? 'Pendente' :
+                            order.status === 'Para analizar' ? 'Para Analisar' :
+                            order.status === 'Em pagamento' ? 'Em Pagamento' :
                             order.status === 'Em Processamento' ? 'Em Processamento' :
                             order.status === 'completed' ? 'Concluída' :
                             order.status === 'CSV' ? 'CSV' :
@@ -555,7 +605,7 @@ const AdminPanel = () => {
                         <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
                         </Button>
-                        {order.status !== 'CSV' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                        {order.status !== 'CSV' && order.status !== 'Para analizar' && order.status !== 'Em pagamento' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
                           <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined">
                             Adicionar ao CSV
                           </Button>
@@ -912,6 +962,8 @@ const AdminPanel = () => {
                     onChange={(e: any) => setOrderStatus(e.target.value)}
                     >
                     <MenuItem value="pending">Pendente</MenuItem>
+                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
+                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
                     <MenuItem value="processing">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
                     <MenuItem value="cancelled">Cancelada</MenuItem>
@@ -919,6 +971,41 @@ const AdminPanel = () => {
                   </FormControl>
                 {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
               </Box>
+
+              {/* Price update section - only show for "Para analizar" orders */}
+              {selectedOrder?.status === 'Para analizar' && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Definir Preço</Typography>
+                  <TextField
+                    fullWidth
+                    label="Preço Total (€)"
+                    type="number"
+                    value={orderPrice}
+                    onChange={(e) => setOrderPrice(parseFloat(e.target.value) || 0)}
+                    inputProps={{ step: 0.01, min: 0 }}
+                    sx={{ mb: 2 }}
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleUpdateOrderPrice}
+                    disabled={orderPriceLoading}
+                    sx={{ mr: 2 }}
+                  >
+                    {orderPriceLoading ? <CircularProgress size={24} /> : 'Atualizar Preço'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    onClick={handleChangeToPayment}
+                    disabled={orderStatusLoading}
+                    sx={{ mr: 2 }}
+                  >
+                    {orderStatusLoading ? <CircularProgress size={24} /> : 'Mudar para Em Pagamento'}
+                  </Button>
+                  {orderPriceError && <Alert severity="error" sx={{ mt: 1 }}>{orderPriceError}</Alert>}
+                </Box>
+              )}
                 </Box>
             )}
           </DialogContent>

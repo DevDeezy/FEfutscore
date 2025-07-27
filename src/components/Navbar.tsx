@@ -33,6 +33,7 @@ import DialogActions from '@mui/material/DialogActions';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { logout } from '../store/slices/authSlice';
+import NotificationBell from './NotificationBell';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -191,6 +192,8 @@ const Navbar = () => {
                 <ShoppingCartIcon />
               </Badge>
             </IconButton>
+
+            {user && <NotificationBell />}
 
             {user ? (
                 <>
