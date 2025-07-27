@@ -94,6 +94,11 @@ const AdminPanel = () => {
   >('');
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  // Pricing Configuration state
+  const [pricingConfigs, setPricingConfigs] = useState<any[]>([]);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+
   const handleSelectOrder = (orderId: string) => {
     setSelectedOrderIds((prev) =>
       prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
@@ -124,6 +129,7 @@ const AdminPanel = () => {
     fetchUsers();
     fetchPacks();
     fetchShirtTypes();
+    fetchPricingConfigs();
     // eslint-disable-next-line
   }, [dispatch]);
 
@@ -451,6 +457,36 @@ const AdminPanel = () => {
     setOpenOrderDialog(true);
   };
 
+  // Pricing Configuration functions
+  const fetchPricingConfigs = async () => {
+    setPricingLoading(true);
+    setPricingError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpricingconfig`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPricingConfigs(res.data);
+    } catch (err: any) {
+      setPricingError('Falha ao carregar configurações de preços');
+      setPricingConfigs([]);
+    }
+    setPricingLoading(false);
+  };
+
+  const handleUpdatePricing = async (key: string, price: number, cost_price: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updatepricingconfig`, 
+        { key, price, cost_price },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchPricingConfigs(); // Refresh the list
+    } catch (err: any) {
+      alert('Falha ao atualizar configuração de preço');
+    }
+  };
+
   // Filtered orders
   const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
 
@@ -474,6 +510,7 @@ const AdminPanel = () => {
           <Tab label="Packs & Preços" />
           <Tab label="Tipos de Camisola" />
           <Tab label="Produtos" />
+          <Tab label="Configuração de Preços" />
         </Tabs>
 
         {/* Orders Tab */}
@@ -894,6 +931,72 @@ const AdminPanel = () => {
         {tab === 4 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <ProductManagement />
+          </Box>
+        )}
+        {tab === 5 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <Typography variant="h6">Configuração de Preços</Typography>
+            </Box>
+            {pricingLoading ? <CircularProgress /> : pricingError ? <Alert severity="error">{pricingError}</Alert> :
+              <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Item</TableCell>
+                      <TableCell>Preço de Venda (€)</TableCell>
+                      <TableCell>Preço de Custo (€)</TableCell>
+                      <TableCell>Ações</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {[
+                      { key: 'patch_price', name: 'Preço por Patch', defaultPrice: 2, defaultCost: 1 },
+                      { key: 'number_price', name: 'Preço por Número', defaultPrice: 3, defaultCost: 1.5 },
+                      { key: 'name_price', name: 'Preço por Nome', defaultPrice: 3, defaultCost: 1.5 },
+                    ].map((item) => {
+                      const config = pricingConfigs.find(c => c.key === item.key);
+                      return (
+                        <TableRow key={item.key}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={config?.price || item.defaultPrice}
+                              onChange={(e) => {
+                                const newPrice = parseFloat(e.target.value) || 0;
+                                const newCost = config?.cost_price || item.defaultCost;
+                                handleUpdatePricing(item.key, newPrice, newCost);
+                              }}
+                              inputProps={{ step: 0.01, min: 0 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={config?.cost_price || item.defaultCost}
+                              onChange={(e) => {
+                                const newCost = parseFloat(e.target.value) || 0;
+                                const newPrice = config?.price || item.defaultPrice;
+                                handleUpdatePricing(item.key, newPrice, newCost);
+                              }}
+                              inputProps={{ step: 0.01, min: 0 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              Atualizado automaticamente
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            }
           </Box>
         )}
       </Paper>
