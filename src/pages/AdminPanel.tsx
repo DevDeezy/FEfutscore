@@ -487,6 +487,32 @@ const AdminPanel = () => {
     }
   };
 
+  const handleUpdateUserEmail = async (userId: string, userEmail: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateuseremail/${userId}`, 
+        { userEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchUsers(); // Refresh the list
+    } catch (err: any) {
+      alert('Falha ao atualizar email do utilizador');
+    }
+  };
+
+  const handleUpdateInstagramName = async (userId: string, instagramName: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateInstagramName/${userId}`, 
+        { instagramName },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchUsers(); // Refresh the list
+    } catch (err: any) {
+      alert('Falha ao atualizar nome do Instagram');
+    }
+  };
+
   // Filtered orders
   const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
 
@@ -664,30 +690,48 @@ const AdminPanel = () => {
             {usersLoading ? <CircularProgress /> : usersError ? <Alert severity="error">{usersError}</Alert> : null}
             <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Função</TableCell>
-                    <TableCell>Data de Criação</TableCell>
-                    <TableCell>Ações</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {users.map((user, idx) => (
+                                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Email Notificações</TableCell>
+                      <TableCell>Instagram</TableCell>
+                      <TableCell>Função</TableCell>
+                      <TableCell>Data de Criação</TableCell>
+                      <TableCell>Ações</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {users.map((user, idx) => (
                       <TableRow key={user._id || user.id || idx}>
-                      <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
+                        <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
                         <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            value={user.userEmail || ''}
+                            onChange={(e) => handleUpdateUserEmail(user._id || user.id, e.target.value)}
+                            placeholder="Email para notificações"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            value={user.instagramName || ''}
+                            onChange={(e) => handleUpdateInstagramName(user._id || user.id, e.target.value)}
+                            placeholder="Nome Instagram"
+                          />
+                        </TableCell>
                         <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
                         <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
                         <TableCell>
                           <Button color="error" onClick={() => handleDeleteUser(user._id || user.id)}>
-                          Apagar
+                            Apagar
                           </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
               </Table>
             </TableContainer>
             <Dialog open={openAddUser} onClose={() => setOpenAddUser(false)} fullScreen={fullScreenDialog}>

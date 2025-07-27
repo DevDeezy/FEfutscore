@@ -5,6 +5,7 @@
   "homepage": "https://diogomendes.me/FEfutscore",
   "proxy": "cerulean-kleicha-c3f93a.netlify.app",
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.11.16",
