@@ -127,9 +127,8 @@ const Cart = () => {
     setProofReference(e.target.value);
   };
 
-  const proofProvided = !!proofImage || proofReference.trim() !== '';
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-  const canPlaceOrder = items.length > 0 && allFieldsFilled && proofProvided;
+  const canPlaceOrder = items.length > 0 && allFieldsFilled;
 
   const getBackendItems = (items: any[]) =>
     items.map((item) =>
@@ -393,7 +392,7 @@ const Cart = () => {
             </Box>
 
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento</Typography>
+              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento (Opcional)</Typography>
               {/* Payment Method Selection */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="payment-method-label">Método de Pagamento</InputLabel>
@@ -448,7 +447,7 @@ const Cart = () => {
                 </Box>
               )}
               <TextField
-                label="Referência do Comprovativo"
+                label="Referência do Comprovativo (Opcional)"
                 fullWidth
                 value={proofReference}
                 onChange={handleReferenceChange}

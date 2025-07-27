@@ -57,10 +57,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
   };
 
   const handleSubmit = async () => {
-    if (!proofReference.trim() && !proofImage) {
-      setError('Por favor, adicione uma referência de pagamento ou uma imagem de prova');
-      return;
-    }
+    // Payment proof is now optional, so we can proceed even without it
 
     setLoading(true);
     setError(null);
@@ -120,7 +117,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
 
         <TextField
           fullWidth
-          label="Referência de Pagamento"
+          label="Referência de Pagamento (Opcional)"
           value={proofReference}
           onChange={(e) => setProofReference(e.target.value)}
           margin="normal"
@@ -179,7 +176,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || (!proofReference.trim() && !proofImage)}
+          disabled={loading}
         >
           {loading ? <CircularProgress size={24} /> : 'Enviar Prova'}
         </Button>
