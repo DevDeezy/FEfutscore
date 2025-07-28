@@ -11,7 +11,7 @@ export const sendOrderEmail = async (templateParams: EmailTemplateParams): Promi
   try {
     const response = await emailjs.send(
       'service_pvd829d',
-      'template_payment_reminder', // You'll need to create this template in EmailJS
+      'template_myzm85l', // You'll need to create this template in EmailJS
       templateParams as any,
       'sYfnZeIDOxAl4y-r9'
     );
