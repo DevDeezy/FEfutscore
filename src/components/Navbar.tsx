@@ -26,6 +26,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import EditIcon from '@mui/icons-material/Edit';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import EmailIcon from '@mui/icons-material/Email';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -50,6 +51,10 @@ const Navbar = () => {
   const [instagramName, setInstagramName] = useState(user?.instagramName || '');
   const [instagramLoading, setInstagramLoading] = useState(false);
   const [instagramError, setInstagramError] = useState<string | null>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState(user?.userEmail || user?.email || '');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -93,6 +98,32 @@ const Navbar = () => {
       setInstagramError('Erro ao atualizar o nome do Instagram.');
     }
     setInstagramLoading(false);
+  };
+
+  const handleOpenEmailDialog = () => {
+    setUserEmail(user?.userEmail || user?.email || '');
+    setEmailDialogOpen(true);
+  };
+
+  const handleCloseEmailDialog = () => {
+    setEmailDialogOpen(false);
+    setEmailError(null);
+  };
+
+  const handleSaveEmail = async () => {
+    setEmailLoading(true);
+    setEmailError(null);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateuseremail/${user?.id}`, { userEmail }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      dispatch(setUser({ ...user, userEmail }));
+      setEmailDialogOpen(false);
+    } catch (err: any) {
+      setEmailError('Erro ao atualizar o email.');
+    }
+    setEmailLoading(false);
   };
 
   const commonLinks = (
@@ -226,6 +257,10 @@ const Navbar = () => {
                           <HomeIcon fontSize="small" style={{ marginRight: 8 }} />
                           Minhas Moradas
                         </MenuItem>
+                        <MenuItem onClick={handleOpenEmailDialog}>
+                          <EmailIcon fontSize="small" style={{ marginRight: 8 }} />
+                          Atualizar Email
+                        </MenuItem>
                         <MenuItem onClick={handleOpenInstagramDialog}>
                           <InstagramIcon fontSize="small" style={{ marginRight: 8 }} />
                           Definir nome do Instagram
@@ -274,6 +309,27 @@ const Navbar = () => {
         <DialogActions>
           <Button onClick={handleCloseInstagramDialog}>Cancelar</Button>
           <Button onClick={handleSaveInstagramName} disabled={instagramLoading} variant="contained">Guardar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={emailDialogOpen} onClose={handleCloseEmailDialog}>
+        <DialogTitle>Atualizar Email</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email"
+            type="email"
+            fullWidth
+            value={userEmail}
+            onChange={e => setUserEmail(e.target.value)}
+            InputProps={{ startAdornment: <EmailIcon sx={{ mr: 1 }} /> }}
+          />
+          {emailError && <Alert severity="error">{emailError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEmailDialog}>Cancelar</Button>
+          <Button onClick={handleSaveEmail} disabled={emailLoading} variant="contained">Guardar</Button>
         </DialogActions>
       </Dialog>
     </AppBar>
