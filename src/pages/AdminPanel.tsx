@@ -38,6 +38,7 @@ import { API_BASE_URL } from '../api';
 import { saveAs } from 'file-saver';
 import { Order, OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
+import { sendOrderEmail, EmailTemplateParams } from '../services/emailService';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -300,6 +301,39 @@ const AdminPanel = () => {
     setOrderStatusError(null);
     try {
       await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' | 'Para analizar' | 'Em pagamento' }));
+      
+      // Send email notification if status is "Em pagamento"
+      if (orderStatus === 'Em pagamento') {
+        try {
+          const user = users.find(u => u.id === selectedOrder.user_id);
+          if (user && (user.email || user.userEmail)) {
+            const emailToUse = user.userEmail || user.email;
+            
+            // Prepare email template parameters
+            const templateParams: EmailTemplateParams = {
+              order_id: selectedOrder.id.toString(),
+              email: emailToUse,
+              orders: selectedOrder.items.map((item: any) => ({
+                name: item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas',
+                units: item.quantity || 1,
+                price: item.price ? `$${item.price.toFixed(2)}` : '$0.00',
+                image_url: 'https://via.placeholder.com/64x64?text=Item'
+              })),
+              cost: {
+                shipping: '$0.00',
+                total: selectedOrder.total_price ? `$${selectedOrder.total_price.toFixed(2)}` : '$0.00'
+              }
+            };
+
+            await sendOrderEmail(templateParams);
+            console.log('Email sent successfully for order:', selectedOrder.id);
+          }
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+          // Don't fail the entire request if email fails
+        }
+      }
+      
       // Optimistically update local state
       const updatedOrders = orders.map((o) =>
         o.id === selectedOrder.id ? { ...o, status: orderStatus } : o
@@ -343,6 +377,37 @@ const AdminPanel = () => {
     setOrderStatusError(null);
     try {
       await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: 'Em pagamento' }));
+      
+      // Send email notification
+      try {
+        const user = users.find(u => u.id === selectedOrder.user_id);
+        if (user && (user.email || user.userEmail)) {
+          const emailToUse = user.userEmail || user.email;
+          
+          // Prepare email template parameters
+          const templateParams: EmailTemplateParams = {
+            order_id: selectedOrder.id.toString(),
+            email: emailToUse,
+            orders: selectedOrder.items.map((item: any) => ({
+              name: item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas',
+              units: item.quantity || 1,
+              price: item.price ? `$${item.price.toFixed(2)}` : '$0.00',
+              image_url: 'https://via.placeholder.com/64x64?text=Item'
+            })),
+            cost: {
+              shipping: '$0.00',
+              total: selectedOrder.total_price ? `$${selectedOrder.total_price.toFixed(2)}` : '$0.00'
+            }
+          };
+
+          await sendOrderEmail(templateParams);
+          console.log('Email sent successfully for order:', selectedOrder.id);
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Don't fail the entire request if email fails
+      }
+      
       setOpenOrderDialog(false);
       dispatch(fetchOrders());
     } catch (err: any) {
