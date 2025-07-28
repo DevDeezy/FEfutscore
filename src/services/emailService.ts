@@ -4,25 +4,14 @@ import emailjs from 'emailjs-com';
 emailjs.init('sYfnZeIDOxAl4y-r9');
 
 export interface EmailTemplateParams {
-  order_id: string;
-  email: string;
-  orders: Array<{
-    name: string;
-    units: number;
-    price: string;
-    image_url: string;
-  }>;
-  cost: {
-    shipping: string;
-    total: string;
-  };
+  order_number: string;
 }
 
 export const sendOrderEmail = async (templateParams: EmailTemplateParams): Promise<void> => {
   try {
     const response = await emailjs.send(
       'service_pvd829d',
-      'template_omc5g2b',
+      'template_payment_reminder', // You'll need to create this template in EmailJS
       templateParams as any,
       'sYfnZeIDOxAl4y-r9'
     );

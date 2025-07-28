@@ -311,18 +311,7 @@ const AdminPanel = () => {
             
             // Prepare email template parameters
             const templateParams: EmailTemplateParams = {
-              order_id: selectedOrder.id.toString(),
-              email: emailToUse,
-              orders: selectedOrder.items.map((item: any) => ({
-                name: item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas',
-                units: item.quantity || 1,
-                price: item.price ? `$${item.price.toFixed(2)}` : '$0.00',
-                image_url: 'https://via.placeholder.com/64x64?text=Item'
-              })),
-              cost: {
-                shipping: '$0.00',
-                total: selectedOrder.total_price ? `$${selectedOrder.total_price.toFixed(2)}` : '$0.00'
-              }
+              order_number: selectedOrder.id.toString()
             };
 
             await sendOrderEmail(templateParams);
@@ -386,18 +375,7 @@ const AdminPanel = () => {
           
           // Prepare email template parameters
           const templateParams: EmailTemplateParams = {
-            order_id: selectedOrder.id.toString(),
-            email: emailToUse,
-            orders: selectedOrder.items.map((item: any) => ({
-              name: item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas',
-              units: item.quantity || 1,
-              price: item.price ? `$${item.price.toFixed(2)}` : '$0.00',
-              image_url: 'https://via.placeholder.com/64x64?text=Item'
-            })),
-            cost: {
-              shipping: '$0.00',
-              total: selectedOrder.total_price ? `$${selectedOrder.total_price.toFixed(2)}` : '$0.00'
-            }
+            order_number: selectedOrder.id.toString()
           };
 
           await sendOrderEmail(templateParams);
