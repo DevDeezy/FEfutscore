@@ -39,6 +39,7 @@ import { saveAs } from 'file-saver';
 import { Order, OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
 import { sendOrderEmail, EmailTemplateParams } from '../services/emailService';
+import DragDropZone from '../components/DragDropZone';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -107,6 +108,15 @@ const AdminPanel = () => {
   const [editingPatch, setEditingPatch] = useState<any | null>(null);
   const [patchForm, setPatchForm] = useState({ name: '', image: '', price: 0 });
   const [pricingError, setPricingError] = useState<string | null>(null);
+
+  // Handle patch image file selection
+  const handlePatchImageChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPatchForm({ ...patchForm, image: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSelectOrder = (orderId: string) => {
     setSelectedOrderIds((prev) =>
@@ -1051,14 +1061,16 @@ const AdminPanel = () => {
               value={patchForm.name}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, name: e.target.value })}
             />
-            <TextField
-              label="URL da Imagem"
-              fullWidth
-              margin="normal"
-              value={patchForm.image}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, image: e.target.value })}
-              placeholder="https://example.com/image.jpg"
-            />
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <DragDropZone
+                title="Carregar Imagem do Patch"
+                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                onFileSelect={handlePatchImageChange}
+                onFileRemove={() => setPatchForm({ ...patchForm, image: '' })}
+                currentImage={patchForm.image}
+                height={150}
+              />
+            </Box>
             <TextField
               label="Preço (€)"
               type="number"
@@ -1068,17 +1080,6 @@ const AdminPanel = () => {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
               inputProps={{ step: 0.01, min: 0 }}
             />
-            {patchForm.image && (
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Pré-visualização:</Typography>
-                <Box
-                  component="img"
-                  src={patchForm.image}
-                  alt="Preview"
-                  sx={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 1 }}
-                />
-              </Box>
-            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenPatchDialog(false)}>Cancelar</Button>
