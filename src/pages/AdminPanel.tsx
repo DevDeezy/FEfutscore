@@ -1029,16 +1029,30 @@ const AdminPanel = () => {
               fullScreen={fullScreenDialog} 
               maxWidth="md" 
               fullWidth
-              sx={{ zIndex: 9999 }}
+              sx={{ 
+                zIndex: 9999,
+                '& .MuiDialog-paper': {
+                  backgroundColor: 'white',
+                  border: '2px solid red',
+                  minHeight: '400px',
+                  minWidth: '500px'
+                }
+              }}
             >
-              <DialogTitle>{editingPatch ? 'Editar' : 'Criar'} Patch</DialogTitle>
-              <DialogContent>
+              <DialogTitle sx={{ backgroundColor: 'yellow', color: 'black' }}>
+                {editingPatch ? 'Editar' : 'Criar'} Patch - DEBUG MODE
+              </DialogTitle>
+              <DialogContent sx={{ backgroundColor: 'lightblue', minHeight: '300px' }}>
+                <Typography variant="body2" sx={{ mb: 2, color: 'red' }}>
+                  DEBUG: Dialog is open and visible!
+                </Typography>
                 <TextField
                   label="Nome do Patch"
                   fullWidth
                   margin="normal"
                   value={patchForm.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, name: e.target.value })}
+                  sx={{ backgroundColor: 'white' }}
                 />
                 <TextField
                   label="URL da Imagem"
@@ -1047,6 +1061,7 @@ const AdminPanel = () => {
                   value={patchForm.image}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, image: e.target.value })}
                   placeholder="https://example.com/image.jpg"
+                  sx={{ backgroundColor: 'white' }}
                 />
                 <TextField
                   label="Preço (€)"
@@ -1056,6 +1071,7 @@ const AdminPanel = () => {
                   value={patchForm.price}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
                   inputProps={{ step: 0.01, min: 0 }}
+                  sx={{ backgroundColor: 'white' }}
                 />
                 {patchForm.image && (
                   <Box sx={{ mt: 2, textAlign: 'center' }}>
@@ -1069,7 +1085,7 @@ const AdminPanel = () => {
                   </Box>
                 )}
               </DialogContent>
-              <DialogActions>
+              <DialogActions sx={{ backgroundColor: 'lightgreen' }}>
                 <Button onClick={() => setOpenPatchDialog(false)}>Cancelar</Button>
                 <Button onClick={handleSavePatch} variant="contained" color="primary">
                   Guardar
