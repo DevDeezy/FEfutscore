@@ -23,6 +23,7 @@ import { AppDispatch, RootState } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import PreviousOrders from '../components/PreviousOrders';
+import DragDropZone from '../components/DragDropZone';
 
 interface ShirtType {
   id: number;
@@ -52,9 +53,6 @@ const OrderForm = () => {
     anuncios: false,
   });
   const [error, setError] = useState<string | null>(null);
-  const imageFrontInputRef = useRef<HTMLInputElement>(null);
-  const imageBackInputRef = useRef<HTMLInputElement>(null);
-  const patchInputRef = useRef<HTMLInputElement>(null);
   const [shirtTypes, setShirtTypes] = useState<ShirtType[]>([]);
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
@@ -67,39 +65,33 @@ const OrderForm = () => {
     return `${first}/${second}`;
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handleImageChange = (file: File, side: 'front' | 'back') => {
     const reader = new FileReader();
-      reader.onloadend = () => {
-        if (side === 'front') {
-          setCurrentItem({ ...currentItem, image_front: reader.result as string });
+    reader.onloadend = () => {
+      if (side === 'front') {
+        setCurrentItem({ ...currentItem, image_front: reader.result as string });
       } else {
-          setCurrentItem({ ...currentItem, image_back: reader.result as string });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+        setCurrentItem({ ...currentItem, image_back: reader.result as string });
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handlePatchImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const readers: Promise<string>[] = Array.from(files).map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+  const handlePatchImagesChange = (files: FileList) => {
+    const readers: Promise<string>[] = Array.from(files).map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
-      Promise.all(readers).then(images => {
-        setCurrentItem(prev => ({
-          ...prev,
-          patch_images: [...(prev.patch_images || []), ...images],
-        }));
-      });
-    }
+    });
+    Promise.all(readers).then(images => {
+      setCurrentItem(prev => ({
+        ...prev,
+        patch_images: [...(prev.patch_images || []), ...images],
+      }));
+    });
   };
 
   const handleRemovePatchImage = (idx: number) => {
@@ -172,18 +164,25 @@ const OrderForm = () => {
           <Grid container spacing={3}>
             {/* Carregar Imagem da Frente */}
             <Grid item xs={12}>
-              <Button variant="outlined" component="label">
-                Carregar Imagem da Frente
-                <Box
-                  component="input"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  ref={imageFrontInputRef}
-                  onChange={(e) => handleImageChange(e, 'front')}
-                />
-              </Button>
-              {currentItem.image_front && <Box component="img" src={currentItem.image_front} alt="preview frente" sx={{ height: 100, marginLeft: 16 }} />}
+              <DragDropZone
+                title="Carregar Imagem da Frente"
+                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                onFileSelect={(file) => handleImageChange(file, 'front')}
+                onFileRemove={() => setCurrentItem({ ...currentItem, image_front: '' })}
+                currentImage={currentItem.image_front}
+                height={150}
+              />
+            </Grid>
+            {/* Carregar Imagem das Costas */}
+            <Grid item xs={12}>
+              <DragDropZone
+                title="Carregar Imagem das Costas"
+                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                onFileSelect={(file) => handleImageChange(file, 'back')}
+                onFileRemove={() => setCurrentItem({ ...currentItem, image_back: '' })}
+                currentImage={currentItem.image_back}
+                height={150}
+              />
             </Grid>
             {/* Ano */}
             <Grid item xs={12} sm={6}>
@@ -310,18 +309,17 @@ const OrderForm = () => {
             </Grid>
             {/* Patches */}
             <Grid item xs={12}>
-              <Button variant="outlined" component="label">
-                Carregar Imagem do Patch
-                <Box
-                  component="input"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  multiple
-                  ref={patchInputRef}
-                  onChange={handlePatchImagesChange}
-                />
-              </Button>
+              <DragDropZone
+                title="Carregar Imagens do Patch"
+                subtitle="Escolha imagens ou arraste-as para aqui"
+                onFileSelect={(file) => {
+                  const fileList = new DataTransfer();
+                  fileList.items.add(file);
+                  handlePatchImagesChange(fileList.files);
+                }}
+                multiple={true}
+                height={120}
+              />
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                 {(currentItem.patch_images || []).map((img, idx) => (
                   <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>

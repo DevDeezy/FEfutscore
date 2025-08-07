@@ -21,6 +21,7 @@ import ChangePassword from './pages/ChangePassword';
 import Store from './pages/Store';
 import Addresses from './pages/Addresses';
 import PreviousOrders from './components/PreviousOrders';
+import UserPanel from './pages/UserPanel';
 
 const fontLink = document.createElement('link');
 fontLink.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap';
@@ -53,6 +54,7 @@ const AppLayout = () => {
             <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
             <Route path="/moradas" element={<PrivateRoute><Addresses /></PrivateRoute>} />
             <Route path="/previous-orders" element={<PrivateRoute><PreviousOrders /></PrivateRoute>} />
+            <Route path="/user-panel" element={<PrivateRoute><UserPanel /></PrivateRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
             <Route path="/change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
           </Routes>
