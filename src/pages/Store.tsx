@@ -186,7 +186,12 @@ const Store = () => {
               <Card>
                 <CardMedia
                   component="img"
-                  height="200"
+                  sx={{
+                    height: 300,
+                    objectFit: 'contain',
+                    backgroundColor: '#f5f5f5',
+                    padding: 2,
+                  }}
                   image={product.image_url}
                   alt={product.name}
                 />

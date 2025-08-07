@@ -49,7 +49,11 @@ const UserPanel = () => {
 
   // State for form data
   const [userEmail, setUserEmail] = useState(user?.userEmail || user?.email || '');
-  const [instagramName, setInstagramName] = useState(user?.instagramName || '');
+  const [instagramNames, setInstagramNames] = useState<string[]>(
+    user?.instagramNames ? JSON.parse(user.instagramNames) : 
+    user?.instagramName ? [user.instagramName] : []
+  );
+  const [newInstagramName, setNewInstagramName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -97,7 +101,11 @@ const UserPanel = () => {
 
   // Instagram management
   const handleOpenInstagramDialog = () => {
-    setInstagramName(user?.instagramName || '');
+    setInstagramNames(
+      user?.instagramNames ? JSON.parse(user.instagramNames) : 
+      user?.instagramName ? [user.instagramName] : []
+    );
+    setNewInstagramName('');
     setInstagramError(null);
     setInstagramDialogOpen(true);
   };
@@ -107,18 +115,31 @@ const UserPanel = () => {
     setInstagramError(null);
   };
 
-  const handleSaveInstagramName = async () => {
+  const handleAddInstagramName = () => {
+    if (newInstagramName.trim() && !instagramNames.includes(newInstagramName.trim())) {
+      setInstagramNames([...instagramNames, newInstagramName.trim()]);
+      setNewInstagramName('');
+    }
+  };
+
+  const handleRemoveInstagramName = (index: number) => {
+    setInstagramNames(instagramNames.filter((_, i) => i !== index));
+  };
+
+  const handleSaveInstagramNames = async () => {
     setInstagramLoading(true);
     setInstagramError(null);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/.netlify/functions/updateInstagramName`, { instagramName }, {
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateInstagramName`, { 
+        instagramNames: JSON.stringify(instagramNames) 
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      dispatch(setUser({ ...user, instagramName }));
+      dispatch(setUser({ ...user, instagramNames: JSON.stringify(instagramNames) }));
       setInstagramDialogOpen(false);
     } catch (err: any) {
-      setInstagramError('Erro ao atualizar o nome do Instagram.');
+      setInstagramError('Erro ao atualizar os nomes do Instagram.');
     }
     setInstagramLoading(false);
   };
@@ -185,8 +206,8 @@ const UserPanel = () => {
       color: '#2196F3',
     },
     {
-      title: 'Definir nome do Instagram',
-      description: 'Configurar o seu nome do Instagram',
+      title: 'Gerir Nomes do Instagram',
+      description: 'Configurar os seus nomes do Instagram',
       icon: <InstagramIcon sx={{ fontSize: 40 }} />,
       action: handleOpenInstagramDialog,
       color: '#E91E63',
@@ -218,7 +239,16 @@ const UserPanel = () => {
         <Typography variant="h6" color="text.secondary">
           Bem-vindo, {user?.email}
         </Typography>
-        {user?.instagramName && (
+        {user?.instagramNames && (
+          <Typography variant="body1" color="text.secondary">
+            Instagram: {JSON.parse(user.instagramNames).map((name: string, index: number) => (
+              <span key={index}>
+                @{name}{index < JSON.parse(user.instagramNames).length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </Typography>
+        )}
+        {user?.instagramName && !user?.instagramNames && (
           <Typography variant="body1" color="text.secondary">
             Instagram: @{user.instagramName}
           </Typography>
@@ -284,24 +314,79 @@ const UserPanel = () => {
 
       {/* Instagram Dialog */}
       <Dialog open={instagramDialogOpen} onClose={handleCloseInstagramDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Definir nome do Instagram</DialogTitle>
+        <DialogTitle>Gerir Nomes do Instagram</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Nome do Instagram"
-            type="text"
-            fullWidth
-            value={instagramName}
-            onChange={e => setInstagramName(e.target.value)}
-            InputProps={{ startAdornment: <InstagramIcon sx={{ mr: 1 }} /> }}
-            placeholder="@seu_nome"
-          />
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Adicione os seus nomes do Instagram para personalização das camisolas
+            </Typography>
+            
+            {/* Add new Instagram name */}
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Novo nome do Instagram"
+                type="text"
+                fullWidth
+                value={newInstagramName}
+                onChange={e => setNewInstagramName(e.target.value)}
+                InputProps={{ startAdornment: <InstagramIcon sx={{ mr: 1 }} /> }}
+                placeholder="@seu_nome"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddInstagramName();
+                  }
+                }}
+              />
+              <Button 
+                variant="outlined" 
+                onClick={handleAddInstagramName}
+                disabled={!newInstagramName.trim() || instagramNames.includes(newInstagramName.trim())}
+                sx={{ minWidth: 'auto', px: 2 }}
+              >
+                +
+              </Button>
+            </Box>
+
+            {/* Display existing Instagram names */}
+            {instagramNames.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Nomes atuais:
+                </Typography>
+                {instagramNames.map((name, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    p: 1,
+                    mb: 1,
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    backgroundColor: '#f9f9f9'
+                  }}>
+                    <Typography variant="body2">
+                      @{name}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveInstagramName(index)}
+                      sx={{ minWidth: 'auto', p: 0.5 }}
+                    >
+                      ×
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
           {instagramError && <Alert severity="error" sx={{ mt: 2 }}>{instagramError}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseInstagramDialog}>Cancelar</Button>
-          <Button onClick={handleSaveInstagramName} disabled={instagramLoading} variant="contained">
+          <Button onClick={handleSaveInstagramNames} disabled={instagramLoading} variant="contained">
             {instagramLoading ? <CircularProgress size={24} /> : 'Guardar'}
           </Button>
         </DialogActions>
