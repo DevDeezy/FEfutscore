@@ -594,6 +594,7 @@ const AdminPanel = () => {
   };
 
   const handleOpenPatchDialog = (patch: any | null = null) => {
+    console.log('handleOpenPatchDialog called with patch:', patch);
     if (patch) {
       setEditingPatch(patch);
       setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0 });
@@ -601,6 +602,7 @@ const AdminPanel = () => {
       setEditingPatch(null);
       setPatchForm({ name: '', image: '', price: 0 });
     }
+    console.log('Setting openPatchDialog to true');
     setOpenPatchDialog(true);
   };
 
@@ -1144,9 +1146,19 @@ const AdminPanel = () => {
         )}
         {tab === 5 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Debug: Current tab is {tab}
+            </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Gestão de Patches</Typography>
-              <Button variant="contained" onClick={() => handleOpenPatchDialog()}>
+              <Button 
+                variant="contained" 
+                onClick={() => {
+                  console.log('Adicionar Patch button clicked');
+                  alert('Button clicked!'); // Temporary debug
+                  handleOpenPatchDialog();
+                }}
+              >
                 Adicionar Patch
               </Button>
             </Box>
