@@ -8,6 +8,7 @@ export interface User {
   token: string;
   password_reset_required?: boolean;
   instagramName?: string;
+  instagramNames?: string;
   userEmail?: string;
 }
 
