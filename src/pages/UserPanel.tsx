@@ -241,11 +241,18 @@ const UserPanel = () => {
         </Typography>
         {user?.instagramNames && (
           <Typography variant="body1" color="text.secondary">
-            Instagram: {JSON.parse(user.instagramNames).map((name: string, index: number) => (
-              <span key={index}>
-                @{name}{index < JSON.parse(user.instagramNames).length - 1 ? ', ' : ''}
-              </span>
-            ))}
+            Instagram: {(() => {
+              try {
+                const names = JSON.parse(user.instagramNames);
+                return names.map((name: string, index: number) => (
+                  <span key={index}>
+                    @{name}{index < names.length - 1 ? ', ' : ''}
+                  </span>
+                ));
+              } catch (error) {
+                return null;
+              }
+            })()}
           </Typography>
         )}
         {user?.instagramName && !user?.instagramNames && (

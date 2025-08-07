@@ -161,49 +161,50 @@ const PatchModal: React.FC<PatchModalProps> = ({
             {!patchesLoading && !patchesError && predefinedPatches.length > 0 && (
               <Grid container spacing={2}>
                 {predefinedPatches.map((patch) => (
-                <Grid item xs={6} sm={4} md={3} key={patch.id}>
-                  <Card 
-                    sx={{ 
-                      cursor: 'pointer',
-                      border: selectedPatches.includes(patch.image) ? '2px solid #1976d2' : '1px solid #e0e0e0',
-                      position: 'relative',
-                    }}
-                    onClick={() => handlePatchToggle(patch.image)}
-                  >
-                    <CardMedia
-                      component="img"
-                      height="100"
-                      image={patch.image}
-                      alt={patch.name}
-                      sx={{ objectFit: 'contain', p: 1 }}
-                    />
-                    <CardContent sx={{ p: 1, textAlign: 'center' }}>
-                      <Typography variant="body2" noWrap>
-                        {patch.name}
-                      </Typography>
-                    </CardContent>
-                    {selectedPatches.includes(patch.image) && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          backgroundColor: '#1976d2',
-                          borderRadius: '50%',
-                          width: 24,
-                          height: 24,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <CheckIcon sx={{ color: 'white', fontSize: 16 }} />
-                      </Box>
-                    )}
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                  <Grid item xs={6} sm={4} md={3} key={patch.id}>
+                    <Card 
+                      sx={{ 
+                        cursor: 'pointer',
+                        border: selectedPatches.includes(patch.image) ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                        position: 'relative',
+                      }}
+                      onClick={() => handlePatchToggle(patch.image)}
+                    >
+                      <CardMedia
+                        component="img"
+                        height="100"
+                        image={patch.image}
+                        alt={patch.name}
+                        sx={{ objectFit: 'contain', p: 1 }}
+                      />
+                      <CardContent sx={{ p: 1, textAlign: 'center' }}>
+                        <Typography variant="body2" noWrap>
+                          {patch.name}
+                        </Typography>
+                      </CardContent>
+                      {selectedPatches.includes(patch.image) && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            backgroundColor: '#1976d2',
+                            borderRadius: '50%',
+                            width: 24,
+                            height: 24,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <CheckIcon sx={{ color: 'white', fontSize: 16 }} />
+                        </Box>
+                      )}
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Box>
         )}
 
