@@ -98,6 +98,14 @@ const AdminPanel = () => {
   // Pricing Configuration state
   const [pricingConfigs, setPricingConfigs] = useState<any[]>([]);
   const [pricingLoading, setPricingLoading] = useState(false);
+
+  // Patches state
+  const [patches, setPatches] = useState<any[]>([]);
+  const [patchesLoading, setPatchesLoading] = useState(false);
+  const [patchesError, setPatchesError] = useState<string | null>(null);
+  const [openPatchDialog, setOpenPatchDialog] = useState(false);
+  const [editingPatch, setEditingPatch] = useState<any | null>(null);
+  const [patchForm, setPatchForm] = useState({ name: '', image: '', price: 0 });
   const [pricingError, setPricingError] = useState<string | null>(null);
 
   const handleSelectOrder = (orderId: string) => {
@@ -131,6 +139,7 @@ const AdminPanel = () => {
     fetchPacks();
     fetchShirtTypes();
     fetchPricingConfigs();
+    fetchPatches();
     // eslint-disable-next-line
   }, [dispatch]);
 
@@ -556,6 +565,70 @@ const AdminPanel = () => {
     }
   };
 
+  // Patch management functions
+  const fetchPatches = async () => {
+    setPatchesLoading(true);
+    setPatchesError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getPatches`);
+      setPatches(response.data);
+    } catch (error: any) {
+      setPatchesError('Erro ao carregar patches');
+      console.error('Error fetching patches:', error);
+    } finally {
+      setPatchesLoading(false);
+    }
+  };
+
+  const handleDeletePatch = async (id: number) => {
+    if (window.confirm('Tem a certeza que deseja eliminar este patch?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/.netlify/functions/deletePatch/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        fetchPatches();
+      } catch (error) {
+        console.error('Error deleting patch:', error);
+      }
+    }
+  };
+
+  const handleOpenPatchDialog = (patch: any | null = null) => {
+    if (patch) {
+      setEditingPatch(patch);
+      setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0 });
+    } else {
+      setEditingPatch(null);
+      setPatchForm({ name: '', image: '', price: 0 });
+    }
+    setOpenPatchDialog(true);
+  };
+
+  const handleSavePatch = async () => {
+    if (!patchForm.name || !patchForm.image) {
+      alert('Nome e imagem são obrigatórios');
+      return;
+    }
+
+    try {
+      if (editingPatch) {
+        // Update existing patch
+        await axios.put(`${API_BASE_URL}/.netlify/functions/updatePatch/${editingPatch.id}`, patchForm, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+      } else {
+        // Create new patch
+        await axios.post(`${API_BASE_URL}/.netlify/functions/createPatch`, patchForm, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+      }
+      setOpenPatchDialog(false);
+      fetchPatches();
+    } catch (error) {
+      console.error('Error saving patch:', error);
+    }
+  };
+
   // Filtered orders
   const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
 
@@ -579,6 +652,7 @@ const AdminPanel = () => {
           <Tab label="Packs & Preços" />
           <Tab label="Tipos de Camisola" />
           <Tab label="Produtos" />
+          <Tab label="Patches" />
           <Tab label="Configuração de Preços" />
         </Tabs>
 
@@ -940,6 +1014,54 @@ const AdminPanel = () => {
                 </Button>
               </DialogActions>
             </Dialog>
+
+            {/* Patch Dialog */}
+            <Dialog open={openPatchDialog} onClose={() => setOpenPatchDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
+              <DialogTitle>{editingPatch ? 'Editar' : 'Criar'} Patch</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Nome do Patch"
+                  fullWidth
+                  margin="normal"
+                  value={patchForm.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, name: e.target.value })}
+                />
+                <TextField
+                  label="URL da Imagem"
+                  fullWidth
+                  margin="normal"
+                  value={patchForm.image}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, image: e.target.value })}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <TextField
+                  label="Preço (€)"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  value={patchForm.price}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
+                  inputProps={{ step: 0.01, min: 0 }}
+                />
+                {patchForm.image && (
+                  <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Pré-visualização:</Typography>
+                    <Box
+                      component="img"
+                      src={patchForm.image}
+                      alt="Preview"
+                      sx={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 1 }}
+                    />
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenPatchDialog(false)}>Cancelar</Button>
+                <Button onClick={handleSavePatch} variant="contained" color="primary">
+                  Guardar
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
         )}
         {tab === 3 && (
@@ -1021,6 +1143,80 @@ const AdminPanel = () => {
           </Box>
         )}
         {tab === 5 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+              <Typography variant="h6">Gestão de Patches</Typography>
+              <Button variant="contained" onClick={() => handleOpenPatchDialog()}>
+                Adicionar Patch
+              </Button>
+            </Box>
+            {patchesLoading ? (
+              <CircularProgress />
+            ) : patchesError ? (
+              <Alert severity="error">{patchesError}</Alert>
+            ) : (
+              <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Imagem</TableCell>
+                      <TableCell>Preço (€)</TableCell>
+                      <TableCell>Estado</TableCell>
+                      <TableCell>Ações</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {patches.map((patch) => (
+                      <TableRow key={patch.id}>
+                        <TableCell>{patch.name}</TableCell>
+                        <TableCell>
+                          <Box
+                            component="img"
+                            src={patch.image}
+                            alt={patch.name}
+                            sx={{ width: 60, height: 60, objectFit: 'contain', border: '1px solid #eee', borderRadius: 1 }}
+                          />
+                        </TableCell>
+                        <TableCell>{patch.price || 0}</TableCell>
+                        <TableCell>
+                          <Typography
+                            component="span"
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              color: 'white',
+                              backgroundColor: patch.active ? 'green' : 'red',
+                            }}
+                          >
+                            {patch.active ? 'Ativo' : 'Inativo'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="small"
+                            onClick={() => handleOpenPatchDialog(patch)}
+                            sx={{ mr: 1 }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeletePatch(patch.id)}
+                          >
+                            Eliminar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
+        )}
+        {tab === 6 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Configuração de Preços</Typography>

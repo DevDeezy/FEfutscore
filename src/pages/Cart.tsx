@@ -63,6 +63,7 @@ const Cart = () => {
   const [proofImage, setProofImage] = useState<string>('');
   const [proofReference, setProofReference] = useState<string>('');
   const [proofError, setProofError] = useState<string | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<string>('');
   const proofInputRef = useRef<HTMLInputElement>(null);
   const [cartPrice, setCartPrice] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('Revolut');
@@ -128,7 +129,8 @@ const Cart = () => {
   };
 
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-  const canPlaceOrder = items.length > 0 && allFieldsFilled;
+  const proofProvided = proofImage || selectedRecipient;
+  const canPlaceOrder = items.length > 0 && allFieldsFilled && proofProvided;
 
   const getBackendItems = (items: any[]) =>
     items.map((item) =>
@@ -139,11 +141,17 @@ const Cart = () => {
 
   const handleSubmitOrder = async () => {
     if (canPlaceOrder && user) {
-      await dispatch(createOrder({ userId: user.id, items: getBackendItems(items), address: { ...address, proofImage, proofReference }, paymentMethod }));
+      await dispatch(createOrder({ 
+        userId: user.id, 
+        items: getBackendItems(items), 
+        address: { ...address, proofImage, proofReference, selectedRecipient }, 
+        paymentMethod 
+      }));
       dispatch(clearCart());
       setAddress(initialAddress);
       setProofImage('');
       setProofReference('');
+      setSelectedRecipient('');
       setPaymentMethod('Revolut');
       navigate('/');
     }
@@ -304,6 +312,15 @@ const Cart = () => {
               ))}
             </Grid>
             
+            {/* Shipping Costs */}
+            {items.length === 1 && (
+              <Box sx={{ mt: 3, p: 2, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}>
+                <Typography variant="body1" sx={{ color: '#d84315', fontWeight: 'bold' }}>
+                  Portes de Envio - €2.00
+                </Typography>
+              </Box>
+            )}
+            
             <Box sx={{ mt: 4 }}>
               <Typography variant="h6" gutterBottom>
                 Morada de Entrega
@@ -392,7 +409,11 @@ const Cart = () => {
             </Box>
 
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento (Opcional)</Typography>
+              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento *</Typography>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                É obrigatório fornecer um comprovativo de pagamento ou indicar o destinatário.
+              </Alert>
+              
               {/* Payment Method Selection */}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="payment-method-label">Método de Pagamento</InputLabel>
@@ -422,42 +443,86 @@ const Cart = () => {
                   Envie o pagamento para o IBAN: <b>PT50 0002 0123 1234 5678 9015 4</b>
                 </Alert>
               )}
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ mb: 2 }}
-              >
-                Carregar Comprovativo
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  ref={proofInputRef}
-                  onChange={handleProofChange}
-                />
-              </Button>
-              {proofError && <Alert severity="error" sx={{ mb: 2 }}>{proofError}</Alert>}
-              {proofImage && (
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
-                  <img
-                    src={proofImage}
-                    alt="Comprovativo de Pagamento"
-                    style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'contain', border: '1px solid #eee', borderRadius: 4 }}
+              
+              {/* Option 1: Upload Proof */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  Opção 1: Carregar Comprovativo
+                </Typography>
+                <Button
+                  variant="contained"
+                  component="label"
+                  sx={{ mb: 2 }}
+                >
+                  Carregar Comprovativo
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    ref={proofInputRef}
+                    onChange={handleProofChange}
                   />
+                </Button>
+                {proofError && <Alert severity="error" sx={{ mb: 2 }}>{proofError}</Alert>}
+                {proofImage && (
+                  <Box sx={{ mt: 2, textAlign: 'center' }}>
+                    <img
+                      src={proofImage}
+                      alt="Comprovativo de Pagamento"
+                      style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'contain', border: '1px solid #eee', borderRadius: 4 }}
+                    />
+                  </Box>
+                )}
+                <TextField
+                  label="Referência do Comprovativo (Opcional)"
+                  fullWidth
+                  value={proofReference}
+                  onChange={handleReferenceChange}
+                  sx={{ mt: 2 }}
+                  placeholder="Insira a referência do comprovativo se não anexar imagem"
+                />
+              </Box>
+              
+              {/* Option 2: Select Recipient */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  Opção 2: Enviei para:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    variant={selectedRecipient === 'MIGUEL' ? 'contained' : 'outlined'}
+                    onClick={() => setSelectedRecipient('MIGUEL')}
+                    startIcon={selectedRecipient === 'MIGUEL' ? <Check /> : null}
+                    sx={{ minWidth: 120 }}
+                  >
+                    MIGUEL
+                  </Button>
+                  <Button
+                    variant={selectedRecipient === 'HUGO' ? 'contained' : 'outlined'}
+                    onClick={() => setSelectedRecipient('HUGO')}
+                    startIcon={selectedRecipient === 'HUGO' ? <Check /> : null}
+                    sx={{ minWidth: 120 }}
+                  >
+                    HUGO
+                  </Button>
                 </Box>
+              </Box>
+              
+              {/* Validation Error */}
+              {!proofProvided && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  É obrigatório fornecer um comprovativo de pagamento ou selecionar um destinatário.
+                </Alert>
               )}
-              <TextField
-                label="Referência do Comprovativo (Opcional)"
-                fullWidth
-                value={proofReference}
-                onChange={handleReferenceChange}
-                sx={{ mt: 2 }}
-                placeholder="Insira a referência do comprovativo se não anexar imagem"
-              />
             </Box>
             {cartPrice !== null && (
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Preço Total: €{cartPrice.toFixed(2)}
+                Preço Total: €{(cartPrice + (items.length === 1 ? 2 : 0)).toFixed(2)}
+                {items.length === 1 && (
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    (Inclui portes de envio: €2.00)
+                  </Typography>
+                )}
               </Typography>
             )}
             <Box sx={{ mt: 4, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-end', gap: 2 }}>

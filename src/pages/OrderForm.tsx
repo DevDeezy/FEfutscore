@@ -24,6 +24,8 @@ import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import PreviousOrders from '../components/PreviousOrders';
 import DragDropZone from '../components/DragDropZone';
+import PatchModal from '../components/PatchModal';
+import { Add as AddIcon } from '@mui/icons-material';
 
 interface ShirtType {
   id: number;
@@ -57,6 +59,7 @@ const OrderForm = () => {
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
   const [anoInput, setAnoInput] = useState('');
+  const [patchModalOpen, setPatchModalOpen] = useState(false);
   const getFormattedAno = (input: string) => {
     if (!/^[0-9]{2}$/.test(input)) return '';
     const first = input;
@@ -98,6 +101,13 @@ const OrderForm = () => {
     setCurrentItem(prev => ({
       ...prev,
       patch_images: (prev.patch_images || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+  const handleAddPatchesFromModal = (patches: string[]) => {
+    setCurrentItem(prev => ({
+      ...prev,
+      patch_images: [...(prev.patch_images || []), ...patches],
     }));
   };
 
@@ -309,32 +319,34 @@ const OrderForm = () => {
             </Grid>
             {/* Patches */}
             <Grid item xs={12}>
-              <DragDropZone
-                title="Carregar Imagens do Patch"
-                subtitle="Escolha imagens ou arraste-as para aqui"
-                onFileSelect={(file) => {
-                  const fileList = new DataTransfer();
-                  fileList.items.add(file);
-                  handlePatchImagesChange(fileList.files);
-                }}
-                multiple={true}
-                height={120}
-              />
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {(currentItem.patch_images || []).map((img, idx) => (
-                  <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
-                    <Box component="img" src={img} alt={`patch ${idx + 1}`} sx={{ height: 60, border: '1px solid #ccc', borderRadius: 1 }} />
-                    <Button
-                      size="small"
-                      color="error"
-                      sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
-                      onClick={() => handleRemovePatchImage(idx)}
-                    >
-                      X
-                    </Button>
-                  </Box>
-                ))}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Typography variant="subtitle1">Patches</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => setPatchModalOpen(true)}
+                >
+                  Adicionar Patch
+                </Button>
               </Box>
+              
+              {(currentItem.patch_images || []).length > 0 && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                  {(currentItem.patch_images || []).map((img, idx) => (
+                    <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
+                      <Box component="img" src={img} alt={`patch ${idx + 1}`} sx={{ height: 60, border: '1px solid #ccc', borderRadius: 1 }} />
+                      <Button
+                        size="small"
+                        color="error"
+                        sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
+                        onClick={() => handleRemovePatchImage(idx)}
+                      >
+                        X
+                      </Button>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Grid>
 
             <Grid item xs={12}>
@@ -345,6 +357,15 @@ const OrderForm = () => {
           </Grid>
           </Box>
       </Paper>
+      
+      {/* Patch Modal */}
+      <PatchModal
+        open={patchModalOpen}
+        onClose={() => setPatchModalOpen(false)}
+        onAddPatches={handleAddPatchesFromModal}
+        existingPatches={currentItem.patch_images || []}
+      />
+      
       {/* <PreviousOrders /> */}
     </Container>
   );
