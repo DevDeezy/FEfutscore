@@ -143,6 +143,16 @@ const AdminPanel = () => {
     // eslint-disable-next-line
   }, [dispatch]);
 
+  // Debug: Monitor patch dialog state
+  useEffect(() => {
+    if (openPatchDialog) {
+      console.log('Patch dialog opened from tab:', tab);
+      console.log('Current tab name:', ['Pedidos', 'Utilizadores', 'Packs & Preços', 'Tipos de Camisola', 'Produtos', 'Patches', 'Configuração de Preços'][tab]);
+    }
+  }, [openPatchDialog, tab]);
+
+
+
 
 
   // USERS
@@ -596,6 +606,9 @@ const AdminPanel = () => {
   };
 
   const handleOpenPatchDialog = (patch: any | null = null) => {
+    console.log('handleOpenPatchDialog called from tab:', tab);
+    console.log('Current tab name:', ['Pedidos', 'Utilizadores', 'Packs & Preços', 'Tipos de Camisola', 'Produtos', 'Patches', 'Configuração de Preços'][tab]);
+    
     if (patch) {
       setEditingPatch(patch);
       setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0 });
