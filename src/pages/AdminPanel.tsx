@@ -143,6 +143,11 @@ const AdminPanel = () => {
     // eslint-disable-next-line
   }, [dispatch]);
 
+  // Debug effect for patch dialog
+  useEffect(() => {
+    console.log('openPatchDialog changed to:', openPatchDialog);
+  }, [openPatchDialog]);
+
   // USERS
   const fetchUsers = async () => {
     setUsersLoading(true);
@@ -1018,7 +1023,14 @@ const AdminPanel = () => {
             </Dialog>
 
             {/* Patch Dialog */}
-            <Dialog open={openPatchDialog} onClose={() => setOpenPatchDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
+            <Dialog 
+              open={openPatchDialog} 
+              onClose={() => setOpenPatchDialog(false)} 
+              fullScreen={fullScreenDialog} 
+              maxWidth="md" 
+              fullWidth
+              sx={{ zIndex: 9999 }}
+            >
               <DialogTitle>{editingPatch ? 'Editar' : 'Criar'} Patch</DialogTitle>
               <DialogContent>
                 <TextField
@@ -1148,6 +1160,9 @@ const AdminPanel = () => {
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Debug: Current tab is {tab}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Debug: Dialog open state is {openPatchDialog ? 'true' : 'false'}
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Gestão de Patches</Typography>
