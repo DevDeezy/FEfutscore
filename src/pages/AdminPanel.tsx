@@ -143,10 +143,7 @@ const AdminPanel = () => {
     // eslint-disable-next-line
   }, [dispatch]);
 
-  // Debug effect for patch dialog
-  useEffect(() => {
-    console.log('openPatchDialog changed to:', openPatchDialog);
-  }, [openPatchDialog]);
+
 
   // USERS
   const fetchUsers = async () => {
@@ -599,7 +596,6 @@ const AdminPanel = () => {
   };
 
   const handleOpenPatchDialog = (patch: any | null = null) => {
-    console.log('handleOpenPatchDialog called with patch:', patch);
     if (patch) {
       setEditingPatch(patch);
       setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0 });
@@ -607,7 +603,6 @@ const AdminPanel = () => {
       setEditingPatch(null);
       setPatchForm({ name: '', image: '', price: 0 });
     }
-    console.log('Setting openPatchDialog to true');
     setOpenPatchDialog(true);
   };
 
@@ -1021,79 +1016,64 @@ const AdminPanel = () => {
                 </Button>
               </DialogActions>
             </Dialog>
-
-            {/* Patch Dialog */}
-            <Dialog 
-              open={openPatchDialog} 
-              onClose={() => setOpenPatchDialog(false)} 
-              fullScreen={fullScreenDialog} 
-              maxWidth="md" 
-              fullWidth
-              sx={{ 
-                zIndex: 9999,
-                '& .MuiDialog-paper': {
-                  backgroundColor: 'white',
-                  border: '2px solid red',
-                  minHeight: '400px',
-                  minWidth: '500px'
-                }
-              }}
-            >
-              <DialogTitle sx={{ backgroundColor: 'yellow', color: 'black' }}>
-                {editingPatch ? 'Editar' : 'Criar'} Patch - DEBUG MODE
-              </DialogTitle>
-              <DialogContent sx={{ backgroundColor: 'lightblue', minHeight: '300px' }}>
-                <Typography variant="body2" sx={{ mb: 2, color: 'red' }}>
-                  DEBUG: Dialog is open and visible!
-                </Typography>
-                <TextField
-                  label="Nome do Patch"
-                  fullWidth
-                  margin="normal"
-                  value={patchForm.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, name: e.target.value })}
-                  sx={{ backgroundColor: 'white' }}
-                />
-                <TextField
-                  label="URL da Imagem"
-                  fullWidth
-                  margin="normal"
-                  value={patchForm.image}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, image: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  sx={{ backgroundColor: 'white' }}
-                />
-                <TextField
-                  label="Preço (€)"
-                  type="number"
-                  fullWidth
-                  margin="normal"
-                  value={patchForm.price}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
-                  inputProps={{ step: 0.01, min: 0 }}
-                  sx={{ backgroundColor: 'white' }}
-                />
-                {patchForm.image && (
-                  <Box sx={{ mt: 2, textAlign: 'center' }}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Pré-visualização:</Typography>
-                    <Box
-                      component="img"
-                      src={patchForm.image}
-                      alt="Preview"
-                      sx={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 1 }}
-                    />
-                  </Box>
-                )}
-              </DialogContent>
-              <DialogActions sx={{ backgroundColor: 'lightgreen' }}>
-                <Button onClick={() => setOpenPatchDialog(false)}>Cancelar</Button>
-                <Button onClick={handleSavePatch} variant="contained" color="primary">
-                  Guardar
-                </Button>
-              </DialogActions>
-            </Dialog>
           </Box>
         )}
+
+        {/* Patch Dialog - Moved outside tabs so it can be accessed from any tab */}
+        <Dialog 
+          open={openPatchDialog} 
+          onClose={() => setOpenPatchDialog(false)} 
+          fullScreen={fullScreenDialog} 
+          maxWidth="md" 
+          fullWidth
+        >
+          <DialogTitle>
+            {editingPatch ? 'Editar' : 'Criar'} Patch
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Nome do Patch"
+              fullWidth
+              margin="normal"
+              value={patchForm.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, name: e.target.value })}
+            />
+            <TextField
+              label="URL da Imagem"
+              fullWidth
+              margin="normal"
+              value={patchForm.image}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, image: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+            />
+            <TextField
+              label="Preço (€)"
+              type="number"
+              fullWidth
+              margin="normal"
+              value={patchForm.price}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
+              inputProps={{ step: 0.01, min: 0 }}
+            />
+            {patchForm.image && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>Pré-visualização:</Typography>
+                <Box
+                  component="img"
+                  src={patchForm.image}
+                  alt="Preview"
+                  sx={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain', border: '1px solid #eee', borderRadius: 1 }}
+                />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenPatchDialog(false)}>Cancelar</Button>
+            <Button onClick={handleSavePatch} variant="contained" color="primary">
+              Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
         {tab === 3 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
@@ -1174,21 +1154,11 @@ const AdminPanel = () => {
         )}
         {tab === 5 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Debug: Current tab is {tab}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              Debug: Dialog open state is {openPatchDialog ? 'true' : 'false'}
-            </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Gestão de Patches</Typography>
               <Button 
                 variant="contained" 
-                onClick={() => {
-                  console.log('Adicionar Patch button clicked');
-                  alert('Button clicked!'); // Temporary debug
-                  handleOpenPatchDialog();
-                }}
+                onClick={() => handleOpenPatchDialog()}
               >
                 Adicionar Patch
               </Button>
