@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -11,6 +11,10 @@ import {
   Chip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Tree from 'rc-tree';
+// rc-tree provides styles via css. Depending on bundler, path can differ.
+// The base package exports styles under lib/assets.
+import 'rc-tree/assets/index.css';
 
 interface FilterSidebarProps {
   productTypes: any[];
@@ -25,26 +29,21 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onSelectType,
   onClearAll,
 }) => {
-  const roots = (Array.isArray(productTypes) ? productTypes : []).filter((pt) => !pt.parent_id);
-
-  const renderTypeBranch = (node: any, depth: number = 0) => {
-    return (
-      <Box key={node.id} sx={{ ml: depth * 2, my: 0.5 }}>
-        <Button
-          size="small"
-          variant={selectedType === String(node.id) ? 'contained' : 'text'}
-          onClick={() => onSelectType(String(node.id))}
-          sx={{ justifyContent: 'flex-start', minWidth: 0, px: 1 }}
-        >
-          {node.name}
-          {node.base_type && (
-            <Chip label={node.base_type} size="small" sx={{ ml: 1 }} />
-          )}
-        </Button>
-        {(node.children || []).map((child: any) => renderTypeBranch(child, depth + 1))}
-      </Box>
-    );
-  };
+  const treeData = useMemo(() => {
+    const mapNode = (n: any): any => ({
+      key: String(n.id),
+      title: (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <span>{n.name}</span>
+          {n.base_type && <Chip label={n.base_type} size="small" />}
+        </Box>
+      ),
+      children: (n.children || []).map((c: any) => mapNode(c)),
+    });
+    return (Array.isArray(productTypes) ? productTypes : [])
+      .filter((pt) => !pt.parent_id)
+      .map((root) => mapNode(root));
+  }, [productTypes]);
 
   return (
     <Paper
@@ -68,85 +67,41 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </Box>
       <Divider sx={{ mb: 2 }} />
 
-      {/* Product Types - pretty collapsible list */}
-      <Box sx={{
-        backgroundColor: 'background.paper',
-        borderRadius: 2,
-        border: theme => `1px solid ${theme.palette.divider}`,
-        overflow: 'hidden'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Tipos de Produto</Typography>
+      {/* Product Types - rc-tree (open-source, free) */}
+      <Box
+        sx={{
+          backgroundColor: 'background.paper',
+          borderRadius: 2,
+          border: (theme) => `1px solid ${theme.palette.divider}`,
+          p: 2,
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+          Tipos de Produto
+        </Typography>
+        <Box sx={{ mb: 1 }}>
+          <Button
+            size="small"
+            variant={selectedType === '' ? 'contained' : 'outlined'}
+            onClick={() => onSelectType('')}
+          >
+            Todos
+          </Button>
         </Box>
-        <Divider />
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ mb: 1 }}>
-            <Button
-              size="small"
-              variant={selectedType === '' ? 'contained' : 'outlined'}
-              onClick={() => onSelectType('')}
-              sx={{ justifyContent: 'flex-start', minWidth: 0, px: 1, borderRadius: 3 }}
-            >
-              Todos
-            </Button>
-          </Box>
-          {roots.map((root) => (
-            <Accordion key={root.id} disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, boxShadow: 'none' }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography sx={{ fontWeight: 600 }}>{root.name}</Typography>
-                {root.base_type && <Chip label={root.base_type} size="small" sx={{ ml: 1 }} />}
-              </AccordionSummary>
-              <AccordionDetails>
-                {(root.children || []).length === 0 ? (
-                  <Button
-                    size="small"
-                    variant={selectedType === String(root.id) ? 'contained' : 'text'}
-                    onClick={() => onSelectType(String(root.id))}
-                    sx={{ justifyContent: 'flex-start', minWidth: 0, px: 1 }}
-                  >
-                    {root.name}
-                  </Button>
-                ) : (
-                  <Box>
-                    {(root.children || []).map((child: any) => (
-                      <Accordion key={child.id} disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, ml: 2 }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography>{child.name}</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          {(child.children || []).length === 0 ? (
-                            <Button
-                              size="small"
-                              variant={selectedType === String(child.id) ? 'contained' : 'text'}
-                              onClick={() => onSelectType(String(child.id))}
-                              sx={{ justifyContent: 'flex-start', minWidth: 0, px: 1 }}
-                            >
-                              {child.name}
-                            </Button>
-                          ) : (
-                            <Box sx={{ ml: 2 }}>
-                              {(child.children || []).map((gchild: any) => (
-                                <Button
-                                  key={gchild.id}
-                                  size="small"
-                                  variant={selectedType === String(gchild.id) ? 'contained' : 'text'}
-                                  onClick={() => onSelectType(String(gchild.id))}
-                                  sx={{ justifyContent: 'flex-start', minWidth: 0, px: 1, my: 0.25 }}
-                                >
-                                  {gchild.name}
-                                </Button>
-                              ))}
-                            </Box>
-                          )}
-                        </AccordionDetails>
-                      </Accordion>
-                    ))}
-                  </Box>
-                )}
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Box>
+        <Tree
+          treeData={treeData}
+          defaultExpandAll
+          selectable
+          selectedKeys={selectedType ? [selectedType] : []}
+          onSelect={(keys) => {
+            const k = Array.isArray(keys) && keys.length > 0 ? String(keys[0]) : '';
+            onSelectType(k);
+          }}
+          virtual={false}
+          showLine
+          motion={null}
+          style={{ background: 'transparent' }}
+        />
       </Box>
     </Paper>
   );
