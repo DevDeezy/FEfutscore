@@ -29,6 +29,7 @@ import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
 import { OrderItem } from '../types';
 import Checkbox from '@mui/material/Checkbox';
+import FilterSidebar from '../components/FilterSidebar';
 
 const Store = () => {
   const dispatch = useDispatch();
@@ -167,72 +168,61 @@ const Store = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
+    <Container maxWidth="xl" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
         Loja
       </Typography>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>Filtrar por Tipo</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant={selectedType === '' ? 'contained' : 'outlined'} onClick={() => handleTypeSelectFromTree('')}>Todos</Button>
-        </Box>
-        <Box sx={{ mt: 2, p: 2, border: '1px solid #eee', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
-          {(Array.isArray(productTypes) ? productTypes : []).filter((pt:any) => !pt.parent_id).map((root:any) => (
-            <Box key={root.id} sx={{ ml: 0, mb: 1 }}>
-              <Button size="small" variant={selectedType === String(root.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(root.id))}>{root.name}</Button>
-              {(root.children || []).map((child:any) => (
-                <Box key={child.id} sx={{ ml: 2, my: 0.5 }}>
-                  <Button size="small" variant={selectedType === String(child.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(child.id))}>{child.name}</Button>
-                  {(child.children || []).map((gchild:any) => (
-                    <Box key={gchild.id} sx={{ ml: 4, my: 0.25 }}>
-                      <Button size="small" variant={selectedType === String(gchild.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(gchild.id))}>{gchild.name}</Button>
-                    </Box>
-                  ))}
-                </Box>
-              ))}
-            </Box>
-          ))}
-        </Box>
-      </Box>
-      {loading ? (
-        <CircularProgress />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <Grid container spacing={4}>
-          {Array.isArray(products) && products.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={4}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  sx={{
-                    height: 300,
-                    objectFit: 'contain',
-                    backgroundColor: '#f5f5f5',
-                    padding: 2,
-                  }}
-                  image={product.image_url}
-                  alt={product.name}
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="div">
-                    {product.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {product.description}
-                  </Typography>
-                  <Typography variant="h6" sx={{ mt: 2 }}>
-                    €{product.price.toFixed(2)}
-                  </Typography>
-                  <Button variant="contained" sx={{ mt: 2 }} onClick={() => handleOpenDialog(product)}>
-                    Adicionar ao Pedido
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={3} lg={3}>
+          <FilterSidebar
+            productTypes={productTypes}
+            selectedType={selectedType}
+            onSelectType={handleTypeSelectFromTree}
+            onClearAll={() => handleTypeSelectFromTree('')}
+          />
         </Grid>
-      )}
+        <Grid item xs={12} md={9} lg={9}>
+          {loading ? (
+            <CircularProgress />
+          ) : error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : (
+            <Grid container spacing={3}>
+              {Array.isArray(products) && products.map((product) => (
+                <Grid item key={product.id} xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardMedia
+                      component="img"
+                      sx={{
+                        height: 300,
+                        objectFit: 'contain',
+                        backgroundColor: '#f5f5f5',
+                        padding: 2,
+                      }}
+                      image={product.image_url}
+                      alt={product.name}
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                        {product.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40 }}>
+                        {product.description}
+                      </Typography>
+                      <Typography variant="h6" sx={{ mt: 1 }}>
+                        €{product.price.toFixed(2)}
+                      </Typography>
+                      <Button variant="contained" sx={{ mt: 1 }} onClick={() => handleOpenDialog(product)}>
+                        Adicionar ao Pedido
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
       <Dialog open={openDialog} onClose={handleCloseDialog} fullScreen={fullScreen}>
         <DialogTitle>Adicionar ao Pedido</DialogTitle>
         <DialogContent>
