@@ -90,8 +90,7 @@ const AdminPanel = () => {
   const [pendingChanges, setPendingChanges] = useState({
     status: false,
     price: false,
-    tracking: false,
-    payment: false
+    tracking: false
   });
   const [updatingAll, setUpdatingAll] = useState(false);
   const [updateAllError, setUpdateAllError] = useState<string | null>(null);
@@ -440,7 +439,7 @@ const AdminPanel = () => {
     setTrackingError(null);
     
     try {
-      const response = await axios.put(`${API_BASE_URL}/updateOrderTracking`, {
+      const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, {
         orderId: selectedOrder.id,
         trackingText: trackingText || selectedOrder.trackingText,
         trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
@@ -486,9 +485,9 @@ const AdminPanel = () => {
       // Update price if changed
       if (pendingChanges.price && orderPrice > 0 && orderPrice !== selectedOrder.total_price) {
         updates.push(
-          axios.put(`${API_BASE_URL}/updateorderprice`, {
+          axios.put(`${API_BASE_URL}/.netlify/functions/updateorderprice`, {
             orderId: selectedOrder.id,
-            price: orderPrice
+            total_price: orderPrice
           })
         );
       }
@@ -496,7 +495,7 @@ const AdminPanel = () => {
       // Update tracking if changed
       if (pendingChanges.tracking && (trackingText || trackingImages.length > 0)) {
         updates.push(
-          axios.put(`${API_BASE_URL}/updateOrderTracking`, {
+          axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, {
             orderId: selectedOrder.id,
             trackingText: trackingText || selectedOrder.trackingText,
             trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
@@ -504,21 +503,13 @@ const AdminPanel = () => {
         );
       }
       
-              // Change to payment if requested
-        if (pendingChanges.payment) {
-          updates.push(
-            axios.put(`${API_BASE_URL}/updateorderstatus`, {
-              orderId: selectedOrder.id,
-              status: 'Em pagamento' as const
-            })
-          );
-        }
+        
       
       // Wait for all updates to complete
       await Promise.all(updates);
       
       // Refresh the order data
-      const response = await axios.get(`${API_BASE_URL}/getorders`);
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders`);
       if (response.data && response.data.orders) {
         const updatedOrder = response.data.orders.find((o: any) => o.id === selectedOrder.id);
         if (updatedOrder) {
@@ -530,8 +521,7 @@ const AdminPanel = () => {
       setPendingChanges({
         status: false,
         price: false,
-        tracking: false,
-        payment: false
+        tracking: false
       });
       
       // Clear form fields
@@ -579,10 +569,7 @@ const AdminPanel = () => {
   };
 
   // Change status to "Em pagamento"
-  const handleChangeToPayment = async () => {
-    if (!selectedOrder) return;
-    setPendingChanges(prev => ({ ...prev, payment: true }));
-  };
+
 
   // Add to CSV handler
   const handleAddToCSV = async (orderId: string) => {
@@ -696,8 +683,7 @@ const AdminPanel = () => {
     setPendingChanges({
       status: false,
       price: false,
-      tracking: false,
-      payment: false
+      tracking: false
     });
     setUpdateAllError(null);
     setOpenOrderDialog(true);
@@ -1783,7 +1769,7 @@ const AdminPanel = () => {
               </Box>
 
               {/* Pending Changes Summary */}
-              {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking || pendingChanges.payment) && (
+              {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking) && (
                 <Box sx={{ mt: 3, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1, color: 'warning.dark' }}>
                     Alterações Pendentes:
@@ -1792,7 +1778,6 @@ const AdminPanel = () => {
                     {pendingChanges.status && <li>Estado da encomenda</li>}
                     {pendingChanges.price && <li>Preço da encomenda</li>}
                     {pendingChanges.tracking && <li>Informações de tracking</li>}
-                    {pendingChanges.payment && <li>Mudança para "Em Pagamento"</li>}
                   </Box>
                 </Box>
               )}
@@ -1817,15 +1802,7 @@ const AdminPanel = () => {
                     inputProps={{ step: 0.01, min: 0 }}
                     sx={{ mb: 2 }}
                   />
-                  <Button
-                    variant="contained"
-                    color="warning"
-                    onClick={handleChangeToPayment}
-                    disabled={updatingAll}
-                    sx={{ mr: 2 }}
-                  >
-                    Marcar para mudar para "Em Pagamento"
-                  </Button>
+
                   {orderPriceError && <Alert severity="error" sx={{ mt: 1 }}>{orderPriceError}</Alert>}
                 </Box>
               )}
@@ -1917,8 +1894,7 @@ const AdminPanel = () => {
               setPendingChanges({
                 status: false,
                 price: false,
-                tracking: false,
-                payment: false
+                tracking: false
               });
               setOrderStatus('');
               setOrderPrice(0);
@@ -1926,7 +1902,7 @@ const AdminPanel = () => {
               setTrackingImages([]);
               setUpdateAllError(null);
             }}>Fechar</Button>
-            {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking || pendingChanges.payment) && (
+            {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking) && (
               <Button
                 onClick={handleUpdateAllChanges}
                 variant="contained"
