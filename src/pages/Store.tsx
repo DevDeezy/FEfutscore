@@ -22,8 +22,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import TreeView from '@mui/lab/TreeView';
-import TreeItem from '@mui/lab/TreeItem';
+import { TreeView, TreeItem } from '@mui/lab';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
