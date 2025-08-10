@@ -84,7 +84,7 @@ const PreviousOrders: React.FC = () => {
         Os Meus Pedidos Anteriores
       </Typography>
       <List>
-        {orders.map((order) => (
+        {Array.isArray(orders) && orders.map((order) => (
           <ListItem
             key={order.id}
             secondaryAction={

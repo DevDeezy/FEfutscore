@@ -160,7 +160,7 @@ const NotificationBell: React.FC = () => {
             <Typography color="text.secondary">Nenhuma notificação</Typography>
           </MenuItem>
         ) : (
-          notifications.map((notification) => (
+          Array.isArray(notifications) && notifications.map((notification) => (
             <MenuItem
               key={notification.id}
               onClick={() => handleNotificationClick(notification)}

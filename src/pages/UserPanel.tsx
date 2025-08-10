@@ -263,7 +263,7 @@ const UserPanel = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {userOptions.map((option, index) => (
+        {Array.isArray(userOptions) && userOptions.map((option, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>
             <Card 
               sx={{ 
@@ -362,7 +362,7 @@ const UserPanel = () => {
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Nomes atuais:
                 </Typography>
-                {instagramNames.map((name, index) => (
+                {Array.isArray(instagramNames) && instagramNames.map((name, index) => (
                   <Box key={index} sx={{ 
                     display: 'flex', 
                     alignItems: 'center', 

@@ -113,7 +113,7 @@ const AddressManager = ({ userId, onSelect }: { userId: number, onSelect?: (addr
       )}
 
       <List>
-        {addresses.map((address: any) => (
+        {Array.isArray(addresses) && addresses.map((address: any) => (
           <Paper key={address.id} sx={{ mb: 2, p: 2 }}>
             <ListItem disablePadding>
               <ListItemText

@@ -152,7 +152,12 @@ const OrderForm = () => {
       setShirtTypesError(null);
       try {
         const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`);
-        setShirtTypes(res.data);
+        // Handle both old format (array) and new format (paginated response)
+        if (Array.isArray(res.data)) {
+          setShirtTypes(res.data);
+        } else {
+          setShirtTypes(res.data.shirtTypes);
+        }
       } catch (err) {
         setShirtTypesError('Falha ao carregar os tipos de camisola');
       } finally {
@@ -238,7 +243,7 @@ const OrderForm = () => {
                       <CircularProgress size={20} />
                     </MenuItem>
                   ) : (
-                    shirtTypes.map((type) => (
+                    Array.isArray(shirtTypes) && shirtTypes.map((type) => (
                       <MenuItem key={type.id} value={type.id.toString()}>
                         {type.name}
                       </MenuItem>

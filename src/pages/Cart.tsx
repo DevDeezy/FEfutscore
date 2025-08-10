@@ -88,7 +88,7 @@ const Cart = () => {
         setAddress(initialAddress);
       } else {
         // Load saved addresses if not already loaded
-        if (user && addresses.length === 0) {
+        if (user && (!Array.isArray(addresses) || addresses.length === 0)) {
           dispatch(getAddresses(user.id));
         }
       }
@@ -336,7 +336,7 @@ const Cart = () => {
                     <Typography variant="subtitle1" sx={{ mb: 1 }}>
                       Usar uma morada guardada:
                     </Typography>
-                    {addresses.length === 0 ? (
+                    {!Array.isArray(addresses) || addresses.length === 0 ? (
                       <Typography variant="body2">Nenhuma morada guardada.</Typography>
                     ) : (
                       <List>
@@ -391,7 +391,7 @@ const Cart = () => {
               ) : (
                 // In saved mode, just show the list of addresses (no edit, no add, no delete)
                 <Box>
-                  {addresses.length === 0 ? (
+                  {!Array.isArray(addresses) || addresses.length === 0 ? (
                     <Typography variant="body2">Nenhuma morada guardada.</Typography>
                   ) : (
                     <List>

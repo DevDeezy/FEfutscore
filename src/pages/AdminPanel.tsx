@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -136,6 +136,9 @@ const AdminPanel = () => {
       prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
     );
   };
+  // Filtered orders
+  const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
+
   const handleSelectAllOrders = (checked: boolean) => {
     setSelectedOrderIds(checked ? filteredOrders.map((o) => o.id) : []);
   };
@@ -735,7 +738,7 @@ const AdminPanel = () => {
   };
 
   // Search functionality
-  const performSearch = async (term: string) => {
+  const performSearch = useCallback(async (term: string) => {
     if (!term.trim()) {
       setSearchResults([]);
       setIsSearching(false);
@@ -814,7 +817,7 @@ const AdminPanel = () => {
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [orders, users, packs, shirtTypes, patches]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -828,7 +831,7 @@ const AdminPanel = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, performSearch]);
 
   // Clear search results when clicking outside
   useEffect(() => {
@@ -870,9 +873,6 @@ const AdminPanel = () => {
     setSearchTerm('');
     setSearchResults([]);
   };
-
-  // Filtered orders
-  const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
@@ -1141,7 +1141,7 @@ const AdminPanel = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {users.map((user, idx) => (
+                    {Array.isArray(users) && users.map((user, idx) => (
                       <TableRow key={user._id || user.id || idx}>
                         <TableCell>{typeof user.id === 'string' ? user.id : ''}</TableCell>
                         <TableCell>{typeof user.email === 'string' ? user.email : ''}</TableCell>
@@ -1230,7 +1230,7 @@ const AdminPanel = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {packs.map((pack) => (
+                    {Array.isArray(packs) && packs.map((pack) => (
                       <TableRow key={pack.id}>
                         <TableCell>{pack.name}</TableCell>
                         <TableCell>
@@ -1306,7 +1306,7 @@ const AdminPanel = () => {
                           onChange={(e: any) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
                           disabled={shirtTypesLoading || shirtTypesError !== null}
                         >
-                          {shirtTypes.map((type) => (
+                          {Array.isArray(shirtTypes) && shirtTypes.map((type) => (
                             <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
                           ))}
                         </Select>
@@ -1491,7 +1491,7 @@ const AdminPanel = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {patches.map((patch) => (
+                    {Array.isArray(patches) && patches.map((patch) => (
                       <TableRow key={patch.id}>
                         <TableCell>{patch.name}</TableCell>
                         <TableCell>

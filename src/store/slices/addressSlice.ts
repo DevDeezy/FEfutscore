@@ -72,7 +72,12 @@ const addressSlice = createSlice({
         state.error = null;
       })
       .addCase(getAddresses.fulfilled, (state, action) => {
-        state.addresses = action.payload;
+        // Handle both old format (array) and new paginated format
+        if (Array.isArray(action.payload)) {
+          state.addresses = action.payload;
+        } else {
+          state.addresses = action.payload.addresses;
+        }
         state.loading = false;
       })
       .addCase(getAddresses.rejected, (state, action) => {

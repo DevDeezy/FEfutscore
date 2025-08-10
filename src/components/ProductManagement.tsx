@@ -102,7 +102,12 @@ const ProductManagement = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes`);
-      setProductTypes(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setProductTypes(res.data);
+      } else {
+        setProductTypes(res.data.productTypes);
+      }
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch product types');
@@ -114,7 +119,12 @@ const ProductManagement = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts`);
-      setProducts(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else {
+        setProducts(res.data.products);
+      }
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch products');
@@ -210,7 +220,7 @@ const ProductManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {productTypes.map((type) => (
+            {Array.isArray(productTypes) && productTypes.map((type) => (
               <TableRow key={type.id}>
                 <TableCell>{type.id}</TableCell>
                 <TableCell>{type.name}</TableCell>
@@ -245,7 +255,7 @@ const ProductManagement = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
+            {Array.isArray(products) && products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.productType.base_type}</TableCell>
@@ -357,7 +367,7 @@ const ProductManagement = () => {
               label="Tipo de Produto"
               onChange={(e) => setNewProduct({ ...newProduct, product_type_id: e.target.value })}
             >
-              {productTypes.map((type) => (
+              {Array.isArray(productTypes) && productTypes.map((type) => (
                 <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
               ))}
             </Select>

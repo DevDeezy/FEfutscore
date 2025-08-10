@@ -64,7 +64,12 @@ const PatchModal: React.FC<PatchModalProps> = ({
       setPatchesError(null);
       try {
         const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getPatches`);
-        setPredefinedPatches(response.data);
+        // Handle both old format (array) and new format (paginated response)
+        if (Array.isArray(response.data)) {
+          setPredefinedPatches(response.data);
+        } else {
+          setPredefinedPatches(response.data.patches);
+        }
       } catch (err: any) {
         setPatchesError('Erro ao carregar patches');
         console.error('Error fetching patches:', err);
@@ -160,7 +165,7 @@ const PatchModal: React.FC<PatchModalProps> = ({
             
             {!patchesLoading && !patchesError && predefinedPatches.length > 0 && (
               <Grid container spacing={2}>
-                {predefinedPatches.map((patch) => (
+                {Array.isArray(predefinedPatches) && predefinedPatches.map((patch) => (
                   <Grid item xs={6} sm={4} md={3} key={patch.id}>
                     <Card 
                       sx={{ 
@@ -232,7 +237,7 @@ const PatchModal: React.FC<PatchModalProps> = ({
                   Imagens adicionadas:
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {customImages.map((img, idx) => (
+                  {Array.isArray(customImages) && customImages.map((img, idx) => (
                     <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
                       <Box 
                         component="img" 

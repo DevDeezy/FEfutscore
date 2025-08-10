@@ -133,7 +133,12 @@ const Store = () => {
         ? `${API_BASE_URL}/.netlify/functions/getProducts?productTypeId=${typeId}`
         : `${API_BASE_URL}/.netlify/functions/getProducts`;
       const res = await axios.get(url);
-      setProducts(res.data);
+      // Handle both old format (array) and new paginated format
+      if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else {
+        setProducts(res.data.products);
+      }
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch products');
@@ -144,7 +149,12 @@ const Store = () => {
   const fetchProductTypes = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes`);
-      setProductTypes(res.data);
+      // Handle both old format (array) and new paginated format
+      if (Array.isArray(res.data)) {
+        setProductTypes(res.data);
+      } else {
+        setProductTypes(res.data.productTypes);
+      }
     } catch (err) {
       // Handle error silently for now
     }
@@ -167,7 +177,7 @@ const Store = () => {
             <MenuItem value="">
               <Typography sx={{ fontStyle: 'italic' }}>Todos</Typography>
             </MenuItem>
-            {productTypes.map((type) => (
+            {Array.isArray(productTypes) && productTypes.map((type) => (
               <MenuItem key={type.id} value={type.id}>
                 {type.name}
               </MenuItem>
@@ -181,7 +191,7 @@ const Store = () => {
         <Alert severity="error">{error}</Alert>
       ) : (
         <Grid container spacing={4}>
-          {products.map((product) => (
+          {Array.isArray(products) && products.map((product) => (
             <Grid item key={product.id} xs={12} sm={6} md={4}>
               <Card>
                 <CardMedia
