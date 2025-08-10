@@ -42,6 +42,7 @@ const PreviousOrders: React.FC = () => {
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { orders, loading, error, pagination } = useSelector((state: RootState) => state.order);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleOpenModal = (order: Order) => setSelectedOrder(order);
   const handleCloseModal = () => setSelectedOrder(null);
@@ -174,7 +175,9 @@ const PreviousOrders: React.FC = () => {
                                 maxWidth: '100%',
                                 maxHeight: '150px',
                                 border: '1px solid #ddd',
+                                cursor: 'zoom-in',
                               }}
+                              onClick={() => setImagePreview(item.image_front || null)}
                             />
                           </Box>
                         )}
@@ -188,7 +191,9 @@ const PreviousOrders: React.FC = () => {
                                 maxWidth: '100%',
                                 maxHeight: '150px',
                                 border: '1px solid #ddd',
+                                cursor: 'zoom-in',
                               }}
+                              onClick={() => setImagePreview(item.image_back || null)}
                             />
                           </Box>
                         )}
@@ -232,7 +237,9 @@ const PreviousOrders: React.FC = () => {
                                 maxHeight: '150px',
                                 border: '1px solid #ddd',
                                 borderRadius: '4px',
+                                cursor: 'zoom-in',
                               }}
+                              onClick={() => setImagePreview(img)}
                             />
                           </Box>
                         ))}
@@ -256,6 +263,15 @@ const PreviousOrders: React.FC = () => {
           order={selectedOrderForPayment}
         />
       )}
+      
+      {/* Image Preview Modal */}
+      <Modal open={!!imagePreview} onClose={() => setImagePreview(null)}>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', outline: 0 }}>
+          {imagePreview && (
+            <img src={imagePreview} alt="Preview" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }} />
+          )}
+        </Box>
+      </Modal>
       
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (

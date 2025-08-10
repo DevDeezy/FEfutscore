@@ -49,6 +49,7 @@ const AdminPanel = () => {
   const [tab, setTab] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -1722,8 +1723,8 @@ const AdminPanel = () => {
                         {item.player_name && <Typography variant="body2">Nome do Jogador: {item.player_name}</Typography>}
                         {(item.image_front || item.image_back) && (
                            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                            {item.image_front && <Box component="img" src={item.image_front} alt="frente" sx={{ height: 60 }} />}
-                            {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60 }} />}
+                            {item.image_front && <Box component="img" src={item.image_front} alt="frente" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(item.image_front)} />}
+                            {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(item.image_back)} />}
                             </Box>
                           )}
                         {/* PATCH IMAGES SECTION */}
@@ -1825,7 +1826,7 @@ const AdminPanel = () => {
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {selectedOrder.trackingImages.map((img: string, idx: number) => (
                         <Box key={idx} sx={{ position: 'relative' }}>
-                          <Box component="img" src={img} alt={`tracking ${idx + 1}`} sx={{ height: 80, border: '1px solid #ccc', borderRadius: 1 }} />
+                          <Box component="img" src={img} alt={`tracking ${idx + 1}`} sx={{ height: 80, border: '1px solid #ccc', borderRadius: 1, cursor: 'zoom-in' }} onClick={() => setImagePreview(img)} />
                         </Box>
                       ))}
                     </Box>
@@ -1913,6 +1914,15 @@ const AdminPanel = () => {
               </Button>
             )}
           </DialogActions>
+        </Dialog>
+
+        {/* Image Preview Dialog */}
+        <Dialog open={!!imagePreview} onClose={() => setImagePreview(null)} maxWidth="lg">
+          <Box sx={{ p: 2 }}>
+            {imagePreview && (
+              <Box component="img" src={imagePreview} alt="Preview" sx={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 1 }} />
+            )}
+          </Box>
         </Dialog>
     </Container>
   );
