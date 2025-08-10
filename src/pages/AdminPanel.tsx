@@ -73,7 +73,7 @@ const AdminPanel = () => {
   // Order details dialog state
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [orderStatus, setOrderStatus] = useState('');
+  const [orderStatus, setOrderStatus] = useState<Order['status'] | ''>('');
   const [orderStatusLoading, setOrderStatusLoading] = useState(false);
   const [orderStatusError, setOrderStatusError] = useState<string | null>(null);
   const [orderPrice, setOrderPrice] = useState<number>(0);
@@ -85,6 +85,16 @@ const AdminPanel = () => {
   const [trackingImages, setTrackingImages] = useState<string[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
+
+  // Pending changes tracking
+  const [pendingChanges, setPendingChanges] = useState({
+    status: false,
+    price: false,
+    tracking: false,
+    payment: false
+  });
+  const [updatingAll, setUpdatingAll] = useState(false);
+  const [updateAllError, setUpdateAllError] = useState<string | null>(null);
 
   // Shirt Types state
   const [shirtTypes, setShirtTypes] = useState<any[]>([]);
@@ -424,29 +434,140 @@ const AdminPanel = () => {
 
   // Update order tracking
   const handleUpdateOrderTracking = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || (!trackingText && trackingImages.length === 0)) return;
+    
     setTrackingLoading(true);
     setTrackingError(null);
+    
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking/${selectedOrder.id}`, 
-        { trackingText, trackingImages },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
-      setTrackingError(null);
-    } catch (err: any) {
-      setTrackingError(err.response?.data?.error || 'Falha ao atualizar o tracking');
+      const response = await axios.put(`${API_BASE_URL}/updateOrderTracking`, {
+        orderId: selectedOrder.id,
+        trackingText: trackingText || selectedOrder.trackingText,
+        trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
+      });
+      
+      if (response.status === 200) {
+        // Update the order in the list
+        const updatedOrders = orders.map(order => 
+          order.id === selectedOrder.id 
+            ? { ...order, trackingText: trackingText || order.trackingText, trackingImages: [...(order.trackingImages || []), ...trackingImages] }
+            : order
+        );
+        dispatch({ type: 'order/fetchOrders/fulfilled', payload: updatedOrders });
+        
+        // Clear the form
+        setTrackingText('');
+        setTrackingImages([]);
+        setPendingChanges(prev => ({ ...prev, tracking: false }));
+      }
+    } catch (error: any) {
+      setTrackingError(error.response?.data?.message || 'Erro ao atualizar tracking');
     } finally {
       setTrackingLoading(false);
     }
   };
 
-  // Handle tracking image upload
+  const handleUpdateAllChanges = async () => {
+    if (!selectedOrder) return;
+    
+    setUpdatingAll(true);
+    setUpdateAllError(null);
+    
+    try {
+      const updates = [];
+      
+      // Update status if changed
+      if (pendingChanges.status && orderStatus && orderStatus !== selectedOrder.status) {
+        updates.push(
+          dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus }))
+        );
+      }
+      
+      // Update price if changed
+      if (pendingChanges.price && orderPrice > 0 && orderPrice !== selectedOrder.total_price) {
+        updates.push(
+          axios.put(`${API_BASE_URL}/updateorderprice`, {
+            orderId: selectedOrder.id,
+            price: orderPrice
+          })
+        );
+      }
+      
+      // Update tracking if changed
+      if (pendingChanges.tracking && (trackingText || trackingImages.length > 0)) {
+        updates.push(
+          axios.put(`${API_BASE_URL}/updateOrderTracking`, {
+            orderId: selectedOrder.id,
+            trackingText: trackingText || selectedOrder.trackingText,
+            trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
+          })
+        );
+      }
+      
+              // Change to payment if requested
+        if (pendingChanges.payment) {
+          updates.push(
+            axios.put(`${API_BASE_URL}/updateorderstatus`, {
+              orderId: selectedOrder.id,
+              status: 'Em pagamento' as const
+            })
+          );
+        }
+      
+      // Wait for all updates to complete
+      await Promise.all(updates);
+      
+      // Refresh the order data
+      const response = await axios.get(`${API_BASE_URL}/getorders`);
+      if (response.data && response.data.orders) {
+        const updatedOrder = response.data.orders.find((o: any) => o.id === selectedOrder.id);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }
+      
+      // Clear all pending changes
+      setPendingChanges({
+        status: false,
+        price: false,
+        tracking: false,
+        payment: false
+      });
+      
+      // Clear form fields
+      setOrderStatus('');
+      setOrderPrice(0);
+      setTrackingText('');
+      setTrackingImages([]);
+      
+    } catch (error: any) {
+      setUpdateAllError(error.response?.data?.message || 'Erro ao atualizar alterações');
+    } finally {
+      setUpdatingAll(false);
+    }
+  };
+
+  // Event handlers to track pending changes
+  const handleStatusChange = (e: any) => {
+    setOrderStatus(e.target.value);
+    setPendingChanges(prev => ({ ...prev, status: true }));
+  };
+
+  const handlePriceChange = (e: any) => {
+    setOrderPrice(parseFloat(e.target.value) || 0);
+    setPendingChanges(prev => ({ ...prev, price: true }));
+  };
+
+  const handleTrackingTextChange = (e: any) => {
+    setTrackingText(e.target.value);
+    setPendingChanges(prev => ({ ...prev, tracking: true }));
+  };
+
   const handleTrackingImageChange = (file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       setTrackingImages(prev => [...prev, reader.result as string]);
+      setPendingChanges(prev => ({ ...prev, tracking: true }));
     };
     reader.readAsDataURL(file);
   };
@@ -454,42 +575,13 @@ const AdminPanel = () => {
   // Remove tracking image
   const handleRemoveTrackingImage = (index: number) => {
     setTrackingImages(prev => prev.filter((_, i) => i !== index));
+    setPendingChanges(prev => ({ ...prev, tracking: true }));
   };
 
   // Change status to "Em pagamento"
   const handleChangeToPayment = async () => {
     if (!selectedOrder) return;
-    setOrderStatusLoading(true);
-    setOrderStatusError(null);
-    try {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: 'Em pagamento' }));
-      
-      // Send email notification
-      try {
-        const user = users.find(u => u.id === selectedOrder.user_id);
-        if (user && (user.email || user.userEmail)) {
-          const emailToUse = user.userEmail || user.email;
-          
-          // Prepare email template parameters
-          const templateParams: EmailTemplateParams = {
-            order_number: selectedOrder.id.toString()
-          };
-
-          await sendOrderEmail(templateParams);
-          console.log('Email sent successfully for order:', selectedOrder.id);
-        }
-      } catch (emailError) {
-        console.error('Error sending email:', emailError);
-        // Don't fail the entire request if email fails
-      }
-      
-      setOpenOrderDialog(false);
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
-    } catch (err: any) {
-      setOrderStatusError(err.response?.data?.error || 'Falha ao alterar o estado');
-    } finally {
-      setOrderStatusLoading(false);
-    }
+    setPendingChanges(prev => ({ ...prev, payment: true }));
   };
 
   // Add to CSV handler
@@ -599,8 +691,15 @@ const AdminPanel = () => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
     setOrderPrice(order.total_price);
-    setTrackingText(order.trackingText || '');
-    setTrackingImages(order.trackingImages || []);
+    setTrackingText('');
+    setTrackingImages([]);
+    setPendingChanges({
+      status: false,
+      price: false,
+      tracking: false,
+      payment: false
+    });
+    setUpdateAllError(null);
     setOpenOrderDialog(true);
   };
 
@@ -1669,7 +1768,7 @@ const AdminPanel = () => {
                     <Select
                       value={orderStatus}
                     label="Atualizar Estado"
-                    onChange={(e: any) => setOrderStatus(e.target.value)}
+                    onChange={handleStatusChange}
                     >
                     <MenuItem value="pending">Pendente</MenuItem>
                     <MenuItem value="Para analizar">Para Analisar</MenuItem>
@@ -1683,8 +1782,30 @@ const AdminPanel = () => {
                 {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
               </Box>
 
-              {/* Price update section - only show for "Para analizar" orders */}
-              {selectedOrder?.status === 'Para analizar' && (
+              {/* Pending Changes Summary */}
+              {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking || pendingChanges.payment) && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'warning.dark' }}>
+                    Alterações Pendentes:
+                  </Typography>
+                  <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                    {pendingChanges.status && <li>Estado da encomenda</li>}
+                    {pendingChanges.price && <li>Preço da encomenda</li>}
+                    {pendingChanges.tracking && <li>Informações de tracking</li>}
+                    {pendingChanges.payment && <li>Mudança para "Em Pagamento"</li>}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Update All Error */}
+              {updateAllError && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {updateAllError}
+                </Alert>
+              )}
+
+              {/* Price update section - only show for "A Orçamentar" orders */}
+              {selectedOrder?.status === 'A Orçamentar' && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Definir Preço</Typography>
                   <TextField
@@ -1692,27 +1813,18 @@ const AdminPanel = () => {
                     label="Preço Total (€)"
                     type="number"
                     value={orderPrice}
-                    onChange={(e) => setOrderPrice(parseFloat(e.target.value) || 0)}
+                    onChange={handlePriceChange}
                     inputProps={{ step: 0.01, min: 0 }}
                     sx={{ mb: 2 }}
                   />
                   <Button
                     variant="contained"
-                    color="primary"
-                    onClick={handleUpdateOrderPrice}
-                    disabled={orderPriceLoading}
-                    sx={{ mr: 2 }}
-                  >
-                    {orderPriceLoading ? <CircularProgress size={24} /> : 'Atualizar Preço'}
-                  </Button>
-                  <Button
-                    variant="contained"
                     color="warning"
                     onClick={handleChangeToPayment}
-                    disabled={orderStatusLoading}
+                    disabled={updatingAll}
                     sx={{ mr: 2 }}
                   >
-                    {orderStatusLoading ? <CircularProgress size={24} /> : 'Mudar para Em Pagamento'}
+                    Marcar para mudar para "Em Pagamento"
                   </Button>
                   {orderPriceError && <Alert severity="error" sx={{ mt: 1 }}>{orderPriceError}</Alert>}
                 </Box>
@@ -1750,7 +1862,7 @@ const AdminPanel = () => {
                   multiline
                   rows={3}
                   value={trackingText}
-                  onChange={(e) => setTrackingText(e.target.value)}
+                  onChange={handleTrackingTextChange}
                   placeholder="Adicione informações de tracking para o cliente..."
                   sx={{ mb: 2 }}
                 />
@@ -1793,29 +1905,37 @@ const AdminPanel = () => {
                   )}
                 </Box>
 
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleUpdateOrderTracking}
-                  disabled={trackingLoading}
-                  sx={{ mr: 2 }}
-                >
-                  {trackingLoading ? <CircularProgress size={24} /> : 'Atualizar Tracking'}
-                </Button>
                 {trackingError && <Alert severity="error" sx={{ mt: 1 }}>{trackingError}</Alert>}
               </Box>
                 </Box>
             )}
           </DialogContent>
           <DialogActions>
-          <Button onClick={() => setOpenOrderDialog(false)}>Fechar</Button>
-            <Button
-              onClick={handleUpdateOrderStatus}
-              variant="contained"
-            disabled={orderStatusLoading}
-            >
-            {orderStatusLoading ? <CircularProgress size={24} /> : 'Atualizar Estado'}
-            </Button>
+            <Button onClick={() => {
+              setOpenOrderDialog(false);
+              // Reset all pending changes and form fields
+              setPendingChanges({
+                status: false,
+                price: false,
+                tracking: false,
+                payment: false
+              });
+              setOrderStatus('');
+              setOrderPrice(0);
+              setTrackingText('');
+              setTrackingImages([]);
+              setUpdateAllError(null);
+            }}>Fechar</Button>
+            {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking || pendingChanges.payment) && (
+              <Button
+                onClick={handleUpdateAllChanges}
+                variant="contained"
+                color="primary"
+                disabled={updatingAll}
+              >
+                {updatingAll ? <CircularProgress size={24} /> : 'Atualizar Todas as Alterações'}
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
     </Container>
