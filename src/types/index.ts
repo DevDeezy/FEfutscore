@@ -100,6 +100,8 @@ export interface ProductType {
   id: number;
   name: string;
   base_type: string;
+  parent_id?: number | null;
+  children?: ProductType[];
   cost_price?: number;
 }
 

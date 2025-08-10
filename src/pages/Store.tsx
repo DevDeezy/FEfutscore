@@ -8,8 +8,6 @@ import {
   CardMedia,
   Typography,
   Button,
-  Select,
-  MenuItem,
   FormControl,
   InputLabel,
   Box,
@@ -24,6 +22,8 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import TreeView from '@mui/lab/TreeView';
+import TreeItem from '@mui/lab/TreeItem';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
@@ -148,21 +148,22 @@ const Store = () => {
 
   const fetchProductTypes = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes`);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`);
       // Handle both old format (array) and new paginated format
       if (Array.isArray(res.data)) {
         setProductTypes(res.data);
       } else {
-        setProductTypes(res.data.productTypes);
+        // Prefer tree if available
+        setProductTypes(res.data.tree || res.data.productTypes);
       }
     } catch (err) {
       // Handle error silently for now
     }
   };
 
-  const handleTypeChange = (event: SelectChangeEvent) => {
-    setSelectedType(event.target.value as string);
-    fetchProducts(event.target.value as string);
+  const handleTypeSelectFromTree = (typeId: string) => {
+    setSelectedType(typeId);
+    fetchProducts(typeId);
   };
 
   return (
@@ -171,19 +172,33 @@ const Store = () => {
         Loja
       </Typography>
       <Box sx={{ mb: 4 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filtrar por Tipo</InputLabel>
-          <Select value={selectedType} label="Filtrar por Tipo" onChange={handleTypeChange}>
-            <MenuItem value="">
-              <Typography sx={{ fontStyle: 'italic' }}>Todos</Typography>
-            </MenuItem>
-            {Array.isArray(productTypes) && productTypes.map((type) => (
-              <MenuItem key={type.id} value={type.id}>
-                {type.name}
-              </MenuItem>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>Filtrar por Tipo</Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button variant={selectedType === '' ? 'contained' : 'outlined'} onClick={() => handleTypeSelectFromTree('')}>Todos</Button>
+        </Box>
+        <Box sx={{ mt: 2, p: 2, border: '1px solid #eee', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
+          <TreeView defaultCollapseIcon={"-" as any} defaultExpandIcon={"+" as any}>
+            {(Array.isArray(productTypes) ? productTypes : []).filter((pt:any) => !pt.parent_id).map((root:any) => (
+              <TreeItem nodeId={`pt-${root.id}`} label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Button size="small" variant={selectedType === String(root.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(root.id))}>{root.name}</Button>
+                </Box>
+              } key={root.id}>
+                {(root.children || []).map((child:any) => (
+                  <TreeItem nodeId={`pt-${child.id}`} label={
+                    <Button size="small" variant={selectedType === String(child.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(child.id))}>{child.name}</Button>
+                  } key={child.id}>
+                    {(child.children || []).map((gchild:any) => (
+                      <TreeItem nodeId={`pt-${gchild.id}`} label={
+                        <Button size="small" variant={selectedType === String(gchild.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(gchild.id))}>{gchild.name}</Button>
+                      } key={gchild.id} />
+                    ))}
+                  </TreeItem>
+                ))}
+              </TreeItem>
             ))}
-          </Select>
-        </FormControl>
+          </TreeView>
+        </Box>
       </Box>
       {loading ? (
         <CircularProgress />

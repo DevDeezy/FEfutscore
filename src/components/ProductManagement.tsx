@@ -22,6 +22,8 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import TreeView from '@mui/lab/TreeView';
+import TreeItem from '@mui/lab/TreeItem';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { Product, ProductType } from '../types';
@@ -36,6 +38,7 @@ const ProductManagement = () => {
   const [openProductTypeDialog, setOpenProductTypeDialog] = useState(false);
   const [newProductTypeName, setNewProductTypeName] = useState('');
   const [newProductTypeBase, setNewProductTypeBase] = useState('tshirt');
+  const [newProductTypeParentId, setNewProductTypeParentId] = useState<number | ''>('');
 
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
@@ -101,7 +104,7 @@ const ProductManagement = () => {
   const fetchProductTypes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes`);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`);
       // Handle both old format (array) and new format (paginated response)
       if (Array.isArray(res.data)) {
         setProductTypes(res.data);
@@ -137,9 +140,11 @@ const ProductManagement = () => {
       await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, {
         name: newProductTypeName,
         base_type: newProductTypeBase,
+        parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
       });
       setOpenProductTypeDialog(false);
       setNewProductTypeName('');
+      setNewProductTypeParentId('');
       fetchProductTypes();
     } catch (err) {
       setError('Failed to create product type');
@@ -209,32 +214,37 @@ const ProductManagement = () => {
           Adicionar Tipo de Produto
         </Button>
       </Box>
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Nome</TableCell>
-              <TableCell>Tipo Base</TableCell>
-              <TableCell>Ações</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Array.isArray(productTypes) && productTypes.map((type) => (
-              <TableRow key={type.id}>
-                <TableCell>{type.id}</TableCell>
-                <TableCell>{type.name}</TableCell>
-                <TableCell>{type.base_type}</TableCell>
-                <TableCell>
-                  <Button color="error" onClick={() => handleDeleteProductType(type.id)}>
-                    Apagar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Paper sx={{ p: 2, mb: 4 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>Estrutura de Tipos (Árvore)</Typography>
+        <TreeView defaultCollapseIcon={"-" as any} defaultExpandIcon={"+" as any}>
+          {(Array.isArray(productTypes) ? productTypes : []).filter(pt => !pt.parent_id).map((root) => (
+            <TreeItem nodeId={`pt-${root.id}`} label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <span>{`${root.name} (${root.base_type})`}</span>
+                <Button size="small" color="error" onClick={() => handleDeleteProductType(root.id)}>Apagar</Button>
+              </Box>
+            } key={root.id}>
+              {(root.children || []).map(child => (
+                <TreeItem nodeId={`pt-${child.id}`} label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{`${child.name} (${child.base_type})`}</span>
+                    <Button size="small" color="error" onClick={() => handleDeleteProductType(child.id)}>Apagar</Button>
+                  </Box>
+                } key={child.id}>
+                  {(child.children || []).map(gchild => (
+                    <TreeItem nodeId={`pt-${gchild.id}`} label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>{`${gchild.name} (${gchild.base_type})`}</span>
+                        <Button size="small" color="error" onClick={() => handleDeleteProductType(gchild.id)}>Apagar</Button>
+                      </Box>
+                    } key={gchild.id} />
+                  ))}
+                </TreeItem>
+              ))}
+            </TreeItem>
+          ))}
+        </TreeView>
+      </Paper>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">Produtos</Typography>
@@ -295,6 +305,19 @@ const ProductManagement = () => {
             >
               <MenuItem value="tshirt">Camisola</MenuItem>
               <MenuItem value="shoes">Sapatilhas</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Tipo Pai (Opcional)</InputLabel>
+            <Select
+              value={newProductTypeParentId === '' ? '' : String(newProductTypeParentId)}
+              label="Tipo Pai (Opcional)"
+              onChange={(e) => setNewProductTypeParentId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <MenuItem value="">— Sem Pai —</MenuItem>
+              {(Array.isArray(productTypes) ? productTypes : []).map((pt) => (
+                <MenuItem key={pt.id} value={pt.id}>{pt.name}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </DialogContent>
