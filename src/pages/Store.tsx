@@ -8,6 +8,8 @@ import {
   CardMedia,
   Typography,
   Button,
+  Select,
+  MenuItem,
   FormControl,
   InputLabel,
   Box,
@@ -22,7 +24,6 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { TreeView, TreeItem } from '@mui/lab';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
@@ -176,27 +177,21 @@ const Store = () => {
           <Button variant={selectedType === '' ? 'contained' : 'outlined'} onClick={() => handleTypeSelectFromTree('')}>Todos</Button>
         </Box>
         <Box sx={{ mt: 2, p: 2, border: '1px solid #eee', borderRadius: 1, maxHeight: 300, overflow: 'auto' }}>
-          <TreeView defaultCollapseIcon={"-" as any} defaultExpandIcon={"+" as any}>
-            {(Array.isArray(productTypes) ? productTypes : []).filter((pt:any) => !pt.parent_id).map((root:any) => (
-              <TreeItem nodeId={`pt-${root.id}`} label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Button size="small" variant={selectedType === String(root.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(root.id))}>{root.name}</Button>
+          {(Array.isArray(productTypes) ? productTypes : []).filter((pt:any) => !pt.parent_id).map((root:any) => (
+            <Box key={root.id} sx={{ ml: 0, mb: 1 }}>
+              <Button size="small" variant={selectedType === String(root.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(root.id))}>{root.name}</Button>
+              {(root.children || []).map((child:any) => (
+                <Box key={child.id} sx={{ ml: 2, my: 0.5 }}>
+                  <Button size="small" variant={selectedType === String(child.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(child.id))}>{child.name}</Button>
+                  {(child.children || []).map((gchild:any) => (
+                    <Box key={gchild.id} sx={{ ml: 4, my: 0.25 }}>
+                      <Button size="small" variant={selectedType === String(gchild.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(gchild.id))}>{gchild.name}</Button>
+                    </Box>
+                  ))}
                 </Box>
-              } key={root.id}>
-                {(root.children || []).map((child:any) => (
-                  <TreeItem nodeId={`pt-${child.id}`} label={
-                    <Button size="small" variant={selectedType === String(child.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(child.id))}>{child.name}</Button>
-                  } key={child.id}>
-                    {(child.children || []).map((gchild:any) => (
-                      <TreeItem nodeId={`pt-${gchild.id}`} label={
-                        <Button size="small" variant={selectedType === String(gchild.id) ? 'contained' : 'text'} onClick={() => handleTypeSelectFromTree(String(gchild.id))}>{gchild.name}</Button>
-                      } key={gchild.id} />
-                    ))}
-                  </TreeItem>
-                ))}
-              </TreeItem>
-            ))}
-          </TreeView>
+              ))}
+            </Box>
+          ))}
         </Box>
       </Box>
       {loading ? (

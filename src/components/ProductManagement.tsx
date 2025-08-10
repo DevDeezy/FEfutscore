@@ -22,7 +22,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { TreeView, TreeItem } from '@mui/lab';
+// Replaced x-tree-view with a simple indented list to avoid extra dependency
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { Product, ProductType } from '../types';
@@ -214,35 +214,33 @@ const ProductManagement = () => {
         </Button>
       </Box>
       <Paper sx={{ p: 2, mb: 4 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>Estrutura de Tipos (Árvore)</Typography>
-        <TreeView defaultCollapseIcon={"-" as any} defaultExpandIcon={"+" as any}>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>Estrutura de Tipos</Typography>
+        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
           {(Array.isArray(productTypes) ? productTypes : []).filter(pt => !pt.parent_id).map((root) => (
-            <TreeItem nodeId={`pt-${root.id}`} label={
+            <Box key={root.id} sx={{ ml: 0, mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <span>{`${root.name} (${root.base_type})`}</span>
                 <Button size="small" color="error" onClick={() => handleDeleteProductType(root.id)}>Apagar</Button>
               </Box>
-            } key={root.id}>
               {(root.children || []).map(child => (
-                <TreeItem nodeId={`pt-${child.id}`} label={
+                <Box key={child.id} sx={{ ml: 2, my: 0.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <span>{`${child.name} (${child.base_type})`}</span>
                     <Button size="small" color="error" onClick={() => handleDeleteProductType(child.id)}>Apagar</Button>
                   </Box>
-                } key={child.id}>
                   {(child.children || []).map(gchild => (
-                    <TreeItem nodeId={`pt-${gchild.id}`} label={
+                    <Box key={gchild.id} sx={{ ml: 4, my: 0.25 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <span>{`${gchild.name} (${gchild.base_type})`}</span>
                         <Button size="small" color="error" onClick={() => handleDeleteProductType(gchild.id)}>Apagar</Button>
                       </Box>
-                    } key={gchild.id} />
+                    </Box>
                   ))}
-                </TreeItem>
+                </Box>
               ))}
-            </TreeItem>
+            </Box>
           ))}
-        </TreeView>
+        </Box>
       </Paper>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
