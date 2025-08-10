@@ -67,6 +67,7 @@ const Cart = () => {
   const proofInputRef = useRef<HTMLInputElement>(null);
   const [cartPrice, setCartPrice] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('Revolut');
+  const [clientInstagram, setClientInstagram] = useState<string>('');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -145,7 +146,8 @@ const Cart = () => {
         userId: user.id, 
         items: getBackendItems(items), 
         address: { ...address, proofImage, proofReference, selectedRecipient }, 
-        paymentMethod 
+        paymentMethod,
+        clientInstagram: user.role === 'admin' ? clientInstagram : undefined
       }));
       dispatch(clearCart());
       setAddress(initialAddress);
@@ -153,6 +155,7 @@ const Cart = () => {
       setProofReference('');
       setSelectedRecipient('');
       setPaymentMethod('Revolut');
+      setClientInstagram('');
       navigate('/');
     }
   };
@@ -407,6 +410,23 @@ const Cart = () => {
                 </Box>
               )}
             </Box>
+
+            {/* Instagram Input for Admin Users */}
+            {user?.role === 'admin' && (
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  Instagram do Cliente
+                </Typography>
+                <TextField
+                  label="Instagram do Cliente (Opcional)"
+                  fullWidth
+                  value={clientInstagram}
+                  onChange={(e) => setClientInstagram(e.target.value)}
+                  placeholder="Ex: @cliente_instagram"
+                  helperText="Este campo só está disponível para administradores"
+                />
+              </Box>
+            )}
 
             <Box sx={{ mt: 4 }}>
               <Typography variant="h6" gutterBottom>Comprovativo de Pagamento *</Typography>

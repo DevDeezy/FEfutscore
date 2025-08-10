@@ -12,7 +12,7 @@ const initialState: OrderState = {
 
 export const createOrder = createAsyncThunk(
   'order/create',
-  async (orderData: { userId: number; items: any[]; address: any; paymentMethod?: string }) => {
+  async (orderData: { userId: number; items: any[]; address: any; paymentMethod?: string; clientInstagram?: string }) => {
     const response = await axios.post(`${API_BASE_URL}/.netlify/functions/createorder`, orderData, {
       headers: {
         'Content-Type': 'application/json',
@@ -24,10 +24,10 @@ export const createOrder = createAsyncThunk(
 
 export const fetchOrders = createAsyncThunk(
   'order/fetchAll',
-  async (userId?: number) => {
+  async ({ userId, page = 1, limit = 20 }: { userId?: number; page?: number; limit?: number } = {}) => {
     const url = userId
-      ? `${API_BASE_URL}/.netlify/functions/getorders?userId=${userId}`
-      : `${API_BASE_URL}/.netlify/functions/getorders`;
+      ? `${API_BASE_URL}/.netlify/functions/getorders?userId=${userId}&page=${page}&limit=${limit}`
+      : `${API_BASE_URL}/.netlify/functions/getorders?page=${page}&limit=${limit}`;
     const response = await axios.get(url);
     return response.data;
   }
@@ -82,7 +82,14 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        // Handle both old format (array) and new format (paginated response)
+        if (Array.isArray(action.payload)) {
+          state.orders = action.payload;
+          state.pagination = undefined;
+        } else {
+          state.orders = action.payload.orders;
+          state.pagination = action.payload.pagination;
+        }
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;

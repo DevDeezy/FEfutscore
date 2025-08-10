@@ -38,7 +38,7 @@ export interface Order {
   user?: { email: string; instagramName?: string };
   items: OrderItem[];
   total_price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento' | 'A Orçamentar';
   created_at: string;
   address_nome: string;
   address_morada: string;
@@ -47,6 +47,8 @@ export interface Order {
   address_pais: string;
   address_codigo_postal: string;
   address_telemovel: string;
+  trackingText?: string;
+  trackingImages?: string[];
 }
 
 export interface AuthState {
@@ -56,11 +58,26 @@ export interface AuthState {
   error: string | null;
 }
 
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
 export interface OrderState {
   orders: Order[];
   currentOrder: Order | null;
   loading: boolean;
   error: string | null;
+  pagination?: PaginationInfo;
 }
 
 export interface PackItem {

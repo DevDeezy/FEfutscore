@@ -27,7 +27,9 @@ import {
   useTheme,
   useMediaQuery,
   Checkbox,
+  InputAdornment,
 } from '@mui/material';
+import { Search as SearchIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
@@ -77,6 +79,12 @@ const AdminPanel = () => {
   const [orderPrice, setOrderPrice] = useState<number>(0);
   const [orderPriceLoading, setOrderPriceLoading] = useState(false);
   const [orderPriceError, setOrderPriceError] = useState<string | null>(null);
+  
+  // Tracking state
+  const [trackingText, setTrackingText] = useState('');
+  const [trackingImages, setTrackingImages] = useState<string[]>([]);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
 
   // Shirt Types state
   const [shirtTypes, setShirtTypes] = useState<any[]>([]);
@@ -95,6 +103,11 @@ const AdminPanel = () => {
     'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento' | ''
   >('');
   const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Pricing Configuration state
   const [pricingConfigs, setPricingConfigs] = useState<any[]>([]);
@@ -136,22 +149,28 @@ const AdminPanel = () => {
       }
       setSelectedOrderIds([]);
       setBulkStatus('');
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
     } finally {
       setBulkLoading(false);
     }
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [packsPage, setPacksPage] = useState(1);
+  const [shirtTypesPage, setShirtTypesPage] = useState(1);
+  const [patchesPage, setPatchesPage] = useState(1);
+
   // Fetch orders, users, and packs on mount
   useEffect(() => {
-    dispatch(fetchOrders());
-    fetchUsers();
-    fetchPacks();
-    fetchShirtTypes();
-    fetchPricingConfigs();
-    fetchPatches();
+    dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+    fetchUsers(usersPage);
+    fetchPacks(packsPage);
+    fetchShirtTypes(shirtTypesPage);
+    fetchPricingConfigs(1);
+    fetchPatches(patchesPage);
     // eslint-disable-next-line
-  }, [dispatch]);
+  }, [dispatch, currentPage, usersPage, packsPage, shirtTypesPage, patchesPage]);
 
   // Debug: Monitor patch dialog state
   useEffect(() => {
@@ -166,15 +185,20 @@ const AdminPanel = () => {
 
 
   // USERS
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1) => {
     setUsersLoading(true);
     setUsersError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers?page=${page}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setUsers(res.data);
+      } else {
+        setUsers(res.data.users);
+      }
     } catch (err: any) {
       setUsersError('Falha ao carregar os utilizadores');
       setUsers([]);
@@ -212,15 +236,20 @@ const AdminPanel = () => {
   };
 
   // PACKS
-  const fetchPacks = async () => {
+  const fetchPacks = async (page = 1) => {
     setPacksLoading(true);
     setPacksError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpacks`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpacks?page=${page}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPacks(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setPacks(res.data);
+      } else {
+        setPacks(res.data.packs);
+      }
     } catch (err: any) {
       setPacksError('Falha ao carregar os packs');
       setPacks([]);
@@ -331,7 +360,7 @@ const AdminPanel = () => {
     setOrderStatusLoading(true);
     setOrderStatusError(null);
     try {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' | 'Para analizar' | 'Em pagamento' }));
+      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' | 'Para analizar' | 'Em pagamento' | 'A Orçamentar' }));
       
       // Send email notification if status is "Em pagamento"
       if (orderStatus === 'Em pagamento') {
@@ -362,7 +391,7 @@ const AdminPanel = () => {
       // A better way is to refetch orders or have the slice update the state.
       // For now, let's just close the dialog.
       setOpenOrderDialog(false);
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
     } catch (err: any) {
       setOrderStatusError(err.response?.data?.error || 'Falha ao atualizar o estado');
     } finally {
@@ -381,13 +410,47 @@ const AdminPanel = () => {
         { total_price: orderPrice },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
       setOrderPriceError(null);
     } catch (err: any) {
       setOrderPriceError(err.response?.data?.error || 'Falha ao atualizar o preço');
     } finally {
       setOrderPriceLoading(false);
     }
+  };
+
+  // Update order tracking
+  const handleUpdateOrderTracking = async () => {
+    if (!selectedOrder) return;
+    setTrackingLoading(true);
+    setTrackingError(null);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking/${selectedOrder.id}`, 
+        { trackingText, trackingImages },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      setTrackingError(null);
+    } catch (err: any) {
+      setTrackingError(err.response?.data?.error || 'Falha ao atualizar o tracking');
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
+
+  // Handle tracking image upload
+  const handleTrackingImageChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTrackingImages(prev => [...prev, reader.result as string]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove tracking image
+  const handleRemoveTrackingImage = (index: number) => {
+    setTrackingImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // Change status to "Em pagamento"
@@ -418,7 +481,7 @@ const AdminPanel = () => {
       }
       
       setOpenOrderDialog(false);
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
     } catch (err: any) {
       setOrderStatusError(err.response?.data?.error || 'Falha ao alterar o estado');
     } finally {
@@ -430,7 +493,7 @@ const AdminPanel = () => {
   const handleAddToCSV = async (orderId: string) => {
     try {
       await dispatch(updateOrderStatus({ orderId, status: 'CSV' }));
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
     } catch (err) {
       alert('Falha ao marcar encomenda para CSV');
     }
@@ -456,7 +519,7 @@ const AdminPanel = () => {
       );
       saveAs(new Blob([response.data]), 'encomendas.xlsx');
       // After export, refresh orders (their status will be updated by backend)
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
     } catch (err) {
       console.error('Error exporting orders:', err);
       alert('Falha ao exportar encomendas. Veja a consola para mais detalhes.');
@@ -465,15 +528,20 @@ const AdminPanel = () => {
   };
 
   // Shirt Types
-  const fetchShirtTypes = async () => {
+  const fetchShirtTypes = async (page = 1) => {
     setShirtTypesLoading(true);
     setShirtTypesError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=${page}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setShirtTypes(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setShirtTypes(res.data);
+      } else {
+        setShirtTypes(res.data.shirtTypes);
+      }
     } catch (err: any) {
       setShirtTypesError('Falha ao carregar os tipos de camisola');
       setShirtTypes([]);
@@ -528,19 +596,26 @@ const AdminPanel = () => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
     setOrderPrice(order.total_price);
+    setTrackingText(order.trackingText || '');
+    setTrackingImages(order.trackingImages || []);
     setOpenOrderDialog(true);
   };
 
   // Pricing Configuration functions
-  const fetchPricingConfigs = async () => {
+  const fetchPricingConfigs = async (page = 1) => {
     setPricingLoading(true);
     setPricingError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpricingconfig`, {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getpricingconfig?page=${page}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPricingConfigs(res.data);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(res.data)) {
+        setPricingConfigs(res.data);
+      } else {
+        setPricingConfigs(res.data.pricingConfigs);
+      }
     } catch (err: any) {
       setPricingError('Falha ao carregar configurações de preços');
       setPricingConfigs([]);
@@ -555,7 +630,7 @@ const AdminPanel = () => {
         { key, price, cost_price },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchPricingConfigs(); // Refresh the list
+      fetchPricingConfigs(1); // Refresh the list
     } catch (err: any) {
       alert('Falha ao atualizar configuração de preço');
     }
@@ -568,7 +643,7 @@ const AdminPanel = () => {
         { userEmail },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchUsers(); // Refresh the list
+      fetchUsers(usersPage); // Refresh the list
     } catch (err: any) {
       alert('Falha ao atualizar email do utilizador');
     }
@@ -581,19 +656,24 @@ const AdminPanel = () => {
         { instagramName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      fetchUsers(); // Refresh the list
+      fetchUsers(usersPage); // Refresh the list
     } catch (err: any) {
       alert('Falha ao atualizar nome do Instagram');
     }
   };
 
   // Patch management functions
-  const fetchPatches = async () => {
+  const fetchPatches = async (page = 1) => {
     setPatchesLoading(true);
     setPatchesError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getPatches`);
-      setPatches(response.data);
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getPatches?page=${page}&limit=20`);
+      // Handle both old format (array) and new format (paginated response)
+      if (Array.isArray(response.data)) {
+        setPatches(response.data);
+      } else {
+        setPatches(response.data.patches);
+      }
     } catch (error: any) {
       setPatchesError('Erro ao carregar patches');
       console.error('Error fetching patches:', error);
@@ -608,7 +688,7 @@ const AdminPanel = () => {
         await axios.delete(`${API_BASE_URL}/.netlify/functions/deletePatch/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
-        fetchPatches();
+        fetchPatches(patchesPage);
       } catch (error) {
         console.error('Error deleting patch:', error);
       }
@@ -648,10 +728,147 @@ const AdminPanel = () => {
         });
       }
       setOpenPatchDialog(false);
-      fetchPatches();
+      fetchPatches(patchesPage);
     } catch (error) {
       console.error('Error saving patch:', error);
     }
+  };
+
+  // Search functionality
+  const performSearch = async (term: string) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const results: any[] = [];
+
+    try {
+      // Search in orders
+      const orderResults = orders.filter(order => 
+        order.id.toString().includes(term) ||
+        order.user?.email?.toLowerCase().includes(term.toLowerCase()) ||
+        order.user?.instagramName?.toLowerCase().includes(term.toLowerCase()) ||
+        order.address_nome?.toLowerCase().includes(term.toLowerCase()) ||
+        order.address_morada?.toLowerCase().includes(term.toLowerCase()) ||
+        order.address_cidade?.toLowerCase().includes(term.toLowerCase()) ||
+        order.total_price.toString().includes(term) ||
+        order.status.toLowerCase().includes(term.toLowerCase())
+      ).map(order => ({
+        ...order,
+        type: 'order',
+        displayText: `Encomenda #${order.id} - ${order.user?.email || 'N/A'} - €${order.total_price.toFixed(2)}`
+      }));
+
+      // Search in users
+      const userResults = users.filter(user => 
+        user.id?.toString().includes(term) ||
+        user.email?.toLowerCase().includes(term.toLowerCase()) ||
+        user.instagramName?.toLowerCase().includes(term.toLowerCase()) ||
+        user.userEmail?.toLowerCase().includes(term.toLowerCase())
+      ).map(user => ({
+        ...user,
+        type: 'user',
+        displayText: `Utilizador: ${user.email} - ${user.instagramName || 'N/A'}`
+      }));
+
+      // Search in packs
+      const packResults = packs.filter(pack => 
+        pack.id.toString().includes(term) ||
+        pack.name.toLowerCase().includes(term.toLowerCase()) ||
+        pack.price.toString().includes(term)
+      ).map(pack => ({
+        ...pack,
+        type: 'pack',
+        displayText: `Pack: ${pack.name} - €${pack.price.toFixed(2)}`
+      }));
+
+      // Search in shirt types
+      const shirtTypeResults = shirtTypes.filter(shirtType => 
+        shirtType.id.toString().includes(term) ||
+        shirtType.name.toLowerCase().includes(term.toLowerCase()) ||
+        shirtType.price.toString().includes(term)
+      ).map(shirtType => ({
+        ...shirtType,
+        type: 'shirtType',
+        displayText: `Tipo de Camisola: ${shirtType.name} - €${shirtType.price.toFixed(2)}`
+      }));
+
+      // Search in patches
+      const patchResults = patches.filter(patch => 
+        patch.id.toString().includes(term) ||
+        patch.name.toLowerCase().includes(term.toLowerCase()) ||
+        patch.price.toString().includes(term)
+      ).map(patch => ({
+        ...patch,
+        type: 'patch',
+        displayText: `Patch: ${patch.name} - €${patch.price.toFixed(2)}`
+      }));
+
+      results.push(...orderResults, ...userResults, ...packResults, ...shirtTypeResults, ...patchResults);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Clear search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-search-container]')) {
+        setSearchResults([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSearchResultClick = (result: any) => {
+    switch (result.type) {
+      case 'order':
+        handleOpenOrderDialog(result);
+        break;
+      case 'user':
+        // Switch to users tab and highlight the user
+        setTab(1);
+        break;
+      case 'pack':
+        // Switch to packs tab and highlight the pack
+        setTab(2);
+        break;
+      case 'shirtType':
+        // Switch to shirt types tab and highlight the shirt type
+        setTab(3);
+        break;
+      case 'patch':
+        // Switch to patches tab and highlight the patch
+        setTab(5);
+        break;
+    }
+    setSearchTerm('');
+    setSearchResults([]);
   };
 
   // Filtered orders
@@ -662,6 +879,83 @@ const AdminPanel = () => {
         <Typography variant="h4" gutterBottom>
         Painel de Administração
         </Typography>
+        
+        {/* Global Search */}
+        <Box sx={{ mb: 3, position: 'relative' }} data-search-container>
+          <TextField
+            fullWidth
+            placeholder="🔍 Pesquisar encomendas, utilizadores, moradas, valores, IDs..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              endAdornment: isSearching && (
+                <InputAdornment position="end">
+                  <CircularProgress size={20} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'background.paper',
+                boxShadow: 1,
+              },
+            }}
+          />
+          
+          {/* Search Results Dropdown */}
+          {searchResults.length > 0 && (
+            <Paper
+              sx={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 1000,
+                maxHeight: 400,
+                overflow: 'auto',
+                mt: 1,
+                boxShadow: 3,
+              }}
+            >
+              {searchResults.map((result, index) => (
+                <Box
+                  key={`${result.type}-${result.id}-${index}`}
+                  onClick={() => handleSearchResultClick(result)}
+                  sx={{
+                    p: 2,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                    '&:last-child': {
+                      borderBottom: 'none',
+                    },
+                  }}
+                >
+                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    {result.displayText}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {result.type === 'order' && `Estado: ${result.status}`}
+                    {result.type === 'user' && `ID: ${result.id}`}
+                    {result.type === 'pack' && `ID: ${result.id}`}
+                    {result.type === 'shirtType' && `ID: ${result.id}`}
+                    {result.type === 'patch' && `ID: ${result.id}`}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
+          )}
+        </Box>
+        
       <Paper>
         <Tabs
           value={tab}
@@ -783,6 +1077,8 @@ const AdminPanel = () => {
                               ? 'orange'
                               : order.status === 'Para analizar'
                               ? 'purple'
+                              : order.status === 'A Orçamentar'
+                              ? 'darkblue'
                               : order.status === 'Em pagamento'
                               ? 'red'
                               : order.status === 'Em Processamento'
@@ -795,7 +1091,8 @@ const AdminPanel = () => {
                           }}
                         >
                           {order.status === 'pending' ? 'Pendente' :
-                            order.status === 'Para analizar' ? 'Para Analisar' :
+                                                         order.status === 'Para analizar' ? 'Para Analisar' :
+                            order.status === 'A Orçamentar' ? 'A Orçamentar' :
                             order.status === 'Em pagamento' ? 'Em Pagamento' :
                             order.status === 'Em Processamento' ? 'Em Processamento' :
                             order.status === 'completed' ? 'Concluída' :
@@ -810,7 +1107,7 @@ const AdminPanel = () => {
                         <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
                         </Button>
-                        {order.status !== 'CSV' && order.status !== 'Para analizar' && order.status !== 'Em pagamento' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                        {order.status !== 'CSV' && order.status !== 'Para analizar' && order.status !== 'A Orçamentar' && order.status !== 'Em pagamento' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
                           <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined">
                             Adicionar ao CSV
                           </Button>
@@ -1376,6 +1673,7 @@ const AdminPanel = () => {
                     >
                     <MenuItem value="pending">Pendente</MenuItem>
                     <MenuItem value="Para analizar">Para Analisar</MenuItem>
+                    <MenuItem value="A Orçamentar">A Orçamentar</MenuItem>
                     <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
                     <MenuItem value="processing">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
@@ -1419,6 +1717,93 @@ const AdminPanel = () => {
                   {orderPriceError && <Alert severity="error" sx={{ mt: 1 }}>{orderPriceError}</Alert>}
                 </Box>
               )}
+
+              {/* Tracking section */}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>Informações de Tracking</Typography>
+                
+                {/* Current tracking info */}
+                {selectedOrder?.trackingText && (
+                  <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Texto de Tracking Atual:</Typography>
+                    <Typography variant="body2">{selectedOrder.trackingText}</Typography>
+                  </Box>
+                )}
+                
+                {selectedOrder?.trackingImages && selectedOrder.trackingImages.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagens de Tracking Atuais:</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {selectedOrder.trackingImages.map((img: string, idx: number) => (
+                        <Box key={idx} sx={{ position: 'relative' }}>
+                          <Box component="img" src={img} alt={`tracking ${idx + 1}`} sx={{ height: 80, border: '1px solid #ccc', borderRadius: 1 }} />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Add new tracking info */}
+                <TextField
+                  fullWidth
+                  label="Texto de Tracking"
+                  multiline
+                  rows={3}
+                  value={trackingText}
+                  onChange={(e) => setTrackingText(e.target.value)}
+                  placeholder="Adicione informações de tracking para o cliente..."
+                  sx={{ mb: 2 }}
+                />
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>Adicionar Imagens de Tracking:</Typography>
+                  <DragDropZone 
+                    title="Adicionar Imagem de Tracking"
+                    onFileSelect={handleTrackingImageChange}
+                  />
+                  
+                  {trackingImages.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagens Selecionadas:</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {trackingImages.map((img: string, idx: number) => (
+                          <Box key={idx} sx={{ position: 'relative' }}>
+                            <Box component="img" src={img} alt={`new tracking ${idx + 1}`} sx={{ height: 80, border: '1px solid #ccc', borderRadius: 1 }} />
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="error"
+                              sx={{ 
+                                position: 'absolute', 
+                                top: -8, 
+                                right: -8, 
+                                minWidth: 'auto', 
+                                width: 24, 
+                                height: 24,
+                                borderRadius: '50%'
+                              }}
+                              onClick={() => handleRemoveTrackingImage(idx)}
+                            >
+                              ×
+                            </Button>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleUpdateOrderTracking}
+                  disabled={trackingLoading}
+                  sx={{ mr: 2 }}
+                >
+                  {trackingLoading ? <CircularProgress size={24} /> : 'Atualizar Tracking'}
+                </Button>
+                {trackingError && <Alert severity="error" sx={{ mt: 1 }}>{trackingError}</Alert>}
+              </Box>
                 </Box>
             )}
           </DialogContent>

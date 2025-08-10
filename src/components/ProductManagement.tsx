@@ -25,6 +25,7 @@ import {
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { Product, ProductType } from '../types';
+import DragDropZone from './DragDropZone';
 
 const ProductManagement = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -52,6 +53,45 @@ const ProductManagement = () => {
     ano: '25/26',
     numero: '',
   });
+
+  // State for image upload
+  const [productImage, setProductImage] = useState<string>('');
+
+  // Handle product image upload
+  const handleProductImageChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imageUrl = reader.result as string;
+      setProductImage(imageUrl);
+      setNewProduct({ ...newProduct, image_url: imageUrl });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove product image
+  const handleRemoveProductImage = () => {
+    setProductImage('');
+    setNewProduct({ ...newProduct, image_url: '' });
+  };
+
+  // Handle closing the product dialog and resetting states
+  const handleCloseProductDialog = () => {
+    setOpenProductDialog(false);
+    setNewProduct({
+      name: '',
+      description: '',
+      price: 0,
+      cost_price: 0,
+      image_url: '',
+      base_type: 'tshirt',
+      available_sizes: '',
+      product_type_id: '',
+      sexo: 'Neutro',
+      ano: '25/26',
+      numero: '',
+    });
+    setProductImage('');
+  };
 
   useEffect(() => {
     fetchProductTypes();
@@ -133,6 +173,7 @@ const ProductManagement = () => {
         ano: '25/26',
         numero: '',
       });
+      setProductImage(''); // Reset the image upload state
       fetchProducts();
     } catch (err) {
       setError('Failed to create product');
@@ -289,13 +330,19 @@ const ProductManagement = () => {
             value={newProduct.cost_price}
             onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })}
           />
-          <TextField
-            label="URL da Imagem"
-            fullWidth
-            margin="normal"
-            value={newProduct.image_url}
-            onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
-          />
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagem do Produto:</Typography>
+            <DragDropZone
+              title="Carregar Imagem do Produto"
+              subtitle="Escolha uma imagem ou arraste-a para aqui"
+              onFileSelect={handleProductImageChange}
+              onFileRemove={handleRemoveProductImage}
+              currentImage={productImage || newProduct.image_url}
+              accept="image/*"
+              multiple={false}
+              height={150}
+            />
+          </Box>
           <TextField
             label="Tamanhos Disponíveis (separados por vírgula)"
             fullWidth
@@ -344,7 +391,7 @@ const ProductManagement = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenProductDialog(false)}>Cancelar</Button>
+          <Button onClick={handleCloseProductDialog}>Cancelar</Button>
           <Button onClick={handleCreateProduct}>Criar</Button>
         </DialogActions>
       </Dialog>

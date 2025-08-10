@@ -14,6 +14,7 @@ import {
   Button,
   Modal,
   Grid,
+  Pagination,
 } from '@mui/material';
 import { Order, OrderItem } from '../types';
 import PaymentProofModal from './PaymentProofModal';
@@ -35,11 +36,12 @@ const modalStyle = {
 
 const PreviousOrders: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders, loading, error } = useSelector((state: RootState) => state.order);
   const { user } = useSelector((state: RootState) => state.auth);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { orders, loading, error, pagination } = useSelector((state: RootState) => state.order);
 
   const handleOpenModal = (order: Order) => setSelectedOrder(order);
   const handleCloseModal = () => setSelectedOrder(null);
@@ -56,9 +58,13 @@ const PreviousOrders: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      dispatch(fetchOrders(user.id));
+      dispatch(fetchOrders({ userId: user.id, page: currentPage, limit: 10 }));
     }
-  }, [dispatch, user]);
+  }, [dispatch, user, currentPage]);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+  };
 
   if (loading) {
     return <CircularProgress />;
@@ -75,7 +81,7 @@ const PreviousOrders: React.FC = () => {
   return (
     <Paper elevation={3} sx={{ p: 2, mt: 4 }}>
       <Typography variant="h6" gutterBottom>
-        My Previous Orders
+        Os Meus Pedidos Anteriores
       </Typography>
       <List>
         {orders.map((order) => (
@@ -138,7 +144,7 @@ const PreviousOrders: React.FC = () => {
                   : '-'}
               </Typography>
               <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
-                Items
+                Artigos
               </Typography>
               <List>
                 {selectedOrder.items.map((item: OrderItem, index: number) => (
@@ -160,10 +166,10 @@ const PreviousOrders: React.FC = () => {
                       <Grid item xs={12} md={6}>
                         {item.image_front && (
                           <Box sx={{ mb: 1 }}>
-                            <Typography variant="body2">Front Image:</Typography>
+                            <Typography variant="body2">Imagem da Frente:</Typography>
                             <img
                               src={item.image_front}
-                              alt="Front design"
+                              alt="Design da frente"
                               style={{
                                 maxWidth: '100%',
                                 maxHeight: '150px',
@@ -174,10 +180,10 @@ const PreviousOrders: React.FC = () => {
                         )}
                         {item.image_back && (
                           <Box>
-                            <Typography variant="body2">Back Image:</Typography>
+                            <Typography variant="body2">Imagem das Costas:</Typography>
                             <img
                               src={item.image_back}
-                              alt="Back design"
+                              alt="Design das costas"
                               style={{
                                 maxWidth: '100%',
                                 maxHeight: '150px',
@@ -191,8 +197,52 @@ const PreviousOrders: React.FC = () => {
                   </Paper>
                 ))}
               </List>
+
+              {/* Tracking Information */}
+              {(selectedOrder.trackingText || (selectedOrder.trackingImages && selectedOrder.trackingImages.length > 0)) && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    📦 Informações de Tracking
+                  </Typography>
+                  
+                  {selectedOrder.trackingText && (
+                    <Paper sx={{ p: 2, mb: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }} variant="outlined">
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        Informações de Rastreamento:
+                      </Typography>
+                      <Typography variant="body2">
+                        {selectedOrder.trackingText}
+                      </Typography>
+                    </Paper>
+                  )}
+                  
+                  {selectedOrder.trackingImages && selectedOrder.trackingImages.length > 0 && (
+                    <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        Imagens de Tracking:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {selectedOrder.trackingImages.map((img: string, idx: number) => (
+                          <Box key={idx}>
+                            <img
+                              src={img}
+                              alt={`Tracking ${idx + 1}`}
+                              style={{
+                                maxWidth: '150px',
+                                maxHeight: '150px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                              }}
+                            />
+                          </Box>
+                        ))}
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              )}
               <Button onClick={handleCloseModal} sx={{ mt: 2 }}>
-                Close
+                Fechar
               </Button>
             </>
           )}
@@ -205,6 +255,20 @@ const PreviousOrders: React.FC = () => {
           onClose={handleClosePaymentModal}
           order={selectedOrderForPayment}
         />
+      )}
+      
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Pagination
+            count={pagination.totalPages}
+            page={pagination.currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
       )}
     </Paper>
   );
