@@ -11,10 +11,9 @@ import {
   Chip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Tree from 'rc-tree';
-// rc-tree provides styles via css. Depending on bundler, path can differ.
-// The base package exports styles under lib/assets.
-import 'rc-tree/assets/index.css';
+// Use rsuite Tree (open-source & styled)
+import { Tree } from 'rsuite';
+import 'rsuite/dist/rsuite.min.css';
 
 interface FilterSidebarProps {
   productTypes: any[];
@@ -31,8 +30,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 }) => {
   const treeData = useMemo(() => {
     const mapNode = (n: any): any => ({
-      key: String(n.id),
-      title: (
+      value: String(n.id),
+      label: (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <span>{n.name}</span>
           {n.base_type && <Chip label={n.base_type} size="small" />}
@@ -89,18 +88,11 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </Button>
         </Box>
         <Tree
-          treeData={treeData}
+          data={treeData}
           defaultExpandAll
-          selectable
-          selectedKeys={selectedType ? [selectedType] : []}
-          onSelect={(keys) => {
-            const k = Array.isArray(keys) && keys.length > 0 ? String(keys[0]) : '';
-            onSelectType(k);
-          }}
-          virtual={false}
-          showLine
-          motion={null}
           style={{ background: 'transparent' }}
+          value={selectedType || undefined}
+          onSelect={(node: any) => onSelectType(node?.value ?? '')}
         />
       </Box>
     </Paper>
