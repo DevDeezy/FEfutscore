@@ -27,17 +27,12 @@ import DragDropZone from '../components/DragDropZone';
 import PatchModal from '../components/PatchModal';
 import { Add as AddIcon } from '@mui/icons-material';
 
-interface ShirtType {
-  id: number;
-  name: string;
-  price: number;
-}
+
 
 const OrderForm = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
-  const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
-  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
+
   const [currentItem, setCurrentItem] = useState<OrderItem>({
     id: '',
     product_type: 'tshirt',
@@ -46,27 +41,13 @@ const OrderForm = () => {
     size: 'S',
     quantity: 1,
     player_name: '',
-    shirt_type_id: undefined,
-    shirt_type_name: '',
-    sexo: 'Neutro',
-    ano: '25/26',
     numero: '',
     patch_images: [],
     anuncios: false,
   });
   const [error, setError] = useState<string | null>(null);
-  const [shirtTypes, setShirtTypes] = useState<ShirtType[]>([]);
-  const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
-  const [shirtTypesError, setShirtTypesError] = useState<string | null>(null);
-  const [anoInput, setAnoInput] = useState('');
   const [patchModalOpen, setPatchModalOpen] = useState(false);
-  const getFormattedAno = (input: string) => {
-    if (!/^[0-9]{2}$/.test(input)) return '';
-    const first = input;
-    let second = (parseInt(first, 10) + 1).toString().padStart(2, '0');
-    if (first === '99') second = '00';
-    return `${first}/${second}`;
-  };
+
 
   const handleImageChange = (file: File, side: 'front' | 'back') => {
     const reader = new FileReader();
@@ -117,14 +98,7 @@ const OrderForm = () => {
       setError('Precisa de estar autenticado para adicionar ao carrinho.');
       return;
     }
-    // Set price for custom t-shirt from selected shirt type
     let itemToAdd = { ...currentItem };
-    if (itemToAdd.product_type === 'tshirt' && itemToAdd.shirt_type_id) {
-      const selectedType = shirtTypes.find((t) => t.id === itemToAdd.shirt_type_id);
-      if (selectedType) {
-        itemToAdd.price = selectedType.price;
-      }
-    }
     dispatch(addToCart(itemToAdd));
     // Reset form after submission
     setCurrentItem({
@@ -135,10 +109,6 @@ const OrderForm = () => {
       size: 'S',
       quantity: 1,
       player_name: '',
-      shirt_type_id: undefined,
-      shirt_type_name: '',
-      sexo: 'Neutro',
-      ano: '25/26',
       numero: '',
       patch_images: [],
       anuncios: false,
@@ -146,27 +116,7 @@ const OrderForm = () => {
     alert('Item adicionado ao carrinho!');
   };
 
-  useEffect(() => {
-    const fetchShirtTypes = async () => {
-      setShirtTypesLoading(true);
-      setShirtTypesError(null);
-      try {
-        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes`);
-        // Handle both old format (array) and new format (paginated response)
-        if (Array.isArray(res.data)) {
-          setShirtTypes(res.data);
-        } else {
-          setShirtTypes(res.data.shirtTypes);
-        }
-      } catch (err) {
-        setShirtTypesError('Falha ao carregar os tipos de camisola');
-      } finally {
-        setShirtTypesLoading(false);
-      }
-    };
 
-    fetchShirtTypes();
-  }, []);
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -199,74 +149,9 @@ const OrderForm = () => {
                 height={150}
               />
             </Grid>
-            {/* Ano */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Ano"
-                value={currentItem.ano}
-                onChange={e => {
-                  let val = e.target.value.replace(/[^0-9]/g, '');
-                  if (val.length > 2) val = val.slice(0, 2);
-                  let formatted = val;
-                  if (val.length === 2) {
-                    let second = (parseInt(val, 10) + 1).toString().padStart(2, '0');
-                    if (val === '99') second = '00';
-                    formatted = `${val}/${second}`;
-                  }
-                  setCurrentItem({ ...currentItem, ano: formatted });
-                }}
-                inputProps={{ maxLength: 5 }}
-                fullWidth
-                placeholder="25/26"
-              />
-            </Grid>
-            {/* Tipo de Camisola */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Tipo de Camisola</InputLabel>
-                <Select
-                  value={currentItem.shirt_type_id?.toString() ?? ''}
-                  label="Tipo de Camisola"
-                  onChange={(e: SelectChangeEvent) => {
-                    const selectedId = Number(e.target.value);
-                    const selected = shirtTypes.find((t) => t.id === selectedId);
-                    setCurrentItem({
-                      ...currentItem,
-                      shirt_type_id: selected?.id,
-                      shirt_type_name: selected?.name,
-                    });
-                  }}
-                  disabled={shirtTypesLoading || shirtTypesError !== null}
-                >
-                  {shirtTypesLoading ? (
-                    <MenuItem value="">
-                      <CircularProgress size={20} />
-                    </MenuItem>
-                  ) : (
-                    Array.isArray(shirtTypes) && shirtTypes.map((type) => (
-                      <MenuItem key={type.id} value={type.id.toString()}>
-                        {type.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Sexo */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Sexo</InputLabel>
-                <Select
-                  value={currentItem.sexo}
-                  label="Sexo"
-                  onChange={(e: SelectChangeEvent) => setCurrentItem({ ...currentItem, sexo: e.target.value })}
-                >
-                  {sexoOptions.map((sexo) => (
-                    <MenuItem key={sexo} value={sexo}>{sexo}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+
+
+
             {/* Tamanho */}
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>

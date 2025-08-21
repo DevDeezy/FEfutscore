@@ -45,31 +45,19 @@ const Store = () => {
   const [size, setSize] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [playerNumber, setPlayerNumber] = useState('');
-  const [sexo, setSexo] = useState('Masculino');
   const [patchImages, setPatchImages] = useState<string[]>([]);
-  const [anoInput, setAnoInput] = useState('');
-  const [anoLocked, setAnoLocked] = useState(false);
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  const getFormattedAno = (input: string) => {
-    if (!/^[0-9]{2}$/.test(input)) return '';
-    const first = input;
-    let second = (parseInt(first, 10) + 1).toString().padStart(2, '0');
-    if (first === '99') second = '00';
-    return `${first}/${second}`;
-  };
+
 
   const handleOpenDialog = (product: any) => {
     setSelectedProduct(product);
     setSize(product.available_sizes[0] || '');
     setPlayerName('');
     setPlayerNumber('');
-    setSexo('Masculino');
     setPatchImages([]);
-    setAnoInput('');
-    setAnoLocked(false);
     setOpenDialog(true);
   };
 
@@ -102,7 +90,6 @@ const Store = () => {
 
   const handleAddToCart = () => {
     if (!selectedProduct) return;
-    const ano = getFormattedAno(anoInput);
     const cartItem: OrderItem = {
       id: `${selectedProduct.id}-${size}`,
       product_id: selectedProduct.id,
@@ -114,9 +101,7 @@ const Store = () => {
       quantity,
       player_name: playerName,
       numero: playerNumber,
-      sexo,
       patch_images: patchImages,
-      ano,
     };
     dispatch(addToCart(cartItem));
     handleCloseDialog();
@@ -224,41 +209,13 @@ const Store = () => {
         </Grid>
       </Grid>
       <Dialog open={openDialog} onClose={handleCloseDialog} fullScreen={fullScreen}>
-        <DialogTitle>Adicionar ao Pedido</DialogTitle>
+        <DialogTitle></DialogTitle>
         <DialogContent>
           {selectedProduct && (
             <>
               <Typography variant="h6">{selectedProduct.name}</Typography>
-              <FormControl fullWidth sx={{ mt: 2 }}>
-                <InputLabel>Sexo</InputLabel>
-                <Select value={sexo} label="Sexo" onChange={e => setSexo(e.target.value)}>
-                  <MenuItem value="Masculino">Masculino</MenuItem>
-                  <MenuItem value="Feminino">Feminino</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                label="Ano"
-                value={anoLocked ? getFormattedAno(anoInput) : anoInput}
-                onChange={e => {
-                  let val = e.target.value.replace(/[^0-9]/g, '');
-                  if (!anoLocked) {
-                    if (val.length > 2) val = val.slice(0, 2);
-                    setAnoInput(val);
-                    if (val.length === 2) setAnoLocked(true);
-                  } else {
-                    // If user deletes, unlock
-                    if (val.length < 2) {
-                      setAnoLocked(false);
-                      setAnoInput(val);
-                    }
-                  }
-                }}
-                inputProps={{ maxLength: anoLocked ? 5 : 2 }}
-                fullWidth
-                placeholder="25"
-                sx={{ mt: 2 }}
-                onFocus={() => { if (anoLocked) setAnoLocked(false); }}
-              />
+
+
               <TextField
                 label="Nome do Jogador (Opcional)"
                 fullWidth

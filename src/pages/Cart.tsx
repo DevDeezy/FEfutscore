@@ -48,8 +48,7 @@ const initialAddress = {
   telemovel: '',
 };
 
-const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
-const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
+
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -134,11 +133,7 @@ const Cart = () => {
   const canPlaceOrder = items.length > 0 && allFieldsFilled && proofProvided;
 
   const getBackendItems = (items: any[]) =>
-    items.map((item) =>
-      item.product_type === 'tshirt'
-        ? { ...item, shirt_type_id: item.shirt_type_id }
-        : item
-    );
+    items.map((item) => item);
 
   const handleSubmitOrder = async () => {
     if (canPlaceOrder && user) {
@@ -293,12 +288,6 @@ const Cart = () => {
                         )}
                         {/* END PATCH IMAGES SECTION */}
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          Sexo: {item.sexo || 'Neutro'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Ano: {item.ano || '21/22'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
                           Número: {item.numero || '-'}
                         </Typography>
                       </Box>
