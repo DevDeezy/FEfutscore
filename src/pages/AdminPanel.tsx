@@ -164,8 +164,8 @@ const AdminPanel = () => {
       );
     }
     
-    // Apply sorting
-    filtered.sort((a, b) => {
+    // Apply sorting (create a copy to avoid mutating)
+    filtered = [...filtered].sort((a, b) => {
       let comparison = 0;
       
       if (sortBy === 'id') {
