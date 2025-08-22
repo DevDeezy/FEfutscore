@@ -189,7 +189,7 @@ const Store = () => {
                     />
                     <CardContent>
                       <Typography gutterBottom variant="h6" component="div" noWrap>
-                        {product.name}
+                        {product.name}{product.ano ? ` ${product.ano}` : ''}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ minHeight: 40 }}>
                         {product.description}
@@ -209,11 +209,11 @@ const Store = () => {
         </Grid>
       </Grid>
       <Dialog open={openDialog} onClose={handleCloseDialog} fullScreen={fullScreen}>
-        <DialogTitle></DialogTitle>
+        <DialogTitle>{selectedProduct?.name}{selectedProduct?.ano ? ` ${selectedProduct.ano}` : ''}</DialogTitle>
         <DialogContent>
           {selectedProduct && (
             <>
-              <Typography variant="h6">{selectedProduct.name}</Typography>
+              <Typography variant="h6">{selectedProduct.name}{selectedProduct.ano ? ` ${selectedProduct.ano}` : ''}</Typography>
 
 
               <TextField

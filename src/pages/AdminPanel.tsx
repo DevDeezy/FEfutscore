@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -107,6 +107,9 @@ const AdminPanel = () => {
   const fullScreenDialog = useMediaQuery(theme.breakpoints.down('md'));
 
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'id' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchQuery, setSearchQuery] = useState('');
   const [exporting, setExporting] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<
@@ -146,8 +149,36 @@ const AdminPanel = () => {
       prev.includes(orderId) ? prev.filter((id) => id !== orderId) : [...prev, orderId]
     );
   };
-  // Filtered orders
-  const filteredOrders = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
+  // Filtered and sorted orders
+  const filteredOrders = useMemo(() => {
+    let filtered = statusFilter === 'all' ? orders : orders.filter((o) => o.status === statusFilter);
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((order) => 
+        order.id.toString().includes(query) ||
+        order.user?.email?.toLowerCase().includes(query) ||
+        order.address_nome?.toLowerCase().includes(query) ||
+        order.status.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === 'id') {
+        comparison = parseInt(a.id) - parseInt(b.id);
+      } else if (sortBy === 'created_at') {
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return filtered;
+  }, [orders, statusFilter, searchQuery, sortBy, sortOrder]);
 
   const handleSelectAllOrders = (checked: boolean) => {
     setSelectedOrderIds(checked ? filteredOrders.map((o) => o.id) : []);
@@ -1064,9 +1095,35 @@ const AdminPanel = () => {
         {/* Orders Tab */}
         {tab === 0 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
-              <Typography variant="h6">Todos os Pedidos</Typography>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Todos os Pedidos</Typography>
+              
+              {/* Search and Filters Row */}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 2, 
+                alignItems: 'center', 
+                mb: 2,
+                flexDirection: isMobile ? 'column' : 'row',
+                flexWrap: 'wrap'
+              }}>
+                {/* Search Field */}
+                <TextField
+                  size="small"
+                  placeholder="Pesquisar por ID, utilizador, nome..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{ minWidth: 250 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                
+                {/* Status Filter */}
                 <FormControl size="small" sx={{ minWidth: 180 }}>
                   <InputLabel>Filtrar por Estado</InputLabel>
                   <Select
@@ -1078,15 +1135,51 @@ const AdminPanel = () => {
                     <MenuItem value="pending">Pendente</MenuItem>
                     <MenuItem value="Para analizar">Para Analisar</MenuItem>
                     <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
+                    <MenuItem value="A Orçamentar">A Orçamentar</MenuItem>
                     <MenuItem value="CSV">CSV</MenuItem>
                     <MenuItem value="Em Processamento">Em Processamento</MenuItem>
                     <MenuItem value="completed">Concluída</MenuItem>
                     <MenuItem value="cancelled">Cancelada</MenuItem>
                   </Select>
                 </FormControl>
-                <Button variant="contained" onClick={handleExportOrders} sx={{ mt: isMobile ? 2 : 0 }} disabled={exporting}>
+                
+                {/* Sort By */}
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Ordenar por</InputLabel>
+                  <Select
+                    value={sortBy}
+                    label="Ordenar por"
+                    onChange={(e) => setSortBy(e.target.value as 'id' | 'created_at')}
+                  >
+                    <MenuItem value="created_at">Data de Criação</MenuItem>
+                    <MenuItem value="id">ID da Encomenda</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                {/* Sort Order */}
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <InputLabel>Ordem</InputLabel>
+                  <Select
+                    value={sortOrder}
+                    label="Ordem"
+                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                  >
+                    <MenuItem value="desc">Descendente</MenuItem>
+                    <MenuItem value="asc">Ascendente</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <Button variant="contained" onClick={handleExportOrders} disabled={exporting}>
                   Exportar para CSV
                 </Button>
+              </Box>
+              
+              {/* Results Summary */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  A mostrar {filteredOrders.length} de {orders.length} pedidos
+                  {searchQuery && ` (filtrados por "${searchQuery}")`}
+                </Typography>
               </Box>
             </Box>
             {/* Bulk status update controls */}
@@ -1447,7 +1540,7 @@ const AdminPanel = () => {
             <Box sx={{ mt: 2, mb: 2 }}>
               <DragDropZone
                 title="Carregar Imagem do Patch"
-                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                subtitle="Escolhe uma imagem ou arrasta-a para aqui"
                 onFileSelect={handlePatchImageChange}
                 onFileRemove={() => setPatchForm({ ...patchForm, image: '' })}
                 currentImage={patchForm.image}
@@ -1645,8 +1738,7 @@ const AdminPanel = () => {
                   <TableBody>
                     {[
                       { key: 'patch_price', name: 'Preço por Patch', defaultPrice: 2, defaultCost: 1 },
-                      { key: 'number_price', name: 'Preço por Número', defaultPrice: 3, defaultCost: 1.5 },
-                      { key: 'name_price', name: 'Preço por Nome', defaultPrice: 3, defaultCost: 1.5 },
+                      { key: 'personalization_price', name: 'Preço por Personalização', defaultPrice: 3, defaultCost: 1.5 },
                     ].map((item) => {
                       const config = pricingConfigs.find(c => c.key === item.key);
                       return (

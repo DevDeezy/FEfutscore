@@ -115,4 +115,7 @@ export interface Product {
   available_sizes: string[];
   productType: ProductType;
   product_type_id: number;
+  sexo?: string;
+  ano?: string;
+  numero?: string;
 } 

@@ -40,6 +40,7 @@ const ProductManagement = () => {
   const [newProductTypeParentId, setNewProductTypeParentId] = useState<number | ''>('');
 
   const [openProductDialog, setOpenProductDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
   const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
   const [newProduct, setNewProduct] = useState({
@@ -76,9 +77,47 @@ const ProductManagement = () => {
     setNewProduct({ ...newProduct, image_url: '' });
   };
 
+  // Handle opening product dialog for editing
+  const handleOpenProductDialog = (product: Product | null = null) => {
+    setEditingProduct(product);
+    if (product) {
+      setNewProduct({
+        name: product.name,
+        description: product.description || '',
+        price: product.price,
+        cost_price: product.cost_price || 0,
+        image_url: product.image_url,
+        base_type: product.productType.base_type,
+        available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : product.available_sizes,
+        product_type_id: product.product_type_id.toString(),
+        sexo: product.sexo || 'Neutro',
+        ano: product.ano || '25/26',
+        numero: product.numero || '',
+      });
+      setProductImage(product.image_url);
+    } else {
+      setNewProduct({
+        name: '',
+        description: '',
+        price: 0,
+        cost_price: 0,
+        image_url: '',
+        base_type: 'tshirt',
+        available_sizes: '',
+        product_type_id: '',
+        sexo: 'Neutro',
+        ano: '25/26',
+        numero: '',
+      });
+      setProductImage('');
+    }
+    setOpenProductDialog(true);
+  };
+
   // Handle closing the product dialog and resetting states
   const handleCloseProductDialog = () => {
     setOpenProductDialog(false);
+    setEditingProduct(null);
     setNewProduct({
       name: '',
       description: '',
@@ -161,9 +200,9 @@ const ProductManagement = () => {
     }
   };
 
-  const handleCreateProduct = async () => {
+  const handleSaveProduct = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, {
+      const productData = {
         ...newProduct,
         price: Number(newProduct.price),
         cost_price: Number(newProduct.cost_price),
@@ -172,25 +211,20 @@ const ProductManagement = () => {
         sexo: newProduct.sexo,
         ano: newProduct.ano,
         numero: newProduct.numero,
-      });
-      setOpenProductDialog(false);
-      setNewProduct({
-        name: '',
-        description: '',
-        price: 0,
-        cost_price: 0,
-        image_url: '',
-        base_type: 'tshirt',
-        available_sizes: '',
-        product_type_id: '',
-        sexo: 'Neutro',
-        ano: '25/26',
-        numero: '',
-      });
-      setProductImage(''); // Reset the image upload state
+      };
+
+      if (editingProduct) {
+        // Update existing product
+        await axios.put(`${API_BASE_URL}/.netlify/functions/updateProduct/${editingProduct.id}`, productData);
+      } else {
+        // Create new product
+        await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, productData);
+      }
+
+      handleCloseProductDialog();
       fetchProducts();
     } catch (err) {
-      setError('Failed to create product');
+      setError(editingProduct ? 'Falha ao atualizar produto' : 'Falha ao criar produto');
     }
   };
 
@@ -245,7 +279,7 @@ const ProductManagement = () => {
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">Produtos</Typography>
-        <Button variant="contained" onClick={() => setOpenProductDialog(true)}>
+        <Button variant="contained" onClick={() => handleOpenProductDialog()}>
           Adicionar Produto
         </Button>
       </Box>
@@ -270,9 +304,22 @@ const ProductManagement = () => {
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
                 <TableCell>€{product.cost_price ? product.cost_price.toFixed(2) : '-'}</TableCell>
                 <TableCell>
-                  <Button color="error" onClick={() => handleDeleteProduct(product.id)}>
-                    Apagar
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button 
+                      variant="outlined" 
+                      size="small"
+                      onClick={() => handleOpenProductDialog(product)}
+                    >
+                      Editar
+                    </Button>
+                    <Button 
+                      color="error" 
+                      size="small"
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
+                      Apagar
+                    </Button>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -326,7 +373,7 @@ const ProductManagement = () => {
 
       {/* Product Dialog */}
       <Dialog open={openProductDialog} onClose={() => setOpenProductDialog(false)}>
-        <DialogTitle>Adicionar Produto</DialogTitle>
+        <DialogTitle>{editingProduct ? 'Editar Produto' : 'Adicionar Produto'}</DialogTitle>
         <DialogContent>
           <TextField
             label="Nome do Produto"
@@ -364,7 +411,7 @@ const ProductManagement = () => {
             <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagem do Produto:</Typography>
             <DragDropZone
               title="Carregar Imagem do Produto"
-              subtitle="Escolha uma imagem ou arraste-a para aqui"
+              subtitle="Escolhe uma imagem ou arrasta-a para aqui"
               onFileSelect={handleProductImageChange}
               onFileRemove={handleRemoveProductImage}
               currentImage={productImage || newProduct.image_url}
@@ -422,7 +469,9 @@ const ProductManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseProductDialog}>Cancelar</Button>
-          <Button onClick={handleCreateProduct}>Criar</Button>
+          <Button onClick={handleSaveProduct}>
+            {editingProduct ? 'Atualizar' : 'Criar'}
+          </Button>
         </DialogActions>
       </Dialog>
 

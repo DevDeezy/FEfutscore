@@ -10,7 +10,7 @@ const Addresses: React.FC = () => {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="info">
-          Por favor, faça login para gerir as suas moradas.
+          Por favor, faz login para gerir as tuas moradas.
         </Alert>
       </Container>
     );

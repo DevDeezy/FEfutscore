@@ -131,7 +131,7 @@ const OrderForm = () => {
             <Grid item xs={12}>
               <DragDropZone
                 title="Carregar Imagem da Frente"
-                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                subtitle="Escolhe uma imagem ou arrasta-a para aqui"
                 onFileSelect={(file) => handleImageChange(file, 'front')}
                 onFileRemove={() => setCurrentItem({ ...currentItem, image_front: '' })}
                 currentImage={currentItem.image_front}
@@ -142,7 +142,7 @@ const OrderForm = () => {
             <Grid item xs={12}>
               <DragDropZone
                 title="Carregar Imagem das Costas"
-                subtitle="Escolha uma imagem ou arraste-a para aqui"
+                subtitle="Escolhe uma imagem ou arrasta-a para aqui"
                 onFileSelect={(file) => handleImageChange(file, 'back')}
                 onFileRemove={() => setCurrentItem({ ...currentItem, image_back: '' })}
                 currentImage={currentItem.image_back}

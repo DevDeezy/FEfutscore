@@ -209,7 +209,7 @@ const Cart = () => {
         </Typography>
         {items.length === 0 ? (
           <Typography variant="body1" sx={{ textAlign: 'center', py: 4 }}>
-            O seu carrinho está vazio
+            O teu carrinho está vazio
           </Typography>
         ) : (
           <>
@@ -305,13 +305,31 @@ const Cart = () => {
             </Grid>
             
             {/* Shipping Costs */}
-            {items.length === 1 && (
-              <Box sx={{ mt: 3, p: 2, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}>
-                <Typography variant="body1" sx={{ color: '#d84315', fontWeight: 'bold' }}>
-                  Portes de Envio - €2.00
-                </Typography>
-              </Box>
-            )}
+            {(() => {
+              // Function to determine unique product types
+              const getUniqueProductTypes = () => {
+                const uniqueTypes = new Set();
+                items.forEach(item => {
+                  // Create a unique identifier for each product type
+                  const productKey = item.product_id 
+                    ? `product_${item.product_id}_${item.size}` // Unique key for catalog products with size
+                    : item.product_type === 'tshirt'
+                    ? `tshirt_${item.shirt_type_id}` // Unique key for custom t-shirts by type
+                    : `shoes`; // Fallback for shoes or other types
+                  uniqueTypes.add(productKey);
+                });
+                return uniqueTypes.size;
+              };
+
+              const uniqueProductCount = getUniqueProductTypes();
+              return uniqueProductCount === 1 && (
+                <Box sx={{ mt: 3, p: 2, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}>
+                  <Typography variant="body1" sx={{ color: '#d84315', fontWeight: 'bold' }}>
+                    Portes de Envio - €2.00
+                  </Typography>
+                </Box>
+              );
+            })()}
             
             <Box sx={{ mt: 4 }}>
               <Typography variant="h6" gutterBottom>

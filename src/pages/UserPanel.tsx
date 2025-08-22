@@ -193,7 +193,7 @@ const UserPanel = () => {
   const userOptions = [
     {
       title: 'Minhas Moradas',
-      description: 'Gerir as suas moradas de entrega',
+      description: 'Gerir as tuas moradas de entrega',
       icon: <HomeIcon sx={{ fontSize: 40 }} />,
       action: () => navigate('/moradas'),
       color: '#4CAF50',
@@ -207,14 +207,14 @@ const UserPanel = () => {
     },
     {
       title: 'Gerir Nomes do Instagram',
-      description: 'Configurar os seus nomes do Instagram',
+      description: 'Configurar os teus nomes do Instagram',
       icon: <InstagramIcon sx={{ fontSize: 40 }} />,
       action: handleOpenInstagramDialog,
       color: '#E91E63',
     },
     {
       title: 'Mudar Palavra-passe',
-      description: 'Alterar a sua palavra-passe',
+      description: 'Alterar a tua palavra-passe',
       icon: <LockIcon sx={{ fontSize: 40 }} />,
       action: handleOpenPasswordDialog,
       color: '#FF9800',
@@ -325,7 +325,7 @@ const UserPanel = () => {
         <DialogContent>
           <Box sx={{ mb: 2 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Adicione os seus nomes do Instagram para personalização das camisolas
+              Adiciona os teus nomes do Instagram para personalização das camisolas
             </Typography>
             
             {/* Add new Instagram name */}
