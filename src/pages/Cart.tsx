@@ -133,13 +133,10 @@ const Cart = () => {
     setProofReference(e.target.value);
   };
 
-  // Check if cart contains custom orders (items from "Novo Pedido" - no product_id but with custom images)
-  const hasCustomItems = items.some(item => 
-    !item.product_id && (
-      (item.image_front && item.image_front.trim() !== '') || 
-      (item.image_back && item.image_back.trim() !== '')
-    )
-  );
+  // Check if cart contains custom orders (items from "Novo Pedido")
+  // This includes: 1) Items without product_id, 2) Admin creating orders with clientInstagram
+  const hasCustomItems = items.some(item => !item.product_id) || 
+                         (user?.role === 'admin' && clientInstagram.trim() !== '');
 
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
   const proofProvided = proofImage || selectedRecipient || selectedPaymentMethod;
