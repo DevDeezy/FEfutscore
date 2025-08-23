@@ -20,6 +20,7 @@ import Footer from './components/Footer';
 import ChangePassword from './pages/ChangePassword';
 import Store from './pages/Store';
 import Addresses from './pages/Addresses';
+import PaymentMethods from './pages/PaymentMethods';
 import PreviousOrders from './components/PreviousOrders';
 import UserPanel from './pages/UserPanel';
 
@@ -53,6 +54,7 @@ const AppLayout = () => {
             <Route path="/order" element={<PrivateRoute><OrderForm /></PrivateRoute>} />
             <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
             <Route path="/moradas" element={<PrivateRoute><Addresses /></PrivateRoute>} />
+            <Route path="/payment-methods" element={<PrivateRoute><PaymentMethods /></PrivateRoute>} />
             <Route path="/previous-orders" element={<PrivateRoute><PreviousOrders /></PrivateRoute>} />
             <Route path="/user-panel" element={<PrivateRoute><UserPanel /></PrivateRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />

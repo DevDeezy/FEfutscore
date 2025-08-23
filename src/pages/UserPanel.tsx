@@ -27,6 +27,7 @@ import {
   Lock as LockIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  Payment as PaymentIcon,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -211,6 +212,13 @@ const UserPanel = () => {
       icon: <InstagramIcon sx={{ fontSize: 40 }} />,
       action: handleOpenInstagramDialog,
       color: '#E91E63',
+    },
+    {
+      title: 'Métodos de Pagamento',
+      description: 'Gerir os teus métodos de pagamento',
+      icon: <PaymentIcon sx={{ fontSize: 40 }} />,
+      action: () => navigate('/payment-methods'),
+      color: '#4CAF50',
     },
     {
       title: 'Mudar Palavra-passe',

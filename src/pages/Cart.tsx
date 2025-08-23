@@ -67,6 +67,11 @@ const Cart = () => {
   const [cartPrice, setCartPrice] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('Revolut');
   const [clientInstagram, setClientInstagram] = useState<string>('');
+  
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [paymentMode, setPaymentMode] = useState<'manual' | 'saved'>('manual');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -128,14 +133,16 @@ const Cart = () => {
     setProofReference(e.target.value);
   };
 
-  // Check if cart contains custom orders (items with image_front or image_back)
+  // Check if cart contains custom orders (items from "Novo Pedido" - no product_id but with custom images)
   const hasCustomItems = items.some(item => 
-    (item.image_front && item.image_front.trim() !== '') || 
-    (item.image_back && item.image_back.trim() !== '')
+    !item.product_id && (
+      (item.image_front && item.image_front.trim() !== '') || 
+      (item.image_back && item.image_back.trim() !== '')
+    )
   );
 
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
-  const proofProvided = proofImage || selectedRecipient;
+  const proofProvided = proofImage || selectedRecipient || selectedPaymentMethod;
   // For custom orders, only address is required. For regular orders, both address and payment proof are required
   const canPlaceOrder = items.length > 0 && allFieldsFilled && (hasCustomItems || proofProvided);
 
@@ -158,6 +165,8 @@ const Cart = () => {
       setSelectedRecipient('');
       setPaymentMethod('Revolut');
       setClientInstagram('');
+      setSelectedPaymentMethod(null);
+      setPaymentMode('manual');
       navigate('/');
     }
   };
@@ -180,12 +189,34 @@ const Cart = () => {
     fetchCartPrice();
   }, [items]);
 
-  // Fetch addresses on mount if user exists
+  // Fetch addresses and payment methods on mount if user exists
   useEffect(() => {
     if (user) {
       dispatch(getAddresses(user.id));
+      fetchPaymentMethods();
     }
   }, [dispatch, user]);
+
+  // Fetch payment methods
+  const fetchPaymentMethods = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getpaymentmethods`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPaymentMethods(response.data);
+      
+      // Auto-select default payment method if available
+      const defaultMethod = response.data.find((method: any) => method.isDefault);
+      if (defaultMethod) {
+        setSelectedPaymentMethod(defaultMethod);
+        setPaymentMethod(defaultMethod.method);
+        setPaymentMode('saved');
+      }
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+    }
+  };
 
   // Handler to edit/fill the manual form with a saved address (like AddressManager)
   const handleEdit = (addr: any) => {
@@ -206,6 +237,30 @@ const Cart = () => {
     );
     localStorage.setItem('cart', JSON.stringify({ items: updatedItems }));
     dispatch(updateCartItem({ index, field, value }));
+  };
+
+  // Payment method handlers
+  const handlePaymentModeChange = (event: React.MouseEvent<HTMLElement>, newMode: 'manual' | 'saved' | null) => {
+    if (newMode !== null) {
+      setPaymentMode(newMode);
+      if (newMode === 'manual') {
+        setSelectedPaymentMethod(null);
+        setPaymentMethod('Revolut');
+      } else {
+        // Load default payment method if available
+        const defaultMethod = paymentMethods.find((method: any) => method.isDefault);
+        if (defaultMethod) {
+          setSelectedPaymentMethod(defaultMethod);
+          setPaymentMethod(defaultMethod.method);
+        }
+      }
+    }
+  };
+
+  const handleSelectPaymentMethod = (paymentMethodData: any) => {
+    setSelectedPaymentMethod(paymentMethodData);
+    setPaymentMethod(paymentMethodData.method);
+    setPaymentMode('saved');
   };
 
   return (
@@ -452,19 +507,67 @@ const Cart = () => {
                 </Alert>
               
               {/* Payment Method Selection */}
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="payment-method-label">Método de Pagamento</InputLabel>
-                <Select
-                  labelId="payment-method-label"
-                  value={paymentMethod}
-                  label="Método de Pagamento"
-                  onChange={e => setPaymentMethod(e.target.value)}
+              <Box sx={{ mb: 2 }}>
+                <ToggleButtonGroup
+                  value={paymentMode}
+                  exclusive
+                  onChange={handlePaymentModeChange}
+                  fullWidth={isMobile}
+                  sx={{ mb: 2 }}
                 >
-                  <MenuItem value="Revolut">Revolut</MenuItem>
-                  <MenuItem value="PayPal">PayPal</MenuItem>
-                  <MenuItem value="Bank Transfer">Transferência Bancária</MenuItem>
-                </Select>
-              </FormControl>
+                  <ToggleButton value="manual">Manual</ToggleButton>
+                  <ToggleButton value="saved">Métodos Salvos</ToggleButton>
+                </ToggleButtonGroup>
+
+                {paymentMode === 'saved' ? (
+                  <Box>
+                    {paymentMethods.length === 0 ? (
+                      <Alert severity="info">
+                        Nenhum método de pagamento salvo. <Button onClick={() => navigate('/payment-methods')}>Gerir Métodos</Button>
+                      </Alert>
+                    ) : (
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ mb: 1 }}>Selecionar método de pagamento:</Typography>
+                        <List>
+                          {paymentMethods.map((method: any) => (
+                            <Paper key={method.id} sx={{ mb: 1 }}>
+                              <ListItem 
+                                button
+                                selected={selectedPaymentMethod?.id === method.id}
+                                onClick={() => handleSelectPaymentMethod(method)}
+                              >
+                                <ListItemText
+                                  primary={method.name}
+                                  secondary={`${method.method} - ${method.accountInfo}`}
+                                />
+                                {method.isDefault && (
+                                  <Box sx={{ ml: 1, px: 1, py: 0.5, backgroundColor: 'primary.main', color: 'white', borderRadius: 1, fontSize: '0.75rem' }}>
+                                    Padrão
+                                  </Box>
+                                )}
+                              </ListItem>
+                            </Paper>
+                          ))}
+                        </List>
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <FormControl fullWidth>
+                    <InputLabel id="payment-method-label">Método de Pagamento</InputLabel>
+                    <Select
+                      labelId="payment-method-label"
+                      value={paymentMethod}
+                      label="Método de Pagamento"
+                      onChange={e => setPaymentMethod(e.target.value)}
+                    >
+                      <MenuItem value="Revolut">Revolut</MenuItem>
+                      <MenuItem value="PayPal">PayPal</MenuItem>
+                      <MenuItem value="Bank Transfer">Transferência Bancária</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              </Box>
               {paymentMethod === 'Revolut' && (
                 <Alert severity="info" sx={{ mb: 2 }}>
                   Envie o pagamento para o número Revolut: <b>+351 912 345 678</b>
@@ -548,7 +651,7 @@ const Cart = () => {
               {/* Validation Error */}
               {!proofProvided && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                  É obrigatório fornecer um comprovativo de pagamento ou selecionar um destinatário.
+                  É obrigatório fornecer um comprovativo de pagamento, selecionar um destinatário ou escolher um método de pagamento salvo.
                 </Alert>
               )}
               </Box>
