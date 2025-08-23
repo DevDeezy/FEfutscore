@@ -128,9 +128,16 @@ const Cart = () => {
     setProofReference(e.target.value);
   };
 
+  // Check if cart contains custom orders (items with image_front or image_back)
+  const hasCustomItems = items.some(item => 
+    (item.image_front && item.image_front.trim() !== '') || 
+    (item.image_back && item.image_back.trim() !== '')
+  );
+
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
   const proofProvided = proofImage || selectedRecipient;
-  const canPlaceOrder = items.length > 0 && allFieldsFilled && proofProvided;
+  // For custom orders, only address is required. For regular orders, both address and payment proof are required
+  const canPlaceOrder = items.length > 0 && allFieldsFilled && (hasCustomItems || proofProvided);
 
   const getBackendItems = (items: any[]) =>
     items.map((item) => item);
@@ -306,23 +313,13 @@ const Cart = () => {
             
             {/* Shipping Costs */}
             {(() => {
-              // Function to determine unique product types
-              const getUniqueProductTypes = () => {
-                const uniqueTypes = new Set();
-                items.forEach(item => {
-                  // Create a unique identifier for each product type
-                  const productKey = item.product_id 
-                    ? `product_${item.product_id}_${item.size}` // Unique key for catalog products with size
-                    : item.product_type === 'tshirt'
-                    ? `tshirt_${item.shirt_type_id}` // Unique key for custom t-shirts by type
-                    : `shoes`; // Fallback for shoes or other types
-                  uniqueTypes.add(productKey);
-                });
-                return uniqueTypes.size;
-              };
-
-              const uniqueProductCount = getUniqueProductTypes();
-              return uniqueProductCount === 1 && (
+              // Calculate total quantity of all items
+              const totalQuantity = items.reduce((total, item) => total + (item.quantity || 1), 0);
+              
+              // Only charge shipping if total quantity is 1
+              const shouldChargeShipping = totalQuantity === 1;
+              
+              return shouldChargeShipping && (
                 <Box sx={{ mt: 3, p: 2, backgroundColor: '#fff3e0', borderRadius: 1, border: '1px solid #ff9800' }}>
                   <Typography variant="body1" sx={{ color: '#d84315', fontWeight: 'bold' }}>
                     Portes de Envio - €2.00
@@ -435,11 +432,24 @@ const Cart = () => {
               </Box>
             )}
 
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" gutterBottom>Comprovativo de Pagamento *</Typography>
-              <Alert severity="info" sx={{ mb: 2 }}>
-                É obrigatório fornecer um comprovativo de pagamento ou indicar o destinatário.
-              </Alert>
+            {hasCustomItems ? (
+              /* Custom orders section */
+              <Box sx={{ mt: 4 }}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 1 }}>Encomenda Personalizada Detectada</Typography>
+                  O seu carrinho contém itens personalizados. A sua encomenda será enviada para orçamento e entraremos em contacto consigo com o preço final.
+                </Alert>
+                <Alert severity="success" sx={{ mb: 2 }}>
+                  Não é necessário efetuar qualquer pagamento agora. Apenas preencha a morada de entrega e clique em "Enviar para Orçamento".
+                </Alert>
+              </Box>
+            ) : (
+              /* Regular orders section */
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom>Comprovativo de Pagamento *</Typography>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  É obrigatório fornecer um comprovativo de pagamento ou indicar o destinatário.
+                </Alert>
               
               {/* Payment Method Selection */}
               <FormControl fullWidth sx={{ mb: 2 }}>
@@ -541,17 +551,25 @@ const Cart = () => {
                   É obrigatório fornecer um comprovativo de pagamento ou selecionar um destinatário.
                 </Alert>
               )}
-            </Box>
-            {cartPrice !== null && (
-              <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Preço Total: €{(cartPrice + (items.length === 1 ? 2 : 0)).toFixed(2)}
-                {items.length === 1 && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    (Inclui portes de envio: €2.00)
-                  </Typography>
-                )}
-              </Typography>
+              </Box>
             )}
+            {!hasCustomItems && cartPrice !== null && (() => {
+              // Calculate total quantity of all items
+              const totalQuantity = items.reduce((total, item) => total + (item.quantity || 1), 0);
+              const shouldChargeShipping = totalQuantity === 1;
+              const shippingCost = shouldChargeShipping ? 2 : 0;
+              
+              return (
+                <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
+                  Preço Total: €{(cartPrice + shippingCost).toFixed(2)}
+                  {shouldChargeShipping && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      (Inclui portes de envio: €2.00)
+                    </Typography>
+                  )}
+                </Typography>
+              );
+            })()}
             <Box sx={{ mt: 4, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 variant="outlined"
@@ -568,7 +586,7 @@ const Cart = () => {
                 disabled={!canPlaceOrder}
                 fullWidth={isMobile}
               >
-                Finalizar Encomenda
+                {hasCustomItems ? 'Enviar para Orçamento' : 'Finalizar Encomenda'}
               </Button>
             </Box>
           </>

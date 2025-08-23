@@ -49,6 +49,7 @@ export interface Order {
   address_telemovel: string;
   trackingText?: string;
   trackingImages?: string[];
+  trackingVideos?: string[];
 }
 
 export interface AuthState {

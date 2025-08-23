@@ -17,9 +17,11 @@ interface DragDropZoneProps {
   onFileSelect: (file: File) => void;
   onFileRemove?: () => void;
   currentImage?: string;
+  currentVideo?: string;
   accept?: string;
   multiple?: boolean;
   height?: number;
+  fileType?: 'image' | 'video' | 'both';
 }
 
 const DragDropZone: React.FC<DragDropZoneProps> = ({
@@ -28,9 +30,11 @@ const DragDropZone: React.FC<DragDropZoneProps> = ({
   onFileSelect,
   onFileRemove,
   currentImage,
+  currentVideo,
   accept = "image/*",
   multiple = false,
   height = 200,
+  fileType = 'image',
 }) => {
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -46,6 +50,13 @@ const DragDropZone: React.FC<DragDropZoneProps> = ({
     setIsDragOver(false);
   };
 
+  const isValidFileType = (file: File): boolean => {
+    if (fileType === 'image') return file.type.startsWith('image/');
+    if (fileType === 'video') return file.type.startsWith('video/');
+    if (fileType === 'both') return file.type.startsWith('image/') || file.type.startsWith('video/');
+    return false;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
@@ -53,14 +64,14 @@ const DragDropZone: React.FC<DragDropZoneProps> = ({
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       if (multiple) {
-        // For multiple files, pass all valid image files
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
-        if (imageFiles.length > 0) {
-          onFileSelect(imageFiles[0]); // For now, just pass the first file
+        // For multiple files, pass all valid files
+        const validFiles = files.filter(isValidFileType);
+        if (validFiles.length > 0) {
+          onFileSelect(validFiles[0]); // For now, just pass the first file
         }
       } else {
         const file = files[0];
-        if (file.type.startsWith('image/')) {
+        if (isValidFileType(file)) {
           onFileSelect(file);
         }
       }
@@ -71,13 +82,16 @@ const DragDropZone: React.FC<DragDropZoneProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       if (multiple) {
-        // For multiple files, pass all valid image files
-        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
-        if (imageFiles.length > 0) {
-          onFileSelect(imageFiles[0]); // For now, just pass the first file
+        // For multiple files, pass all valid files
+        const validFiles = Array.from(files).filter(isValidFileType);
+        if (validFiles.length > 0) {
+          onFileSelect(validFiles[0]); // For now, just pass the first file
         }
       } else {
-        onFileSelect(files[0]);
+        const file = files[0];
+        if (isValidFileType(file)) {
+          onFileSelect(file);
+        }
       }
     }
   };
@@ -118,19 +132,34 @@ const DragDropZone: React.FC<DragDropZoneProps> = ({
         onDrop={handleDrop}
         onClick={handleClick}
       >
-        {currentImage ? (
+        {(currentImage || currentVideo) ? (
           <>
-            <Box
-              component="img"
-              src={currentImage}
-              alt="preview"
-              sx={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 1,
-              }}
-            />
+            {currentImage && (
+              <Box
+                component="img"
+                src={currentImage}
+                alt="preview"
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: 1,
+                }}
+              />
+            )}
+            {currentVideo && (
+              <Box
+                component="video"
+                src={currentVideo}
+                controls
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: 1,
+                }}
+              />
+            )}
             {onFileRemove && (
               <IconButton
                 onClick={handleRemove}

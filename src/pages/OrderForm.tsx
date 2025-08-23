@@ -24,7 +24,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import PreviousOrders from '../components/PreviousOrders';
 import DragDropZone from '../components/DragDropZone';
-import PatchModal from '../components/PatchModal';
+import PatchSelection from '../components/PatchSelection';
 import { Add as AddIcon } from '@mui/icons-material';
 
 
@@ -46,7 +46,6 @@ const OrderForm = () => {
     anuncios: false,
   });
   const [error, setError] = useState<string | null>(null);
-  const [patchModalOpen, setPatchModalOpen] = useState(false);
 
 
   const handleImageChange = (file: File, side: 'front' | 'back') => {
@@ -78,19 +77,7 @@ const OrderForm = () => {
     });
   };
 
-  const handleRemovePatchImage = (idx: number) => {
-    setCurrentItem(prev => ({
-      ...prev,
-      patch_images: (prev.patch_images || []).filter((_, i) => i !== idx),
-    }));
-  };
 
-  const handleAddPatchesFromModal = (patches: string[]) => {
-    setCurrentItem(prev => ({
-      ...prev,
-      patch_images: [...(prev.patch_images || []), ...patches],
-    }));
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,34 +196,11 @@ const OrderForm = () => {
             </Grid>
             {/* Patches */}
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Typography variant="subtitle1">Patches</Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setPatchModalOpen(true)}
-                >
-                  Adicionar Patch
-                </Button>
-              </Box>
-              
-              {(currentItem.patch_images || []).length > 0 && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {(currentItem.patch_images || []).map((img, idx) => (
-                    <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
-                      <Box component="img" src={img} alt={`patch ${idx + 1}`} sx={{ height: 60, border: '1px solid #ccc', borderRadius: 1 }} />
-                      <Button
-                        size="small"
-                        color="error"
-                        sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
-                        onClick={() => handleRemovePatchImage(idx)}
-                      >
-                        X
-                      </Button>
-                    </Box>
-                  ))}
-                </Box>
-              )}
+              <PatchSelection
+                onPatchesChange={(patches) => setCurrentItem(prev => ({ ...prev, patch_images: patches }))}
+                selectedPatches={currentItem.patch_images || []}
+                title="Patches"
+              />
             </Grid>
 
             <Grid item xs={12}>
@@ -248,13 +212,7 @@ const OrderForm = () => {
           </Box>
       </Paper>
       
-      {/* Patch Modal */}
-      <PatchModal
-        open={patchModalOpen}
-        onClose={() => setPatchModalOpen(false)}
-        onAddPatches={handleAddPatchesFromModal}
-        existingPatches={currentItem.patch_images || []}
-      />
+
       
       {/* <PreviousOrders /> */}
     </Container>

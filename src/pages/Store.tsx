@@ -30,6 +30,7 @@ import { addToCart } from '../store/slices/cartSlice';
 import { OrderItem } from '../types';
 import Checkbox from '@mui/material/Checkbox';
 import FilterSidebar from '../components/FilterSidebar';
+import PatchSelection from '../components/PatchSelection';
 
 const Store = () => {
   const dispatch = useDispatch();
@@ -68,25 +69,7 @@ const Store = () => {
     setSize('');
   };
 
-  const handlePatchImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const readers: Promise<string>[] = Array.from(files).map(file => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      });
-      Promise.all(readers).then(images => {
-        setPatchImages(prev => [...prev, ...images]);
-      });
-    }
-  };
-  const handleRemovePatchImage = (idx: number) => {
-    setPatchImages(prev => prev.filter((_, i) => i !== idx));
-  };
+
 
   const handleAddToCart = () => {
     if (!selectedProduct) return;
@@ -230,26 +213,12 @@ const Store = () => {
                 onChange={e => setPlayerNumber(e.target.value)}
                 sx={{ mt: 2 }}
               />
-              <Button variant="outlined" component="label" sx={{ mt: 2 }}>
-                Adicionar Patch
-                <Box
-                  component="input"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  multiple
-                  onChange={handlePatchImagesChange}
+              <Box sx={{ mt: 2 }}>
+                <PatchSelection
+                  onPatchesChange={setPatchImages}
+                  selectedPatches={patchImages}
+                  title="Patches"
                 />
-              </Button>
-              <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                {patchImages.map((img, idx) => (
-                  <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
-                    <img src={img} alt={`patch ${idx + 1}`} style={{ height: 40, border: '1px solid #ccc', borderRadius: 4 }} />
-                    <Button size="small" color="error" sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }} onClick={() => handleRemovePatchImage(idx)}>
-                      X
-                    </Button>
-                  </Box>
-                ))}
               </Box>
               <TextField
                 label="Quantidade"

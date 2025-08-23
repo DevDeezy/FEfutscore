@@ -84,6 +84,7 @@ const AdminPanel = () => {
   // Tracking state
   const [trackingText, setTrackingText] = useState('');
   const [trackingImages, setTrackingImages] = useState<string[]>([]);
+  const [trackingVideos, setTrackingVideos] = useState<string[]>([]);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -465,7 +466,7 @@ const AdminPanel = () => {
 
   // Update order tracking
   const handleUpdateOrderTracking = async () => {
-    if (!selectedOrder || (!trackingText && trackingImages.length === 0)) return;
+    if (!selectedOrder || (!trackingText && trackingImages.length === 0 && trackingVideos.length === 0)) return;
     
     setTrackingLoading(true);
     setTrackingError(null);
@@ -474,14 +475,20 @@ const AdminPanel = () => {
       const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, {
         orderId: selectedOrder.id,
         trackingText: trackingText || selectedOrder.trackingText,
-        trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
+        trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages],
+        trackingVideos: [...(selectedOrder.trackingVideos || []), ...trackingVideos]
       });
       
       if (response.status === 200) {
         // Update the order in the list
         const updatedOrders = orders.map(order => 
           order.id === selectedOrder.id 
-            ? { ...order, trackingText: trackingText || order.trackingText, trackingImages: [...(order.trackingImages || []), ...trackingImages] }
+            ? { 
+                ...order, 
+                trackingText: trackingText || order.trackingText, 
+                trackingImages: [...(order.trackingImages || []), ...trackingImages],
+                trackingVideos: [...(order.trackingVideos || []), ...trackingVideos]
+              }
             : order
         );
         dispatch({ type: 'order/fetchOrders/fulfilled', payload: updatedOrders });
@@ -489,6 +496,7 @@ const AdminPanel = () => {
         // Clear the form
         setTrackingText('');
         setTrackingImages([]);
+        setTrackingVideos([]);
         setPendingChanges(prev => ({ ...prev, tracking: false }));
       }
     } catch (error: any) {
@@ -525,12 +533,13 @@ const AdminPanel = () => {
       }
       
       // Update tracking if changed
-      if (pendingChanges.tracking && (trackingText || trackingImages.length > 0)) {
+      if (pendingChanges.tracking && (trackingText || trackingImages.length > 0 || trackingVideos.length > 0)) {
         updates.push(
           axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, {
             orderId: selectedOrder.id,
             trackingText: trackingText || selectedOrder.trackingText,
-            trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages]
+            trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages],
+            trackingVideos: [...(selectedOrder.trackingVideos || []), ...trackingVideos]
           })
         );
       }
@@ -561,6 +570,7 @@ const AdminPanel = () => {
       setOrderPrice(0);
       setTrackingText('');
       setTrackingImages([]);
+      setTrackingVideos([]);
       
     } catch (error: any) {
       setUpdateAllError(error.response?.data?.message || 'Erro ao atualizar alterações');
@@ -597,6 +607,22 @@ const AdminPanel = () => {
   // Remove tracking image
   const handleRemoveTrackingImage = (index: number) => {
     setTrackingImages(prev => prev.filter((_, i) => i !== index));
+    setPendingChanges(prev => ({ ...prev, tracking: true }));
+  };
+
+  // Handle tracking video upload
+  const handleTrackingVideoChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setTrackingVideos(prev => [...prev, reader.result as string]);
+      setPendingChanges(prev => ({ ...prev, tracking: true }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove tracking video
+  const handleRemoveTrackingVideo = (index: number) => {
+    setTrackingVideos(prev => prev.filter((_, i) => i !== index));
     setPendingChanges(prev => ({ ...prev, tracking: true }));
   };
 
