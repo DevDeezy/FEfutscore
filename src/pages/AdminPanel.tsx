@@ -472,12 +472,30 @@ const AdminPanel = () => {
     setTrackingError(null);
     
     try {
-      const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, {
+      const requestData = {
         orderId: selectedOrder.id,
         trackingText: trackingText || selectedOrder.trackingText,
         trackingImages: [...(selectedOrder.trackingImages || []), ...trackingImages],
         trackingVideos: [...(selectedOrder.trackingVideos || []), ...trackingVideos]
-      });
+      };
+      
+      // Log request size details
+      console.log('=== REQUEST SIZE DEBUG ===');
+      console.log('Request data keys:', Object.keys(requestData));
+      console.log('TrackingImages count:', requestData.trackingImages.length);
+      console.log('TrackingVideos count:', requestData.trackingVideos.length);
+      
+      if (requestData.trackingVideos.length > 0) {
+        const totalVideoSize = requestData.trackingVideos.reduce((sum, video) => sum + video.length, 0);
+        console.log('Total video data size:', totalVideoSize, 'characters');
+        console.log('Total video data size MB:', (totalVideoSize / (1024 * 1024)).toFixed(2));
+      }
+      
+      const jsonString = JSON.stringify(requestData);
+      console.log('Total JSON payload size:', jsonString.length, 'characters');
+      console.log('Total JSON payload size MB:', (jsonString.length / (1024 * 1024)).toFixed(2));
+      
+      const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderTracking`, requestData);
       
       if (response.status === 200) {
         // Update the order in the list
@@ -612,9 +630,24 @@ const AdminPanel = () => {
 
   // Handle tracking video upload
   const handleTrackingVideoChange = (file: File) => {
+    console.log('=== VIDEO UPLOAD DEBUG ===');
+    console.log('File name:', file.name);
+    console.log('File size:', file.size, 'bytes');
+    console.log('File type:', file.type);
+    
+    // Check if file is too large (e.g., > 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Video file is too large. Please select a smaller video (max 50MB).');
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onloadend = () => {
-      setTrackingVideos(prev => [...prev, reader.result as string]);
+      const dataUrl = reader.result as string;
+      console.log('Data URL length:', dataUrl.length);
+      console.log('Data URL preview:', dataUrl.substring(0, 100) + '...');
+      
+      setTrackingVideos(prev => [...prev, dataUrl]);
       setPendingChanges(prev => ({ ...prev, tracking: true }));
     };
     reader.readAsDataURL(file);
