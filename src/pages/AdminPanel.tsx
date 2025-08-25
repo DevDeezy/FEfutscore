@@ -2074,22 +2074,12 @@ const AdminPanel = () => {
 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>Adicionar Vídeos de Tracking:</Typography>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    sx={{ mb: 2 }}
-                  >
-                    Selecionar Vídeo
-                    <input
-                      type="file"
-                      hidden
-                      accept="video/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleTrackingVideoChange(file);
-                      }}
-                    />
-                  </Button>
+                  <DragDropZone 
+                    title="Adicionar Vídeo de Tracking"
+                    onFileSelect={handleTrackingVideoChange}
+                    accept="video/*"
+                    fileType="video"
+                  />
                   
                   {trackingVideos.length > 0 && (
                     <Box sx={{ mt: 2 }}>
