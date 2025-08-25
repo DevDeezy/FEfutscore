@@ -92,6 +92,10 @@ const AdminPanel = () => {
     proofImage?: string;
     trackingText?: string;
     trackingImages: string[];
+    paymentMethod?: string;
+    paymentRecipient?: string;
+    paymentAccountInfo?: string;
+    proofReference?: string;
     items: Array<{
       id: number;
       image_front?: string;
@@ -828,6 +832,10 @@ const AdminPanel = () => {
         proofImage: response.data.proofImage,
         trackingText: response.data.trackingText,
         trackingImages: response.data.trackingImages || [],
+        paymentMethod: response.data.paymentMethod,
+        paymentRecipient: response.data.paymentRecipient,
+        paymentAccountInfo: response.data.paymentAccountInfo,
+        proofReference: response.data.proofReference,
         items: response.data.items || []
       });
       console.log('Images loaded successfully');
@@ -1961,6 +1969,35 @@ const AdminPanel = () => {
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6">Instagram do Cliente</Typography>
                   <Typography component="p">📱 @{selectedOrder.clientInstagram}</Typography>
+                </Box>
+              )}
+
+              {/* Payment Details section */}
+              {(orderImages.paymentMethod || orderImages.paymentRecipient || orderImages.paymentAccountInfo || orderImages.proofReference) && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Detalhes de Pagamento</Typography>
+                  <Paper sx={{ p: 2, bgcolor: 'grey.50' }} variant="outlined">
+                    {orderImages.paymentMethod && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Método de Pagamento:</strong> {orderImages.paymentMethod}
+                      </Typography>
+                    )}
+                    {orderImages.paymentAccountInfo && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Conta de Destino:</strong> {orderImages.paymentAccountInfo}
+                      </Typography>
+                    )}
+                    {orderImages.paymentRecipient && (
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong>Destinatário:</strong> {orderImages.paymentRecipient}
+                      </Typography>
+                    )}
+                    {orderImages.proofReference && (
+                      <Typography variant="body2">
+                        <strong>Referência de Pagamento:</strong> {orderImages.proofReference}
+                      </Typography>
+                    )}
+                  </Paper>
                 </Box>
               )}
 

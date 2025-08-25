@@ -51,6 +51,11 @@ export interface Order {
   trackingImages?: string[];
   trackingVideos?: string[];
   clientInstagram?: string;
+  paymentMethod?: string;
+  paymentRecipient?: string;
+  paymentAccountInfo?: string;
+  proofReference?: string;
+  proofImage?: string;
 }
 
 export interface AuthState {
