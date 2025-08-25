@@ -28,6 +28,7 @@ import {
   useMediaQuery,
   Checkbox,
   InputAdornment,
+  Pagination,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -45,7 +46,7 @@ import DragDropZone from '../components/DragDropZone';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders } = useSelector((state: RootState) => state.order);
+  const { orders, pagination } = useSelector((state: RootState) => state.order);
   const [tab, setTab] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -194,13 +195,18 @@ const AdminPanel = () => {
       }
       setSelectedOrderIds([]);
       setBulkStatus('');
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
     } finally {
       setBulkLoading(false);
     }
   };
 
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Handle pagination change
+  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+    setCurrentPage(page);
+  };
   const [usersPage, setUsersPage] = useState(1);
   const [packsPage, setPacksPage] = useState(1);
   const [shirtTypesPage, setShirtTypesPage] = useState(1);
@@ -436,7 +442,7 @@ const AdminPanel = () => {
       // A better way is to refetch orders or have the slice update the state.
       // For now, let's just close the dialog.
       setOpenOrderDialog(false);
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
     } catch (err: any) {
       setOrderStatusError(err.response?.data?.error || 'Falha ao atualizar o estado');
     } finally {
@@ -455,7 +461,7 @@ const AdminPanel = () => {
         { total_price: orderPrice },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
       setOrderPriceError(null);
     } catch (err: any) {
       setOrderPriceError(err.response?.data?.error || 'Falha ao atualizar o preço');
@@ -666,7 +672,7 @@ const AdminPanel = () => {
   const handleAddToCSV = async (orderId: string) => {
     try {
       await dispatch(updateOrderStatus({ orderId, status: 'CSV' }));
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
     } catch (err) {
       alert('Falha ao marcar encomenda para CSV');
     }
@@ -692,7 +698,7 @@ const AdminPanel = () => {
       );
       saveAs(new Blob([response.data]), 'encomendas.xlsx');
       // After export, refresh orders (their status will be updated by backend)
-      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
     } catch (err) {
       console.error('Error exporting orders:', err);
       alert('Falha ao exportar encomendas. Veja a consola para mais detalhes.');
@@ -1370,6 +1376,30 @@ const AdminPanel = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                <Pagination
+                  count={pagination.totalPages}
+                  page={pagination.currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                  size={isMobile ? "small" : "medium"}
+                />
+              </Box>
+            )}
+            
+            {/* Display pagination info */}
+            {pagination && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Mostrando {((pagination.currentPage - 1) * pagination.limit) + 1} - {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} de {pagination.totalCount} encomendas
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
         {tab === 1 && (
