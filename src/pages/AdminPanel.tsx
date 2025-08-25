@@ -86,6 +86,22 @@ const AdminPanel = () => {
   const [trackingText, setTrackingText] = useState('');
   const [trackingImages, setTrackingImages] = useState<string[]>([]);
   const [trackingVideos, setTrackingVideos] = useState<string[]>([]);
+  
+  // Order images state (loaded separately)
+  const [orderImages, setOrderImages] = useState<{
+    proofImage?: string;
+    trackingText?: string;
+    trackingImages: string[];
+    items: Array<{
+      id: number;
+      image_front?: string;
+      image_back?: string;
+      patch_images: string[];
+    }>;
+  }>({
+    trackingImages: [],
+    items: []
+  });
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -771,6 +787,22 @@ const AdminPanel = () => {
     }
   };
 
+  const handleCloseOrderDialog = () => {
+    setOpenOrderDialog(false);
+    setSelectedOrder(null);
+    setOrderStatus('');
+    setOrderPrice(0);
+    setTrackingText('');
+    setTrackingImages([]);
+    setTrackingVideos([]);
+    setOrderImages({
+      trackingImages: [],
+      items: []
+    });
+    setPendingChanges({ status: false, price: false, tracking: false });
+    setUpdateAllError(null);
+  };
+
   const handleOpenOrderDialog = async (order: Order) => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
@@ -786,6 +818,25 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error loading order videos:', error);
       setTrackingVideos([]);
+    }
+    
+    // Load images separately to avoid payload size issues
+    try {
+      console.log('Loading images for order:', order.id);
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getOrderImages?orderId=${order.id}`);
+      setOrderImages({
+        proofImage: response.data.proofImage,
+        trackingText: response.data.trackingText,
+        trackingImages: response.data.trackingImages || [],
+        items: response.data.items || []
+      });
+      console.log('Images loaded successfully');
+    } catch (error) {
+      console.error('Error loading order images:', error);
+      setOrderImages({
+        trackingImages: [],
+        items: []
+      });
     }
     
     setPendingChanges({
@@ -1890,7 +1941,7 @@ const AdminPanel = () => {
       </Paper>
       
       {/* Dialogs */}
-      <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
+      <Dialog open={openOrderDialog} onClose={handleCloseOrderDialog} fullScreen={fullScreenDialog} maxWidth="md" fullWidth>
         <DialogTitle>Detalhes do Pedido</DialogTitle>
           <DialogContent>
             {selectedOrder && (
@@ -1913,6 +1964,25 @@ const AdminPanel = () => {
                 </Box>
               )}
 
+              {/* Proof of Payment section */}
+              {orderImages.proofImage && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>Prova de Pagamento</Typography>
+                  <Box component="img" 
+                       src={orderImages.proofImage} 
+                       alt="Prova de pagamento" 
+                       sx={{ 
+                         maxHeight: 200, 
+                         maxWidth: '100%', 
+                         border: '1px solid #ccc', 
+                         borderRadius: 1, 
+                         cursor: 'zoom-in' 
+                       }} 
+                       onClick={() => setImagePreview(orderImages.proofImage || null)} 
+                  />
+                </Box>
+              )}
+
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6">Itens da Encomenda</Typography>
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
@@ -1923,27 +1993,33 @@ const AdminPanel = () => {
                         <Typography variant="body2">Tamanho: {item.size}</Typography>
                         <Typography variant="body2">Quantidade: {item.quantity || 1}</Typography>
                         {item.player_name && <Typography variant="body2">Nome do Jogador: {item.player_name}</Typography>}
-                        {(item.image_front || item.image_back) && (
+                        {(() => {
+                          const itemImages = orderImages.items.find(img => img.id === item.id);
+                          return (itemImages && (itemImages.image_front || itemImages.image_back)) && (
                            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                            {item.image_front && <Box component="img" src={item.image_front} alt="frente" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(item.image_front)} />}
-                            {item.image_back && <Box component="img" src={item.image_back} alt="costas" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(item.image_back)} />}
+                            {itemImages.image_front && <Box component="img" src={itemImages.image_front} alt="frente" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(itemImages.image_front || null)} />}
+                            {itemImages.image_back && <Box component="img" src={itemImages.image_back} alt="costas" sx={{ height: 60, cursor: 'zoom-in' }} onClick={() => setImagePreview(itemImages.image_back || null)} />}
                             </Box>
-                          )}
+                          );
+                        })()}
                         {/* PATCH IMAGES SECTION */}
-                        {(item.patch_images ?? []).length > 0 && (
-                          <Box sx={{ mt: 1 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                              Patches:
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              {(item.patch_images ?? []).map((img: string, pidx: number) => (
-                                <Box key={pidx} sx={{ display: 'inline-block' }}>
-                                  <Box component="img" src={img} alt={`patch ${pidx + 1}`} sx={{ height: 40, border: '1px solid #ccc', borderRadius: 1 }} />
-                                </Box>
-                              ))}
+                        {(() => {
+                          const itemImages = orderImages.items.find(img => img.id === item.id);
+                          return itemImages && itemImages.patch_images && itemImages.patch_images.length > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                                Patches:
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {itemImages.patch_images.map((img: string, pidx: number) => (
+                                  <Box key={pidx} sx={{ display: 'inline-block' }}>
+                                    <Box component="img" src={img} alt={`patch ${pidx + 1}`} sx={{ height: 40, border: '1px solid #ccc', borderRadius: 1, cursor: 'zoom-in' }} onClick={() => setImagePreview(img)} />
+                                  </Box>
+                                ))}
+                              </Box>
                             </Box>
-                          </Box>
-                        )}
+                          );
+                        })()}
                         {/* END PATCH IMAGES SECTION */}
                         </Box>
                       ))}
@@ -2015,18 +2091,18 @@ const AdminPanel = () => {
                 <Typography variant="h6" sx={{ mb: 2 }}>Informações de Tracking</Typography>
                 
                 {/* Current tracking info */}
-                {selectedOrder?.trackingText && (
+                {orderImages.trackingText && (
                   <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Texto de Tracking Atual:</Typography>
-                    <Typography variant="body2">{selectedOrder.trackingText}</Typography>
+                    <Typography variant="body2">{orderImages.trackingText}</Typography>
                   </Box>
                 )}
                 
-                {selectedOrder?.trackingImages && selectedOrder.trackingImages.length > 0 && (
+                {orderImages.trackingImages && orderImages.trackingImages.length > 0 && (
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagens de Tracking Atuais:</Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selectedOrder.trackingImages.map((img: string, idx: number) => (
+                      {orderImages.trackingImages.map((img: string, idx: number) => (
                         <Box key={idx} sx={{ position: 'relative' }}>
                           <Box component="img" src={img} alt={`tracking ${idx + 1}`} sx={{ height: 80, border: '1px solid #ccc', borderRadius: 1, cursor: 'zoom-in' }} onClick={() => setImagePreview(img)} />
                         </Box>
