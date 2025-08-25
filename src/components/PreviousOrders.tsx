@@ -18,6 +18,8 @@ import {
 } from '@mui/material';
 import { Order, OrderItem } from '../types';
 import PaymentProofModal from './PaymentProofModal';
+import axios from 'axios';
+import { API_BASE_URL } from '../api';
 
 const modalStyle = {
   position: 'absolute' as 'absolute',
@@ -43,9 +45,24 @@ const PreviousOrders: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { orders, loading, error, pagination } = useSelector((state: RootState) => state.order);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [orderVideos, setOrderVideos] = useState<string[]>([]);
 
-  const handleOpenModal = (order: Order) => setSelectedOrder(order);
-  const handleCloseModal = () => setSelectedOrder(null);
+  const handleOpenModal = async (order: Order) => {
+    setSelectedOrder(order);
+    
+    // Load videos separately to avoid payload size issues
+    try {
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getOrderVideos?orderId=${order.id}`);
+      setOrderVideos(response.data.trackingVideos || []);
+    } catch (error) {
+      console.error('Error loading order videos:', error);
+      setOrderVideos([]);
+    }
+  };
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
+    setOrderVideos([]);
+  };
   
   const handleOpenPaymentModal = (order: Order) => {
     setSelectedOrderForPayment(order);
@@ -206,7 +223,7 @@ const PreviousOrders: React.FC = () => {
               {/* Tracking Information */}
               {(selectedOrder.trackingText || 
                 (selectedOrder.trackingImages && selectedOrder.trackingImages.length > 0) ||
-                (selectedOrder.trackingVideos && selectedOrder.trackingVideos.length > 0)) && (
+                (orderVideos && orderVideos.length > 0)) && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     📦 Informações de Tracking
@@ -249,13 +266,13 @@ const PreviousOrders: React.FC = () => {
                     </Paper>
                   )}
 
-                  {selectedOrder.trackingVideos && selectedOrder.trackingVideos.length > 0 && (
+                  {orderVideos && orderVideos.length > 0 && (
                     <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
                       <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
                         Vídeos de Tracking:
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                        {selectedOrder.trackingVideos.map((video: string, idx: number) => (
+                        {orderVideos.map((video: string, idx: number) => (
                           <Box key={idx}>
                             <video
                               src={video}

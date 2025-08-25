@@ -765,13 +765,23 @@ const AdminPanel = () => {
     }
   };
 
-  const handleOpenOrderDialog = (order: Order) => {
+  const handleOpenOrderDialog = async (order: Order) => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
     setOrderPrice(order.total_price);
     setTrackingText('');
     setTrackingImages([]);
     setTrackingVideos([]);
+    
+    // Load videos separately to avoid payload size issues
+    try {
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getOrderVideos?orderId=${order.id}`);
+      setTrackingVideos(response.data.trackingVideos || []);
+    } catch (error) {
+      console.error('Error loading order videos:', error);
+      setTrackingVideos([]);
+    }
+    
     setPendingChanges({
       status: false,
       price: false,
