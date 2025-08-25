@@ -74,7 +74,7 @@ const orderSlice = createSlice({
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to create order';
+        state.error = action.error.message || 'Falha ao criar encomenda';
       })
       .addCase(fetchOrders.pending, (state) => {
         state.loading = true;
@@ -93,7 +93,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch orders';
+        state.error = action.error.message || 'Falha ao carregar encomendas';
       })
       .addCase(updateOrderStatus.pending, (state) => {
         state.loading = true;
@@ -110,7 +110,7 @@ const orderSlice = createSlice({
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to update order status';
+        state.error = action.error.message || 'Falha ao atualizar estado da encomenda';
       })
       .addCase(updateOrderImages.pending, (state) => {
         state.loading = true;
@@ -127,7 +127,7 @@ const orderSlice = createSlice({
       })
       .addCase(updateOrderImages.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to update order images';
+        state.error = action.error.message || 'Falha ao atualizar imagens da encomenda';
       });
   },
 });

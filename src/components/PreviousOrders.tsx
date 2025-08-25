@@ -47,6 +47,32 @@ const PreviousOrders: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [orderVideos, setOrderVideos] = useState<string[]>([]);
 
+  // Translation function for order status
+  const translateStatus = (status: string): string => {
+    const translations: { [key: string]: string } = {
+      'pending': 'Pendente',
+      'processing': 'Em Processamento',
+      'completed': 'Concluída',
+      'cancelled': 'Cancelada',
+      'CSV': 'CSV',
+      'Em Processamento': 'Em Processamento',
+      'Para analizar': 'Para Analisar',
+      'Em pagamento': 'Em Pagamento',
+      'A Orçamentar': 'A Orçamentar'
+    };
+    return translations[status] || status;
+  };
+
+  // Translation function for product types
+  const translateProductType = (productType: string): string => {
+    const translations: { [key: string]: string } = {
+      'tshirt': 'Camisola',
+      'shoes': 'Sapatos',
+      'shorts': 'Calções'
+    };
+    return translations[productType] || productType;
+  };
+
   const handleOpenModal = async (order: Order) => {
     setSelectedOrder(order);
     
@@ -124,7 +150,7 @@ const PreviousOrders: React.FC = () => {
             }
           >
             <ListItemText
-              primary={`Encomenda #${order.id} - Estado: ${order.status}`}
+              primary={`Encomenda #${order.id} - Estado: ${translateStatus(order.status)}`}
               secondary={
                 <>
                   {order.total_price != null
@@ -153,7 +179,7 @@ const PreviousOrders: React.FC = () => {
                 Detalhes da Encomenda #{selectedOrder.id}
               </Typography>
               <Typography sx={{ mt: 2 }}>
-                <Typography component="span" sx={{ fontWeight: 'bold' }}>Estado:</Typography> {selectedOrder.status}
+                <Typography component="span" sx={{ fontWeight: 'bold' }}>Estado:</Typography> {translateStatus(selectedOrder.status)}
               </Typography>
               <Typography>
                 <Typography component="span" sx={{ fontWeight: 'bold' }}>Total:</Typography>{' '}
@@ -170,7 +196,7 @@ const PreviousOrders: React.FC = () => {
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
                         <Typography>
-                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Produto:</Typography> {item.product_type}
+                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Produto:</Typography> {translateProductType(item.product_type)}
                         </Typography>
                         <Typography>
                           <Typography component="span" sx={{ fontWeight: 'bold' }}>Tamanho:</Typography> {item.size}
@@ -178,6 +204,16 @@ const PreviousOrders: React.FC = () => {
                         {item.player_name && (
                           <Typography>
                             <Typography component="span" sx={{ fontWeight: 'bold' }}>Nome do Jogador:</Typography> {item.player_name}
+                          </Typography>
+                        )}
+                        {item.numero && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Número:</Typography> {item.numero}
+                          </Typography>
+                        )}
+                        {item.quantity && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Quantidade:</Typography> {item.quantity}
                           </Typography>
                         )}
                       </Grid>

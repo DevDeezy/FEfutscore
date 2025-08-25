@@ -635,9 +635,9 @@ const AdminPanel = () => {
     console.log('File size:', file.size, 'bytes');
     console.log('File type:', file.type);
     
-    // Check if file is too large (e.g., > 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Video file is too large. Please select a smaller video (max 50MB).');
+    // Check if file is too large (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ficheiro de vídeo demasiado grande. Por favor selecione um vídeo menor (máx. 5MB).');
       return;
     }
     
