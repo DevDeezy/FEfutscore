@@ -738,6 +738,7 @@ const AdminPanel = () => {
     setOrderPrice(order.total_price);
     setTrackingText('');
     setTrackingImages([]);
+    setTrackingVideos([]);
     setPendingChanges({
       status: false,
       price: false,
@@ -1269,7 +1270,10 @@ const AdminPanel = () => {
                         />
                       </TableCell>
                       <TableCell>{order.id}</TableCell>
-                      <TableCell>{order.user?.email}${order.user?.instagramName ? ' (' + order.user.instagramName + ')' : ''}</TableCell>
+                      <TableCell>
+                        {order.user?.email}
+                        {order.clientInstagram && <><br/>📱 @{order.clientInstagram}</>}
+                      </TableCell>
                       <TableCell>
                         <Typography
                           component="span"
@@ -1829,6 +1833,13 @@ const AdminPanel = () => {
                 <Typography component="p">Telemóvel: {selectedOrder.address_telemovel}</Typography>
               </Box>
 
+              {selectedOrder.clientInstagram && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="h6">Instagram do Cliente</Typography>
+                  <Typography component="p">📱 @{selectedOrder.clientInstagram}</Typography>
+                </Box>
+              )}
+
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6">Itens da Encomenda</Typography>
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
@@ -1951,6 +1962,23 @@ const AdminPanel = () => {
                   </Box>
                 )}
 
+                {selectedOrder?.trackingVideos && selectedOrder.trackingVideos.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Vídeos de Tracking Atuais:</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {selectedOrder.trackingVideos.map((video: string, idx: number) => (
+                        <Box key={idx} sx={{ position: 'relative' }}>
+                          <video 
+                            src={video} 
+                            controls 
+                            style={{ height: 100, border: '1px solid #ccc', borderRadius: 4 }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
                 {/* Add new tracking info */}
                 <TextField
                   fullWidth
@@ -2001,6 +2029,60 @@ const AdminPanel = () => {
                   )}
                 </Box>
 
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>Adicionar Vídeos de Tracking:</Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    sx={{ mb: 2 }}
+                  >
+                    Selecionar Vídeo
+                    <input
+                      type="file"
+                      hidden
+                      accept="video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleTrackingVideoChange(file);
+                      }}
+                    />
+                  </Button>
+                  
+                  {trackingVideos.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Vídeos Selecionados:</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {trackingVideos.map((video: string, idx: number) => (
+                          <Box key={idx} sx={{ position: 'relative' }}>
+                            <video 
+                              src={video} 
+                              controls 
+                              style={{ height: 100, border: '1px solid #ccc', borderRadius: 4 }}
+                            />
+                            <Button
+                              size="small"
+                              variant="contained"
+                              color="error"
+                              sx={{ 
+                                position: 'absolute', 
+                                top: -8, 
+                                right: -8, 
+                                minWidth: 'auto', 
+                                width: 24, 
+                                height: 24,
+                                borderRadius: '50%'
+                              }}
+                              onClick={() => handleRemoveTrackingVideo(idx)}
+                            >
+                              ×
+                            </Button>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
                 {trackingError && <Alert severity="error" sx={{ mt: 1 }}>{trackingError}</Alert>}
               </Box>
                 </Box>
@@ -2019,6 +2101,7 @@ const AdminPanel = () => {
               setOrderPrice(0);
               setTrackingText('');
               setTrackingImages([]);
+              setTrackingVideos([]);
               setUpdateAllError(null);
             }}>Fechar</Button>
             {(pendingChanges.status || pendingChanges.price || pendingChanges.tracking) && (

@@ -50,6 +50,7 @@ export interface Order {
   trackingText?: string;
   trackingImages?: string[];
   trackingVideos?: string[];
+  clientInstagram?: string;
 }
 
 export interface AuthState {

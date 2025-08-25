@@ -18,7 +18,7 @@ const Footer = () => (
     }}
   >
     <Typography variant="body1" color="text.primary">
-      &copy; {new Date().getFullYear()} FutScore. All rights reserved.
+      &copy; {new Date().getFullYear()} FutScore. Todos os direitos reservados.
     </Typography>
   </Box>
 );

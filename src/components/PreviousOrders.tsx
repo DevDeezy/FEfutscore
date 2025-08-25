@@ -204,7 +204,9 @@ const PreviousOrders: React.FC = () => {
               </List>
 
               {/* Tracking Information */}
-              {(selectedOrder.trackingText || (selectedOrder.trackingImages && selectedOrder.trackingImages.length > 0)) && (
+              {(selectedOrder.trackingText || 
+                (selectedOrder.trackingImages && selectedOrder.trackingImages.length > 0) ||
+                (selectedOrder.trackingVideos && selectedOrder.trackingVideos.length > 0)) && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     📦 Informações de Tracking
@@ -240,6 +242,30 @@ const PreviousOrders: React.FC = () => {
                                 cursor: 'zoom-in',
                               }}
                               onClick={() => setImagePreview(img)}
+                            />
+                          </Box>
+                        ))}
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {selectedOrder.trackingVideos && selectedOrder.trackingVideos.length > 0 && (
+                    <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
+                      <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                        Vídeos de Tracking:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                        {selectedOrder.trackingVideos.map((video: string, idx: number) => (
+                          <Box key={idx}>
+                            <video
+                              src={video}
+                              controls
+                              style={{
+                                maxWidth: '300px',
+                                maxHeight: '200px',
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                              }}
                             />
                           </Box>
                         ))}

@@ -73,6 +73,10 @@ const Cart = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const [paymentMode, setPaymentMode] = useState<'manual' | 'saved'>('manual');
 
+  // Pricing configuration state
+  const [patchPrice, setPatchPrice] = useState<number>(2); // Default value
+  const [personalizationPrice, setPersonalizationPrice] = useState<number>(3); // Default value
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -192,6 +196,7 @@ const Cart = () => {
       dispatch(getAddresses(user.id));
       fetchPaymentMethods();
     }
+    fetchPricingConfiguration();
   }, [dispatch, user]);
 
   // Fetch payment methods
@@ -212,6 +217,35 @@ const Cart = () => {
       }
     } catch (error) {
       console.error('Error fetching payment methods:', error);
+    }
+  };
+
+  // Fetch pricing configuration
+  const fetchPricingConfiguration = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getpricingconfig`);
+      const configs = Array.isArray(response.data) ? response.data : response.data.pricingConfigs;
+      
+      configs.forEach((config: any) => {
+        switch (config.key) {
+          case 'patch_price':
+            setPatchPrice(config.price);
+            break;
+          case 'personalization_price':
+            setPersonalizationPrice(config.price);
+            break;
+          // Keep backward compatibility
+          case 'number_price':
+          case 'name_price':
+            if (!configs.find((c: any) => c.key === 'personalization_price')) {
+              setPersonalizationPrice(config.price);
+            }
+            break;
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching pricing configuration:', error);
+      // Keep default values if loading fails
     }
   };
 
@@ -304,13 +338,18 @@ const Cart = () => {
                         {/* Price per item */}
                         {typeof item.price === 'number' && (
                           <Typography variant="body2" color="text.secondary">
-                            Preço unitário: €{item.price.toFixed(2)}
+                            Preço base: €{item.price.toFixed(2)}
                           </Typography>
                         )}
-                        {/* Subtotal for this item */}
-                        {typeof item.price === 'number' && (
-                          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold' }}>
-                            Subtotal: €{(item.price * item.quantity).toFixed(2)}
+                        {/* Show personalization costs */}
+                        {(item.player_name || item.numero) && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            + Personalização (nome/número): +€{personalizationPrice.toFixed(2)}
+                          </Typography>
+                        )}
+                        {(item.patch_images && item.patch_images.length > 0) && (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            + Patches ({item.patch_images.length}): +€{(item.patch_images.length * patchPrice).toFixed(2)}
                           </Typography>
                         )}
                         {item.player_name && (

@@ -37,9 +37,14 @@ const cartSlice = createSlice({
       let existingItem;
 
       if (newItem.product_id) {
-        // It's a store product
+        // It's a store product - include personalization in uniqueness check
         existingItem = state.items.find(
-          (item) => item.product_id === newItem.product_id && item.size === newItem.size
+          (item) => 
+            item.product_id === newItem.product_id && 
+            item.size === newItem.size &&
+            item.player_name === newItem.player_name &&
+            item.numero === newItem.numero &&
+            JSON.stringify(item.patch_images || []) === JSON.stringify(newItem.patch_images || [])
         );
       } else {
         // It's a custom t-shirt
