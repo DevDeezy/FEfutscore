@@ -154,7 +154,7 @@ const ProductManagement = () => {
   const fetchProductTypes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`, { headers: { 'x-admin-request': 'true' } });
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`);
       // Handle both old format (array) and new format (paginated response)
       const tree = res.data?.tree || (Array.isArray(res.data) ? res.data : res.data?.productTypes);
       setProductTypes(tree);
@@ -168,7 +168,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`, { headers: { 'x-admin-request': 'true' } });
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`);
       // Handle both old format (array) and new format (paginated response)
       if (Array.isArray(res.data)) {
         setProducts(res.data);
