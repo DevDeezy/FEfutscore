@@ -55,7 +55,6 @@ const ProductManagement = () => {
     product_type_id: '',
     sexo: 'Neutro',
     ano: '25/26',
-    numero: '',
   });
 
   // State for image upload
@@ -93,7 +92,6 @@ const ProductManagement = () => {
         product_type_id: String((product as any).product_type_id ?? product.productType.id),
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
-        numero: product.numero || '',
       });
       setProductImage(product.image_url);
     } else {
@@ -108,7 +106,6 @@ const ProductManagement = () => {
         product_type_id: '',
         sexo: 'Neutro',
         ano: '25/26',
-        numero: '',
       });
       setProductImage('');
     }
@@ -130,7 +127,6 @@ const ProductManagement = () => {
       product_type_id: '',
       sexo: 'Neutro',
       ano: '25/26',
-      numero: '',
     });
     setProductImage('');
   };
@@ -242,7 +238,6 @@ const ProductManagement = () => {
         available_sizes: newProduct.available_sizes.split(',').map(s => s.trim()),
         sexo: newProduct.sexo,
         ano: newProduct.ano,
-        numero: newProduct.numero,
       };
 
       const token = localStorage.getItem('token');
@@ -378,17 +373,7 @@ const ProductManagement = () => {
             value={newProductTypeName}
             onChange={(e) => setNewProductTypeName(e.target.value)}
           />
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Tipo Base</InputLabel>
-            <Select
-              value={newProductTypeBase}
-              label="Tipo Base"
-              onChange={(e) => setNewProductTypeBase(e.target.value)}
-            >
-              <MenuItem value="tshirt">Camisola</MenuItem>
-              <MenuItem value="shoes">Sapatilhas</MenuItem>
-            </Select>
-          </FormControl>
+          {/* Removido do Admin conforme pedido: seleção de Tipo Base */}
           <FormControl fullWidth margin="dense">
             <InputLabel>Tipo Pai (Opcional)</InputLabel>
             <Select
@@ -497,13 +482,7 @@ const ProductManagement = () => {
               {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
             </Select>
           </FormControl>
-          <TextField
-            label="Número"
-            fullWidth
-            margin="normal"
-            value={newProduct.numero}
-            onChange={e => setNewProduct({ ...newProduct, numero: e.target.value })}
-          />
+          {/* Removed "Número" field from Add/Edit Product as requested */}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseProductDialog}>Cancelar</Button>

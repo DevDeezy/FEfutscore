@@ -29,16 +29,23 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onClearAll,
 }) => {
   const treeData = useMemo(() => {
-    const mapNode = (n: any): any => ({
-      value: String(n.id),
-      label: (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <span>{n.name}</span>
-          {n.base_type && <Chip label={n.base_type} size="small" />}
-        </Box>
-      ),
-      children: (n.children || []).map((c: any) => mapNode(c)),
-    });
+    const mapNode = (n: any): any => {
+      const hasChildren = Array.isArray(n.children) && n.children.length > 0;
+      const node: any = {
+        value: String(n.id),
+        label: (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <span>{n.name}</span>
+          </Box>
+        ),
+      };
+      if (hasChildren) {
+        node.children = n.children.map((c: any) => mapNode(c));
+      } else {
+        node.isLeaf = true; // ensure rsuite does not show expand arrow
+      }
+      return node;
+    };
     return (Array.isArray(productTypes) ? productTypes : [])
       .filter((pt) => !pt.parent_id)
       .map((root) => mapNode(root));
