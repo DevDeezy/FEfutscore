@@ -137,7 +137,17 @@ const UserPanel = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      dispatch(setUser({ ...user, instagramNames: JSON.stringify(instagramNames) }));
+      // Refresh user from backend to ensure state matches persisted data
+      if (user?.id) {
+        const refreshed = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers?userId=${user.id}`);
+        if (refreshed?.data) {
+          dispatch(setUser({ ...user, ...refreshed.data }));
+        } else {
+          dispatch(setUser({ ...user, instagramNames: JSON.stringify(instagramNames) }));
+        }
+      } else {
+        dispatch(setUser({ ...user, instagramNames: JSON.stringify(instagramNames) }));
+      }
       setInstagramDialogOpen(false);
     } catch (err: any) {
       setInstagramError('Erro ao atualizar os nomes do Instagram.');

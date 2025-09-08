@@ -283,21 +283,21 @@ const ProductManagement = () => {
           {(Array.isArray(productTypes) ? productTypes : []).filter(pt => !pt.parent_id).map((root) => (
             <Box key={root.id} sx={{ ml: 0, mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <span>{`${root.name} (${root.base_type})`}</span>
+                <span>{root.name}</span>
                 <Button size="small" variant="outlined" onClick={() => { setEditingProductType(root); setNewProductTypeName(root.name); setNewProductTypeBase(root.base_type); setNewProductTypeParentId(root.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                 <Button size="small" color="error" onClick={() => handleDeleteProductType(root.id)}>Apagar</Button>
               </Box>
               {(root.children || []).map(child => (
                 <Box key={child.id} sx={{ ml: 2, my: 0.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <span>{`${child.name} (${child.base_type})`}</span>
+                    <span>{child.name}</span>
                     <Button size="small" variant="outlined" onClick={() => { setEditingProductType(child); setNewProductTypeName(child.name); setNewProductTypeBase(child.base_type); setNewProductTypeParentId(child.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                     <Button size="small" color="error" onClick={() => handleDeleteProductType(child.id)}>Apagar</Button>
                   </Box>
                   {(child.children || []).map(gchild => (
                     <Box key={gchild.id} sx={{ ml: 4, my: 0.25 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span>{`${gchild.name} (${gchild.base_type})`}</span>
+                        <span>{gchild.name}</span>
                         <Button size="small" variant="outlined" onClick={() => { setEditingProductType(gchild); setNewProductTypeName(gchild.name); setNewProductTypeBase(gchild.base_type); setNewProductTypeParentId(gchild.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                         <Button size="small" color="error" onClick={() => handleDeleteProductType(gchild.id)}>Apagar</Button>
                       </Box>
