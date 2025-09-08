@@ -405,15 +405,16 @@ const AdminPanel = () => {
   const handleSavePack = async () => {
     try {
       const token = localStorage.getItem('token');
+      const payload = { ...packForm, items: packForm.items.map(it => ({ ...it, product_type: 'tshirt' })) };
       if (editingPack) {
         // Update
-        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack.id.toString()}`, packForm, {
+        const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updatepack/${editingPack.id.toString()}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks(packs.map((p) => (p.id === editingPack.id ? res.data : p)));
       } else {
         // Create
-        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createpack`, packForm, {
+        const res = await axios.post(`${API_BASE_URL}/.netlify/functions/createpack`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPacks([...packs, res.data]);
@@ -1627,32 +1628,19 @@ const AdminPanel = () => {
                 <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Itens</Typography>
                 {packForm.items.map((item, idx) => (
                   <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                    <FormControl sx={{ minWidth: 120 }}>
-                      <InputLabel>Produto</InputLabel>
+                    <FormControl sx={{ minWidth: 180 }}>
+                      <InputLabel>Tipo de Camisola</InputLabel>
                       <Select
-                        value={item.product_type}
-                        label="Produto"
-                        onChange={(e: any) => handlePackItemChange(idx, 'product_type', e.target.value)}
+                        value={item.shirt_type_id ?? ''}
+                        label="Tipo de Camisola"
+                        onChange={(e: any) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
+                        disabled={shirtTypesLoading || shirtTypesError !== null}
                       >
-                        <MenuItem value="tshirt">Camisola</MenuItem>
-                        <MenuItem value="shoes">Sapatilhas</MenuItem>
+                        {Array.isArray(shirtTypes) && shirtTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
-                    {item.product_type === 'tshirt' && (
-                      <FormControl sx={{ minWidth: 120 }}>
-                        <InputLabel>Tipo de Camisola</InputLabel>
-                        <Select
-                          value={item.shirt_type_id ?? ''}
-                          label="Tipo de Camisola"
-                          onChange={(e: any) => handlePackItemChange(idx, 'shirt_type_id', Number(e.target.value))}
-                          disabled={shirtTypesLoading || shirtTypesError !== null}
-                        >
-                          {Array.isArray(shirtTypes) && shirtTypes.map((type) => (
-                            <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
                     <TextField
                       label="Quantidade"
                       type="number"

@@ -31,6 +31,7 @@ import DragDropZone from './DragDropZone';
 const ProductManagement = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +54,7 @@ const ProductManagement = () => {
     base_type: 'tshirt',
     available_sizes: '',
     product_type_id: '',
+    shirt_type_id: '',
     sexo: 'Neutro',
     ano: '25/26',
   });
@@ -90,6 +92,7 @@ const ProductManagement = () => {
         base_type: product.productType.base_type,
         available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : product.available_sizes,
         product_type_id: String((product as any).product_type_id ?? product.productType.id),
+        shirt_type_id: String((product as any).shirt_type_id || ''),
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
       });
@@ -104,6 +107,7 @@ const ProductManagement = () => {
         base_type: 'tshirt',
         available_sizes: '',
         product_type_id: '',
+        shirt_type_id: '',
         sexo: 'Neutro',
         ano: '25/26',
       });
@@ -125,6 +129,7 @@ const ProductManagement = () => {
       base_type: 'tshirt',
       available_sizes: '',
       product_type_id: '',
+      shirt_type_id: '',
       sexo: 'Neutro',
       ano: '25/26',
     });
@@ -134,6 +139,7 @@ const ProductManagement = () => {
   useEffect(() => {
     fetchProductTypes();
     fetchProducts();
+    fetchShirtTypes();
   }, []);
 
   const flattenTypes = (nodes: any[]): any[] => {
@@ -179,6 +185,16 @@ const ProductManagement = () => {
     } catch (err) {
       setError('Failed to fetch products');
       setLoading(false);
+    }
+  };
+
+  const fetchShirtTypes = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=1&limit=1000`);
+      const list = Array.isArray(res.data?.shirtTypes) ? res.data.shirtTypes : (Array.isArray(res.data) ? res.data : []);
+      setShirtTypes(list.map((t: any) => ({ id: t.id, name: t.name })));
+    } catch (e) {
+      // silent
     }
   };
 
@@ -230,7 +246,7 @@ const ProductManagement = () => {
 
   const handleSaveProduct = async () => {
     try {
-      const productData = {
+      const productData: any = {
         ...newProduct,
         price: Number(newProduct.price),
         cost_price: Number(newProduct.cost_price),
@@ -239,6 +255,9 @@ const ProductManagement = () => {
         sexo: newProduct.sexo,
         ano: newProduct.ano,
       };
+      if (newProduct.shirt_type_id) {
+        productData.shirt_type_id = Number(newProduct.shirt_type_id);
+      }
 
       const token = localStorage.getItem('token');
       const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
@@ -321,7 +340,6 @@ const ProductManagement = () => {
           <TableHead>
             <TableRow>
               <TableCell>Nome</TableCell>
-              <TableCell>Tipo Base</TableCell>
               <TableCell>Tipo</TableCell>
               <TableCell>Preço</TableCell>
               <TableCell>Preço Custo</TableCell>
@@ -332,7 +350,6 @@ const ProductManagement = () => {
             {Array.isArray(products) && products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
-                <TableCell>{product.productType.base_type}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
                 <TableCell>€{product.price.toFixed(2)}</TableCell>
                 <TableCell>€{product.cost_price ? product.cost_price.toFixed(2) : '-'}</TableCell>
@@ -451,14 +468,26 @@ const ProductManagement = () => {
             onChange={(e) => setNewProduct({ ...newProduct, available_sizes: e.target.value })}
           />
           <FormControl fullWidth margin="normal">
-            <InputLabel>Tipo de Produto</InputLabel>
+            <InputLabel>Família do Produto</InputLabel>
             <Select
               value={newProduct.product_type_id}
-              label="Tipo de Produto"
+              label="Família do Produto"
               onChange={(e) => setNewProduct({ ...newProduct, product_type_id: e.target.value })}
             >
               {flattenTypes(Array.isArray(productTypes) ? productTypes : []).map((type) => (
                 <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Tipo de Produto</InputLabel>
+            <Select
+              value={newProduct.shirt_type_id}
+              label="Tipo de Produto"
+              onChange={(e) => setNewProduct({ ...newProduct, shirt_type_id: e.target.value })}
+            >
+              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
+                <MenuItem key={st.id} value={st.id}>{st.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
