@@ -80,7 +80,7 @@ const ProductManagement = () => {
   };
 
   // Handle opening product dialog for editing
-  const handleOpenProductDialog = (product: Product | null = null) => {
+  const handleOpenProductDialog = async (product: Product | null = null) => {
     setEditingProduct(product);
     if (product) {
       setNewProduct({
@@ -88,7 +88,7 @@ const ProductManagement = () => {
         description: product.description || '',
         price: product.price,
         cost_price: product.cost_price || 0,
-        image_url: product.image_url,
+        image_url: (product as any).image_url || '',
         base_type: product.productType.base_type,
         available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : product.available_sizes,
         product_type_id: String((product as any).product_type_id ?? product.productType.id),
@@ -96,7 +96,20 @@ const ProductManagement = () => {
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
       });
-      setProductImage(product.image_url);
+      setProductImage((product as any).image_url || '');
+      try {
+        const full = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${(product as any).id}`);
+        const p = full.data || {};
+        setNewProduct(prev => ({
+          ...prev,
+          image_url: p.image_url || prev.image_url,
+          available_sizes: Array.isArray(p.available_sizes) ? p.available_sizes.join(', ') : (prev.available_sizes || ''),
+          product_type_id: String(p.product_type_id ?? prev.product_type_id),
+          sexo: p.sexo || prev.sexo,
+          ano: p.ano || prev.ano,
+        }));
+        if (p.image_url) setProductImage(p.image_url);
+      } catch (e) {}
     } else {
       setNewProduct({
         name: '',
@@ -174,8 +187,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`);
-      // Handle both old format (array) and new format (paginated response)
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?summary=true&limit=1000`);
       if (Array.isArray(res.data)) {
         setProducts(res.data);
       } else {
