@@ -36,6 +36,7 @@ import PatchSelection from '../components/PatchSelection';
 const Store = () => {
   const dispatch = useDispatch();
   const [products, setProducts] = useState<any[]>([]);
+  const [productImages, setProductImages] = useState<Record<number, string>>({});
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [selectedType, setSelectedType] = useState('');
   const [loading, setLoading] = useState(false);
@@ -110,10 +111,32 @@ const Store = () => {
       } else {
         setProducts(res.data.products);
       }
+      // Lazy-load images for visible products after the list renders
+      setTimeout(() => {
+        const list = Array.isArray(res.data) ? res.data : res.data.products;
+        if (Array.isArray(list)) {
+          list.forEach((p: any) => {
+            if (!productImages[p.id]) {
+              loadProductImage(p.id);
+            }
+          });
+        }
+      }, 0);
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch products');
       setLoading(false);
+    }
+  };
+
+  const loadProductImage = async (productId: number) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${productId}`);
+      if (res?.data?.image_url) {
+        setProductImages(prev => ({ ...prev, [productId]: res.data.image_url }));
+      }
+    } catch (e) {
+      // ignore per-image errors
     }
   };
 
@@ -190,7 +213,7 @@ const Store = () => {
                         backgroundColor: '#f5f5f5',
                         padding: 2,
                       }}
-                      image={product.image_url}
+                      image={productImages[product.id] || product.image_url || ''}
                       alt={product.name}
                     />
                     <CardContent>
