@@ -457,7 +457,7 @@ const ProductManagement = () => {
               label="Tipo de Produto"
               onChange={(e) => setNewProduct({ ...newProduct, product_type_id: e.target.value })}
             >
-              {Array.isArray(productTypes) && productTypes.map((type) => (
+              {flattenTypes(Array.isArray(productTypes) ? productTypes : []).map((type) => (
                 <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
               ))}
             </Select>
