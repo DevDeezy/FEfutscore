@@ -255,9 +255,7 @@ const ProductManagement = () => {
         sexo: newProduct.sexo,
         ano: newProduct.ano,
       };
-      if (newProduct.shirt_type_id) {
-        productData.shirt_type_id = Number(newProduct.shirt_type_id);
-      }
+      productData.shirt_type_id = newProduct.shirt_type_id ? Number(newProduct.shirt_type_id) : null;
 
       const token = localStorage.getItem('token');
       const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
