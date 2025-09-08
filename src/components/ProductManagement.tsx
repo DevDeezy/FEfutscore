@@ -160,7 +160,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts`);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`);
       // Handle both old format (array) and new format (paginated response)
       if (Array.isArray(res.data)) {
         setProducts(res.data);
@@ -176,18 +176,28 @@ const ProductManagement = () => {
 
   const handleCreateOrUpdateProductType = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
       if (editingProductType) {
-        await axios.put(`${API_BASE_URL}/.netlify/functions/updateProductType/${editingProductType.id}`, {
-          name: newProductTypeName,
-          base_type: newProductTypeBase,
-          parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
-        });
+        await axios.put(
+          `${API_BASE_URL}/.netlify/functions/updateProductType/${editingProductType.id}`,
+          {
+            name: newProductTypeName,
+            base_type: newProductTypeBase,
+            parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
+          },
+          headers
+        );
       } else {
-        await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, {
-          name: newProductTypeName,
-          base_type: newProductTypeBase,
-          parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
-        });
+        await axios.post(
+          `${API_BASE_URL}/.netlify/functions/createProductType`,
+          {
+            name: newProductTypeName,
+            base_type: newProductTypeBase,
+            parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
+          },
+          headers
+        );
       }
       setOpenProductTypeDialog(false);
       setEditingProductType(null);
@@ -223,12 +233,15 @@ const ProductManagement = () => {
         numero: newProduct.numero,
       };
 
+      const token = localStorage.getItem('token');
+      const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+
       if (editingProduct) {
         // Update existing product
-        await axios.put(`${API_BASE_URL}/.netlify/functions/updateProduct/${editingProduct.id}`, productData);
+        await axios.put(`${API_BASE_URL}/.netlify/functions/updateProduct/${editingProduct.id}`, productData, headers);
       } else {
         // Create new product
-        await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, productData);
+        await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, productData, headers);
       }
 
       handleCloseProductDialog();
