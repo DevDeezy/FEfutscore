@@ -105,6 +105,7 @@ const ProductManagement = () => {
           image_url: p.image_url || prev.image_url,
           available_sizes: Array.isArray(p.available_sizes) ? p.available_sizes.join(', ') : (prev.available_sizes || ''),
           product_type_id: String(p.product_type_id ?? prev.product_type_id),
+          shirt_type_id: p.shirt_type_id != null ? String(p.shirt_type_id) : prev.shirt_type_id,
           sexo: p.sexo || prev.sexo,
           ano: p.ano || prev.ano,
         }));
