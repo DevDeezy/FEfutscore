@@ -90,7 +90,7 @@ const ProductManagement = () => {
         image_url: product.image_url,
         base_type: product.productType.base_type,
         available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : product.available_sizes,
-        product_type_id: product.product_type_id.toString(),
+        product_type_id: String((product as any).product_type_id ?? product.productType.id),
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
         numero: product.numero || '',
@@ -140,16 +140,28 @@ const ProductManagement = () => {
     fetchProducts();
   }, []);
 
+  const flattenTypes = (nodes: any[]): any[] => {
+    if (!Array.isArray(nodes)) return [];
+    const out: any[] = [];
+    const walk = (arr: any[]) => {
+      for (const n of arr) {
+        out.push(n);
+        if (Array.isArray(n.children) && n.children.length) {
+          walk(n.children);
+        }
+      }
+    };
+    walk(nodes);
+    return out;
+  };
+
   const fetchProductTypes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`, { headers: { 'x-admin-request': 'true' } });
       // Handle both old format (array) and new format (paginated response)
-      if (Array.isArray(res.data)) {
-        setProductTypes(res.data);
-      } else {
-        setProductTypes(res.data.productTypes);
-      }
+      const tree = res.data?.tree || (Array.isArray(res.data) ? res.data : res.data?.productTypes);
+      setProductTypes(tree);
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch product types');
@@ -160,7 +172,7 @@ const ProductManagement = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?limit=1000`, { headers: { 'x-admin-request': 'true' } });
       // Handle both old format (array) and new format (paginated response)
       if (Array.isArray(res.data)) {
         setProducts(res.data);
@@ -385,7 +397,7 @@ const ProductManagement = () => {
               onChange={(e) => setNewProductTypeParentId(e.target.value === '' ? '' : Number(e.target.value))}
             >
               <MenuItem value="">— Sem Pai —</MenuItem>
-              {(Array.isArray(productTypes) ? productTypes : []).map((pt) => (
+              {flattenTypes(Array.isArray(productTypes) ? productTypes : []).map((pt) => (
                 <MenuItem key={pt.id} value={pt.id}>{pt.name}</MenuItem>
               ))}
             </Select>
