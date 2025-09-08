@@ -35,6 +35,7 @@ const ProductManagement = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [openProductTypeDialog, setOpenProductTypeDialog] = useState(false);
+  const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
   const [newProductTypeName, setNewProductTypeName] = useState('');
   const [newProductTypeBase, setNewProductTypeBase] = useState('tshirt');
   const [newProductTypeParentId, setNewProductTypeParentId] = useState<number | ''>('');
@@ -173,19 +174,28 @@ const ProductManagement = () => {
     }
   };
 
-  const handleCreateProductType = async () => {
+  const handleCreateOrUpdateProductType = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, {
-        name: newProductTypeName,
-        base_type: newProductTypeBase,
-        parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
-      });
+      if (editingProductType) {
+        await axios.put(`${API_BASE_URL}/.netlify/functions/updateProductType/${editingProductType.id}`, {
+          name: newProductTypeName,
+          base_type: newProductTypeBase,
+          parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
+        });
+      } else {
+        await axios.post(`${API_BASE_URL}/.netlify/functions/createProductType`, {
+          name: newProductTypeName,
+          base_type: newProductTypeBase,
+          parent_id: newProductTypeParentId === '' ? null : Number(newProductTypeParentId),
+        });
+      }
       setOpenProductTypeDialog(false);
+      setEditingProductType(null);
       setNewProductTypeName('');
       setNewProductTypeParentId('');
       fetchProductTypes();
     } catch (err) {
-      setError('Failed to create product type');
+      setError(editingProductType ? 'Falha ao atualizar tipo de produto' : 'Failed to create product type');
     }
   };
 
@@ -254,18 +264,21 @@ const ProductManagement = () => {
             <Box key={root.id} sx={{ ml: 0, mb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <span>{`${root.name} (${root.base_type})`}</span>
+                <Button size="small" variant="outlined" onClick={() => { setEditingProductType(root); setNewProductTypeName(root.name); setNewProductTypeBase(root.base_type); setNewProductTypeParentId(root.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                 <Button size="small" color="error" onClick={() => handleDeleteProductType(root.id)}>Apagar</Button>
               </Box>
               {(root.children || []).map(child => (
                 <Box key={child.id} sx={{ ml: 2, my: 0.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <span>{`${child.name} (${child.base_type})`}</span>
+                    <Button size="small" variant="outlined" onClick={() => { setEditingProductType(child); setNewProductTypeName(child.name); setNewProductTypeBase(child.base_type); setNewProductTypeParentId(child.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                     <Button size="small" color="error" onClick={() => handleDeleteProductType(child.id)}>Apagar</Button>
                   </Box>
                   {(child.children || []).map(gchild => (
                     <Box key={gchild.id} sx={{ ml: 4, my: 0.25 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <span>{`${gchild.name} (${gchild.base_type})`}</span>
+                        <Button size="small" variant="outlined" onClick={() => { setEditingProductType(gchild); setNewProductTypeName(gchild.name); setNewProductTypeBase(gchild.base_type); setNewProductTypeParentId(gchild.parent_id || ''); setOpenProductTypeDialog(true); }}>Editar</Button>
                         <Button size="small" color="error" onClick={() => handleDeleteProductType(gchild.id)}>Apagar</Button>
                       </Box>
                     </Box>
@@ -328,8 +341,8 @@ const ProductManagement = () => {
       </TableContainer>
 
       {/* Product Type Dialog */}
-      <Dialog open={openProductTypeDialog} onClose={() => setOpenProductTypeDialog(false)}>
-        <DialogTitle>Adicionar Tipo de Produto</DialogTitle>
+      <Dialog open={openProductTypeDialog} onClose={() => { setOpenProductTypeDialog(false); setEditingProductType(null); }}>
+        <DialogTitle>{editingProductType ? 'Editar Tipo de Produto' : 'Adicionar Tipo de Produto'}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -366,8 +379,8 @@ const ProductManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenProductTypeDialog(false)}>Cancelar</Button>
-          <Button onClick={handleCreateProductType}>Criar</Button>
+          <Button onClick={() => { setOpenProductTypeDialog(false); setEditingProductType(null); }}>Cancelar</Button>
+          <Button onClick={handleCreateOrUpdateProductType}>{editingProductType ? 'Guardar' : 'Criar'}</Button>
         </DialogActions>
       </Dialog>
 
