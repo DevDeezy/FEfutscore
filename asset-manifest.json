@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/FEfutscore/static/css/main.9a31e720.css",
-    "main.js": "/FEfutscore/static/js/main.eed4eaaf.js",
+    "main.js": "/FEfutscore/static/js/main.ba5e8606.js",
     "static/js/453.46dc3e92.chunk.js": "/FEfutscore/static/js/453.46dc3e92.chunk.js",
     "index.html": "/FEfutscore/index.html",
     "main.9a31e720.css.map": "/FEfutscore/static/css/main.9a31e720.css.map",
-    "main.eed4eaaf.js.map": "/FEfutscore/static/js/main.eed4eaaf.js.map",
+    "main.ba5e8606.js.map": "/FEfutscore/static/js/main.ba5e8606.js.map",
     "453.46dc3e92.chunk.js.map": "/FEfutscore/static/js/453.46dc3e92.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.9a31e720.css",
-    "static/js/main.eed4eaaf.js"
+    "static/js/main.ba5e8606.js"
   ]
 }
