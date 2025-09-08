@@ -61,6 +61,7 @@ const ProductManagement = () => {
 
   // State for image upload
   const [productImage, setProductImage] = useState<string>('');
+  const [imageChanged, setImageChanged] = useState<boolean>(false);
 
   // Handle product image upload
   const handleProductImageChange = (file: File) => {
@@ -69,6 +70,7 @@ const ProductManagement = () => {
       const imageUrl = reader.result as string;
       setProductImage(imageUrl);
       setNewProduct({ ...newProduct, image_url: imageUrl });
+      setImageChanged(true);
     };
     reader.readAsDataURL(file);
   };
@@ -77,6 +79,7 @@ const ProductManagement = () => {
   const handleRemoveProductImage = () => {
     setProductImage('');
     setNewProduct({ ...newProduct, image_url: '' });
+    setImageChanged(true);
   };
 
   // Handle opening product dialog for editing
@@ -97,6 +100,7 @@ const ProductManagement = () => {
         ano: product.ano || '25/26',
       });
       setProductImage((product as any).image_url || '');
+      setImageChanged(false);
       try {
         const full = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${(product as any).id}`);
         const p = full.data || {};
@@ -126,6 +130,7 @@ const ProductManagement = () => {
         ano: '25/26',
       });
       setProductImage('');
+      setImageChanged(false);
     }
     setOpenProductDialog(true);
   };
@@ -269,6 +274,11 @@ const ProductManagement = () => {
         ano: newProduct.ano,
       };
       productData.shirt_type_id = newProduct.shirt_type_id ? Number(newProduct.shirt_type_id) : null;
+
+      // Only send image_url if it was changed this session, to reduce payloads
+      if (!imageChanged) {
+        delete productData.image_url;
+      }
 
       const token = localStorage.getItem('token');
       const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
