@@ -101,8 +101,8 @@ const Store = () => {
     try {
       setLoading(true);
       const url = typeId
-        ? `${API_BASE_URL}/.netlify/functions/getProducts?productTypeId=${typeId}`
-        : `${API_BASE_URL}/.netlify/functions/getProducts`;
+        ? `${API_BASE_URL}/.netlify/functions/getProducts?productTypeId=${typeId}&summary=true`
+        : `${API_BASE_URL}/.netlify/functions/getProducts?summary=true`;
       const res = await axios.get(url);
       // Handle both old format (array) and new paginated format
       if (Array.isArray(res.data)) {
