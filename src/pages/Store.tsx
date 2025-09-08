@@ -24,6 +24,7 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
@@ -39,6 +40,7 @@ const Store = () => {
   const [selectedType, setSelectedType] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -137,9 +139,21 @@ const Store = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Loja
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="h4" gutterBottom sx={{ m: 0 }}>
+          Loja
+        </Typography>
+        <TextField
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Procurar produtos..."
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1 }} />,
+          }}
+          size="small"
+          sx={{ minWidth: 260 }}
+        />
+      </Box>
       <Grid container spacing={3}>
         <Grid item xs={12} md={3} lg={3}>
           <FilterSidebar
@@ -156,7 +170,16 @@ const Store = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <Grid container spacing={3}>
-              {Array.isArray(products) && products.map((product) => (
+              {Array.isArray(products) && products
+                .filter((product) => {
+                  if (!searchQuery.trim()) return true;
+                  const query = searchQuery.toLowerCase();
+                  const name = `${product.name || ''} ${product.ano || ''}`.toLowerCase();
+                  const description = (product.description || '').toLowerCase();
+                  const typeName = (product?.productType?.name || '').toLowerCase();
+                  return name.includes(query) || description.includes(query) || typeName.includes(query);
+                })
+                .map((product) => (
                 <Grid item key={product.id} xs={12} sm={6} md={4}>
                   <Card>
                     <CardMedia

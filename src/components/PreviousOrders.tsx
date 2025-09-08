@@ -234,22 +234,7 @@ const PreviousOrders: React.FC = () => {
                             />
                           </Box>
                         )}
-                        {item.image_back && (
-                          <Box>
-                            <Typography variant="body2">Imagem das Costas:</Typography>
-                            <img
-                              src={item.image_back}
-                              alt="Design das costas"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: '150px',
-                                border: '1px solid #ddd',
-                                cursor: 'zoom-in',
-                              }}
-                              onClick={() => setImagePreview(item.image_back || null)}
-                            />
-                          </Box>
-                        )}
+                        {/* Removido: visualização de imagem das costas */}
                       </Grid>
                     </Grid>
                   </Paper>

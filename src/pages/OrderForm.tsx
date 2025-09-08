@@ -114,10 +114,10 @@ const OrderForm = () => {
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3}>
-            {/* Carregar Imagem da Frente */}
+            {/* Carregar Imagem */}
             <Grid item xs={12}>
               <DragDropZone
-                title="Carregar Imagem da Frente"
+                title="Carregar Imagem"
                 subtitle="Escolhe uma imagem ou arrasta-a para aqui"
                 onFileSelect={(file) => handleImageChange(file, 'front')}
                 onFileRemove={() => setCurrentItem({ ...currentItem, image_front: '' })}
@@ -125,17 +125,7 @@ const OrderForm = () => {
                 height={150}
               />
             </Grid>
-            {/* Carregar Imagem das Costas */}
-            <Grid item xs={12}>
-              <DragDropZone
-                title="Carregar Imagem das Costas"
-                subtitle="Escolhe uma imagem ou arrasta-a para aqui"
-                onFileSelect={(file) => handleImageChange(file, 'back')}
-                onFileRemove={() => setCurrentItem({ ...currentItem, image_back: '' })}
-                currentImage={currentItem.image_back}
-                height={150}
-              />
-            </Grid>
+
 
 
 
