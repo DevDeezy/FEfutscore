@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Paper,
@@ -43,6 +43,28 @@ const UserPanel = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Helper: refresh user profile from backend to ensure latest fields
+  const refreshUser = async () => {
+    try {
+      if (!user?.id) return null;
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getusers?userId=${user.id}`);
+      if (res?.data) {
+        const refreshed = res.data as any;
+        dispatch(setUser({ ...user, ...refreshed }));
+        return refreshed;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    // On mount, try to sync the user fields from DB (userEmail/instagramNames)
+    refreshUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // State for dialogs
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [instagramDialogOpen, setInstagramDialogOpen] = useState(false);
@@ -73,8 +95,9 @@ const UserPanel = () => {
   };
 
   // Email management
-  const handleOpenEmailDialog = () => {
-    setUserEmail(user?.userEmail || user?.email || '');
+  const handleOpenEmailDialog = async () => {
+    const latest = await refreshUser();
+    setUserEmail(latest?.userEmail || latest?.email || user?.userEmail || user?.email || '');
     setEmailError(null);
     setEmailDialogOpen(true);
   };
@@ -101,10 +124,16 @@ const UserPanel = () => {
   };
 
   // Instagram management
-  const handleOpenInstagramDialog = () => {
+  const handleOpenInstagramDialog = async () => {
+    const latest = await refreshUser();
+    const latestInstagramNames = latest?.instagramNames
+      ? JSON.parse(latest.instagramNames)
+      : (latest?.instagramName ? [latest.instagramName] : null);
     setInstagramNames(
-      user?.instagramNames ? JSON.parse(user.instagramNames) : 
-      user?.instagramName ? [user.instagramName] : []
+      latestInstagramNames ?? (
+        user?.instagramNames ? JSON.parse(user.instagramNames) : 
+        (user?.instagramName ? [user.instagramName] : [])
+      )
     );
     setNewInstagramName('');
     setInstagramError(null);
