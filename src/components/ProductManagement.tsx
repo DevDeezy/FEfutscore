@@ -275,10 +275,6 @@ const ProductManagement = () => {
       };
       productData.shirt_type_id = newProduct.shirt_type_id ? Number(newProduct.shirt_type_id) : null;
 
-      // Only send image_url if it was changed this session, to reduce payloads
-      if (!imageChanged) {
-        delete productData.image_url;
-      }
 
       const token = localStorage.getItem('token');
       const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
