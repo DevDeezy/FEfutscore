@@ -79,7 +79,7 @@ const Store = () => {
     const cartItem: OrderItem = {
       id: `${selectedProduct.id}-${size}`,
       product_id: selectedProduct.id,
-      product_type: selectedProduct.productType.base_type,
+      product_type: selectedProduct?.shirtType?.name || selectedProduct.productType.base_type,
       name: selectedProduct.name,
       price: selectedProduct.price,
       image_front: selectedProduct.image_url,
@@ -88,6 +88,8 @@ const Store = () => {
       player_name: playerName,
       numero: playerNumber,
       patch_images: patchImages,
+      shirt_type_id: selectedProduct?.shirtType?.id,
+      shirt_type_name: selectedProduct?.shirtType?.name,
     };
     dispatch(addToCart(cartItem));
     handleCloseDialog();
