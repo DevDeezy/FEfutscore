@@ -55,6 +55,7 @@ const ProductManagement = () => {
     available_sizes: '',
     product_type_id: '',
     shirt_type_id: '',
+    available_shirt_type_ids: [] as number[],
     sexo: 'Neutro',
     ano: '25/26',
   });
@@ -96,6 +97,7 @@ const ProductManagement = () => {
         available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : product.available_sizes,
         product_type_id: String((product as any).product_type_id ?? product.productType.id),
         shirt_type_id: String((product as any).shirt_type_id || ''),
+        available_shirt_type_ids: Array.isArray((product as any).available_shirt_type_ids) ? (product as any).available_shirt_type_ids : [],
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
       });
@@ -110,6 +112,7 @@ const ProductManagement = () => {
           available_sizes: Array.isArray(p.available_sizes) ? p.available_sizes.join(', ') : (prev.available_sizes || ''),
           product_type_id: String(p.product_type_id ?? prev.product_type_id),
           shirt_type_id: p.shirt_type_id != null ? String(p.shirt_type_id) : prev.shirt_type_id,
+          available_shirt_type_ids: Array.isArray(p.available_shirt_type_ids) ? p.available_shirt_type_ids : prev.available_shirt_type_ids,
           sexo: p.sexo || prev.sexo,
           ano: p.ano || prev.ano,
         }));
@@ -126,6 +129,7 @@ const ProductManagement = () => {
         available_sizes: '',
         product_type_id: '',
         shirt_type_id: '',
+        available_shirt_type_ids: [],
         sexo: 'Neutro',
         ano: '25/26',
       });
@@ -149,6 +153,7 @@ const ProductManagement = () => {
       available_sizes: '',
       product_type_id: '',
       shirt_type_id: '',
+      available_shirt_type_ids: [],
       sexo: 'Neutro',
       ano: '25/26',
     });
@@ -274,6 +279,7 @@ const ProductManagement = () => {
         ano: newProduct.ano,
       };
       productData.shirt_type_id = newProduct.shirt_type_id ? Number(newProduct.shirt_type_id) : null;
+      productData.available_shirt_type_ids = Array.isArray(newProduct.available_shirt_type_ids) ? newProduct.available_shirt_type_ids : [];
 
 
       const token = localStorage.getItem('token');
@@ -500,11 +506,32 @@ const ProductManagement = () => {
             <InputLabel>Tipo de Produto</InputLabel>
             <Select
               value={newProduct.shirt_type_id}
-              label="Tipo de Produto"
+              label="Tipo de Produto (Principal)"
               onChange={(e) => setNewProduct({ ...newProduct, shirt_type_id: e.target.value })}
             >
               {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
                 <MenuItem key={st.id} value={st.id}>{st.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Tipos Disponíveis para o Produto</InputLabel>
+            <Select
+              multiple
+              value={(newProduct.available_shirt_type_ids || []).map(String)}
+              label="Tipos Disponíveis para o Produto"
+              onChange={(e) => {
+                const value = e.target.value as unknown as string[];
+                setNewProduct({ ...newProduct, available_shirt_type_ids: value.map(v => Number(v)) });
+              }}
+              renderValue={(selected) => {
+                const ids = (selected as string[]).map(v => Number(v));
+                const names = shirtTypes.filter(st => ids.includes(st.id)).map(st => st.name);
+                return names.join(', ');
+              }}
+            >
+              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
+                <MenuItem key={st.id} value={String(st.id)}>{st.name}</MenuItem>
               ))}
             </Select>
           </FormControl>

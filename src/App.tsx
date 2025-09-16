@@ -49,7 +49,7 @@ const AppLayout = () => {
         <Navbar />
         <main style={{ flex: 1 }}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Navigate to="/store" replace />} />
             <Route path="/store" element={<Store />} />
             <Route path="/order" element={<PrivateRoute><OrderForm /></PrivateRoute>} />
             <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />

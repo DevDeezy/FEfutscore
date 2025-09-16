@@ -42,6 +42,7 @@ const cartSlice = createSlice({
           (item) => 
             item.product_id === newItem.product_id && 
             item.size === newItem.size &&
+            (item.shirt_type_id || null) === (newItem.shirt_type_id || null) &&
             item.player_name === newItem.player_name &&
             item.numero === newItem.numero &&
             JSON.stringify(item.patch_images || []) === JSON.stringify(newItem.patch_images || [])

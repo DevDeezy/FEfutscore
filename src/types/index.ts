@@ -120,6 +120,7 @@ export interface Product {
   cost_price?: number;
   image_url: string;
   available_sizes: string[];
+  available_shirt_type_ids?: number[];
   productType: ProductType;
   product_type_id: number;
   sexo?: string;

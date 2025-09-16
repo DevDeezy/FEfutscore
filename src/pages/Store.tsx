@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Container,
   Grid,
@@ -8,6 +8,7 @@ import {
   CardMedia,
   Typography,
   Button,
+  IconButton,
   Select,
   MenuItem,
   FormControl,
@@ -25,6 +26,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import BrushIcon from '@mui/icons-material/Brush';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { addToCart } from '../store/slices/cartSlice';
@@ -32,12 +34,16 @@ import { OrderItem } from '../types';
 import Checkbox from '@mui/material/Checkbox';
 import FilterSidebar from '../components/FilterSidebar';
 import PatchSelection from '../components/PatchSelection';
+import DragDropZone from '../components/DragDropZone';
+import { RootState } from '../store';
 
 const Store = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth);
   const [products, setProducts] = useState<any[]>([]);
   const [productImages, setProductImages] = useState<Record<number, string>>({});
   const [productTypes, setProductTypes] = useState<any[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string }[]>([]);
   const [selectedType, setSelectedType] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,15 +56,41 @@ const Store = () => {
   const [playerName, setPlayerName] = useState('');
   const [playerNumber, setPlayerNumber] = useState('');
   const [patchImages, setPatchImages] = useState<string[]>([]);
+  const [selectedShirtTypeId, setSelectedShirtTypeId] = useState<number | ''>('');
 
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Admin edit modal state
+  const [openAdminDialog, setOpenAdminDialog] = useState(false);
+  const [adminEditingProduct, setAdminEditingProduct] = useState<any | null>(null);
+  const [adminProductData, setAdminProductData] = useState<any>({
+    name: '',
+    description: '',
+    price: 0,
+    cost_price: 0,
+    image_url: '',
+    available_sizes: '',
+    product_type_id: '',
+    shirt_type_id: '',
+  });
+  const [adminProductImage, setAdminProductImage] = useState<string>('');
+  const [adminError, setAdminError] = useState<string | null>(null);
 
 
 
   const handleOpenDialog = (product: any) => {
     setSelectedProduct(product);
     setSize(product.available_sizes[0] || '');
+    // Default selected shirt type: first available, or existing shirt_type_id if defined
+    const availableIds: number[] = Array.isArray(product.available_shirt_type_ids) ? product.available_shirt_type_ids : [];
+    if (availableIds.length > 0) {
+      setSelectedShirtTypeId(availableIds[0]);
+    } else if (product.shirt_type_id) {
+      setSelectedShirtTypeId(product.shirt_type_id);
+    } else {
+      setSelectedShirtTypeId('');
+    }
     setPlayerName('');
     setPlayerNumber('');
     setPatchImages([]);
@@ -74,22 +106,45 @@ const Store = () => {
 
 
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedProduct) return;
+
+    const productId = selectedProduct.id;
+    // Prefer already loaded image; fall back to product data; as a last resort fetch the product
+    let imageUrl = productImages[productId] || selectedProduct.image_url || '';
+    if (!imageUrl) {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${productId}`);
+        if (res?.data?.image_url) {
+          imageUrl = res.data.image_url;
+          setProductImages(prev => ({ ...prev, [productId]: imageUrl }));
+        }
+      } catch (_) {
+        // ignore fetch errors; proceed without image
+      }
+    }
+
+    const findShirtTypeName = (id?: number | '') => {
+      if (!id || !Array.isArray(shirtTypes)) return undefined;
+      const st = shirtTypes.find(st => st.id === id);
+      return st?.name;
+    };
+
+    const chosenShirtTypeId = typeof selectedShirtTypeId === 'number' ? selectedShirtTypeId : undefined;
     const cartItem: OrderItem = {
       id: `${selectedProduct.id}-${size}`,
       product_id: selectedProduct.id,
-      product_type: selectedProduct?.shirtType?.name || selectedProduct.productType.base_type,
+      product_type: selectedProduct?.productType?.base_type || 'tshirt',
       name: selectedProduct.name,
       price: selectedProduct.price,
-      image_front: selectedProduct.image_url,
+      image_front: imageUrl,
       size,
       quantity,
       player_name: playerName,
       numero: playerNumber,
       patch_images: patchImages,
-      shirt_type_id: selectedProduct?.shirtType?.id,
-      shirt_type_name: selectedProduct?.shirtType?.name,
+      shirt_type_id: chosenShirtTypeId,
+      shirt_type_name: findShirtTypeName(chosenShirtTypeId),
     };
     dispatch(addToCart(cartItem));
     handleCloseDialog();
@@ -98,6 +153,7 @@ const Store = () => {
   useEffect(() => {
     fetchProducts();
     fetchProductTypes();
+    fetchShirtTypes();
   }, []);
 
   const fetchProducts = async (typeId = '') => {
@@ -157,6 +213,132 @@ const Store = () => {
     }
   };
 
+  const fetchShirtTypes = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=1&limit=1000`);
+      const list = Array.isArray(res.data?.shirtTypes) ? res.data.shirtTypes : (Array.isArray(res.data) ? res.data : []);
+      setShirtTypes(list.map((t: any) => ({ id: t.id, name: t.name })));
+    } catch {
+      // silent
+    }
+  };
+
+  const flattenTypes = (nodes: any[]): any[] => {
+    if (!Array.isArray(nodes)) return [];
+    const out: any[] = [];
+    const walk = (arr: any[]) => {
+      for (const n of arr) {
+        out.push(n);
+        if (Array.isArray(n.children) && n.children.length) {
+          walk(n.children);
+        }
+      }
+    };
+    walk(nodes);
+    return out;
+  };
+
+  // Admin edit handlers
+  const handleOpenAdminDialog = async (product: any) => {
+    setAdminError(null);
+    setAdminEditingProduct(product);
+    // Start with summary data
+    const base = {
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || 0,
+      cost_price: product.cost_price || 0,
+      image_url: product.image_url || productImages[product.id] || '',
+      available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : (product.available_sizes || ''),
+      product_type_id: String(product.product_type_id ?? product?.productType?.id ?? ''),
+      shirt_type_id: String(product.shirt_type_id || ''),
+    };
+    setAdminProductData(base);
+    setAdminProductImage(base.image_url);
+    // Fetch full product for complete data (image/sizes)
+    try {
+      const full = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${product.id}`);
+      const p = full.data || {};
+      setAdminProductData((prev: any) => ({
+        ...prev,
+        image_url: p.image_url || prev.image_url,
+        available_sizes: Array.isArray(p.available_sizes) ? p.available_sizes.join(', ') : (prev.available_sizes || ''),
+        product_type_id: String(p.product_type_id ?? prev.product_type_id),
+        shirt_type_id: p.shirt_type_id != null ? String(p.shirt_type_id) : prev.shirt_type_id,
+        price: typeof p.price === 'number' ? p.price : prev.price,
+        cost_price: typeof p.cost_price === 'number' ? p.cost_price : prev.cost_price,
+        description: typeof p.description === 'string' ? p.description : prev.description,
+        name: typeof p.name === 'string' ? p.name : prev.name,
+      }));
+      if (p.image_url) setAdminProductImage(p.image_url);
+    } catch {}
+    setOpenAdminDialog(true);
+  };
+
+  const handleCloseAdminDialog = () => {
+    setOpenAdminDialog(false);
+    setAdminEditingProduct(null);
+    setAdminProductData({
+      name: '', description: '', price: 0, cost_price: 0, image_url: '', available_sizes: '', product_type_id: '', shirt_type_id: ''
+    });
+    setAdminProductImage('');
+    setAdminError(null);
+  };
+
+  const handleAdminImageChange = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imageUrl = reader.result as string;
+      setAdminProductImage(imageUrl);
+      setAdminProductData((prev: any) => ({ ...prev, image_url: imageUrl }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAdminImageRemove = () => {
+    setAdminProductImage('');
+    setAdminProductData((prev: any) => ({ ...prev, image_url: '' }));
+  };
+
+  const handleSaveAdminProduct = async () => {
+    try {
+      setAdminError(null);
+      const payload: any = {
+        ...adminProductData,
+        price: Number(adminProductData.price),
+        cost_price: Number(adminProductData.cost_price),
+        product_type_id: adminProductData.product_type_id ? Number(adminProductData.product_type_id) : undefined,
+        available_sizes: String(adminProductData.available_sizes || '')
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean),
+      };
+      payload.shirt_type_id = adminProductData.shirt_type_id ? Number(adminProductData.shirt_type_id) : null;
+
+      const token = localStorage.getItem('token');
+      const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateProduct/${adminEditingProduct.id}`, payload, headers);
+      handleCloseAdminDialog();
+      // Refresh list
+      fetchProducts(selectedType);
+    } catch (e: any) {
+      setAdminError(e?.response?.data?.error || 'Falha ao atualizar produto');
+    }
+  };
+
+  const handleDeleteAdminProduct = async () => {
+    if (!adminEditingProduct) return;
+    if (!window.confirm('Tem a certeza que quer apagar este produto?')) return;
+    try {
+      setAdminError(null);
+      await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteProduct/${adminEditingProduct.id}`);
+      handleCloseAdminDialog();
+      fetchProducts(selectedType);
+    } catch (e: any) {
+      setAdminError(e?.response?.data?.error || 'Falha ao apagar o produto');
+    }
+  };
+
   const handleTypeSelectFromTree = (typeId: string) => {
     setSelectedType(typeId);
     fetchProducts(typeId);
@@ -206,7 +388,17 @@ const Store = () => {
                 })
                 .map((product) => (
                 <Grid item key={product.id} xs={12} sm={6} md={4}>
-                  <Card>
+                  <Card sx={{ position: 'relative' }}>
+                    {user?.role === 'admin' && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenAdminDialog(product)}
+                        sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2, backgroundColor: 'rgba(255,255,255,0.9)' }}
+                        title="Editar produto"
+                      >
+                        <BrushIcon fontSize="small" />
+                      </IconButton>
+                    )}
                     <CardMedia
                       component="img"
                       sx={{
@@ -276,6 +468,23 @@ const Store = () => {
                 sx={{ mt: 2, mb: 2 }}
                 InputProps={{ inputProps: { min: 1 } }}
               />
+              {/* Shirt type selection based on available_shirt_type_ids */}
+              {Array.isArray(selectedProduct?.available_shirt_type_ids) && selectedProduct.available_shirt_type_ids.length > 0 && (
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Tipo de Produto</InputLabel>
+                  <Select
+                    value={selectedShirtTypeId === '' ? '' : String(selectedShirtTypeId)}
+                    label="Tipo de Produto"
+                    onChange={(e: any) => setSelectedShirtTypeId(e.target.value === '' ? '' : Number(e.target.value))}
+                  >
+                    {selectedProduct.available_shirt_type_ids.map((id: number) => (
+                      <MenuItem key={id} value={String(id)}>
+                        {shirtTypes.find(st => st.id === id)?.name || `Tipo ${id}`}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
               <FormControl fullWidth>
                 <InputLabel>Tamanho</InputLabel>
                 <Select value={size} label="Tamanho" onChange={(e: any) => setSize(e.target.value)}>
@@ -290,6 +499,97 @@ const Store = () => {
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
           <Button onClick={handleAddToCart} variant="contained">Adicionar ao Carrinho</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Admin Edit Product Dialog */}
+      <Dialog open={openAdminDialog} onClose={handleCloseAdminDialog} fullScreen={fullScreen}>
+        <DialogTitle>Editar Produto</DialogTitle>
+        <DialogContent>
+          {adminError && (
+            <Alert severity="error" sx={{ mb: 2 }}>{adminError}</Alert>
+          )}
+          <TextField
+            label="Nome do Produto"
+            fullWidth
+            margin="normal"
+            value={adminProductData.name}
+            onChange={(e) => setAdminProductData({ ...adminProductData, name: e.target.value })}
+          />
+          <TextField
+            label="Descrição"
+            fullWidth
+            margin="normal"
+            multiline
+            rows={2}
+            value={adminProductData.description}
+            onChange={(e) => setAdminProductData({ ...adminProductData, description: e.target.value })}
+          />
+          <TextField
+            label="Preço"
+            type="number"
+            fullWidth
+            margin="normal"
+            value={adminProductData.price}
+            onChange={(e) => setAdminProductData({ ...adminProductData, price: Number(e.target.value) })}
+          />
+          <TextField
+            label="Preço Custo"
+            type="number"
+            fullWidth
+            margin="normal"
+            value={adminProductData.cost_price}
+            onChange={(e) => setAdminProductData({ ...adminProductData, cost_price: Number(e.target.value) })}
+          />
+          <Box sx={{ mt: 2, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagem do Produto:</Typography>
+            <DragDropZone
+              title="Carregar Imagem do Produto"
+              subtitle="Escolhe uma imagem ou arrasta-a para aqui"
+              onFileSelect={handleAdminImageChange}
+              onFileRemove={handleAdminImageRemove}
+              currentImage={adminProductImage || adminProductData.image_url}
+              accept="image/*"
+              multiple={false}
+              height={150}
+            />
+          </Box>
+          <TextField
+            label="Tamanhos Disponíveis (separados por vírgula)"
+            fullWidth
+            margin="normal"
+            value={adminProductData.available_sizes}
+            onChange={(e) => setAdminProductData({ ...adminProductData, available_sizes: e.target.value })}
+          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Família do Produto</InputLabel>
+            <Select
+              value={adminProductData.product_type_id}
+              label="Família do Produto"
+              onChange={(e) => setAdminProductData({ ...adminProductData, product_type_id: e.target.value })}
+            >
+              {flattenTypes(Array.isArray(productTypes) ? productTypes : []).map((type: any) => (
+                <MenuItem key={type.id} value={String(type.id)}>{type.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Tipo de Produto</InputLabel>
+            <Select
+              value={adminProductData.shirt_type_id}
+              label="Tipo de Produto"
+              onChange={(e) => setAdminProductData({ ...adminProductData, shirt_type_id: e.target.value })}
+            >
+              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
+                <MenuItem key={st.id} value={String(st.id)}>{st.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteAdminProduct} color="error">Apagar</Button>
+          <Button onClick={handleCloseAdminDialog}>Cancelar</Button>
+          <Button onClick={handleSaveAdminProduct} variant="contained">Guardar</Button>
         </DialogActions>
       </Dialog>
     </Container>
