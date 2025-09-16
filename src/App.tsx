@@ -3,7 +3,6 @@ import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'reac
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OrderForm from './pages/OrderForm';
