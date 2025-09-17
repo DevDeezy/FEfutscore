@@ -151,6 +151,10 @@ const ProductManagement = () => {
         const byParam = u.searchParams.get('id');
         let id = byParam || '';
         const path = u.pathname || '';
+        // Keep Drive thumbnail endpoint as is
+        if (path.includes('/thumbnail') && byParam) {
+          return url;
+        }
         if (!id && path.includes('/file/d/')) {
           id = path.split('/file/d/')[1]?.split('/')[0] || '';
         }
@@ -161,6 +165,26 @@ const ProductManagement = () => {
       }
     } catch {}
     return url;
+  };
+
+  const buildDriveThumbnailUrl = (value: string): string => {
+    const input = String(value || '').trim();
+    if (!input) return '';
+    if (!input.includes('://') && !input.includes(' ')) {
+      return `https://drive.google.com/thumbnail?id=${input}`;
+    }
+    try {
+      const u = new URL(input);
+      if (u.host.includes('drive.google.com') || u.host.includes('drive.usercontent.google.com')) {
+        const byParam = u.searchParams.get('id');
+        let id = byParam || '';
+        const path = u.pathname || '';
+        if (!id && path.includes('/file/d/')) id = path.split('/file/d/')[1]?.split('/')[0] || '';
+        if (!id && path.includes('/d/')) id = path.split('/d/')[1]?.split('/')[0] || '';
+        if (id) return `https://drive.google.com/thumbnail?id=${id}`;
+      }
+    } catch {}
+    return input;
   };
 
   const isUnsupportedDriveViewer = (url: string): boolean => {
@@ -479,12 +503,12 @@ const ProductManagement = () => {
             onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })}
           />
           <TextField
-            label="URL da Imagem"
+            label="Imagem (ID do Drive ou URL)"
             fullWidth
             margin="normal"
             value={newProduct.image_url}
             onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
-            placeholder="https://..."
+            placeholder="Ex.: 1-pW0M60WDmG-k_rzjkWIn5e1BfdmfMCm ou https://..."
           />
           {isUnsupportedDriveViewer(newProduct.image_url) && (
             <Alert severity="warning" sx={{ mt: 1 }}>
@@ -495,7 +519,7 @@ const ProductManagement = () => {
             <Box sx={{ mt: 1, mb: 2 }}>
               <Box
                 component="img"
-                src={normalizeImageUrl(newProduct.image_url)}
+                src={normalizeImageUrl(buildDriveThumbnailUrl(newProduct.image_url))}
                 alt="preview"
                 referrerPolicy="no-referrer"
                 sx={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}
