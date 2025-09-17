@@ -60,6 +60,22 @@ const Store = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
+  const normalizeImageUrl = (url: string): string => {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      if (u.host.includes('drive.google.com') || u.host.includes('drive.usercontent.google.com')) {
+        const byParam = u.searchParams.get('id');
+        let id = byParam || '';
+        if (!id && u.pathname.includes('/d/')) {
+          id = u.pathname.split('/d/')[1]?.split('/')[0] || '';
+        }
+        if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+      }
+    } catch {}
+    return url;
+  };
+
   // Admin edit modal state
   const [openAdminDialog, setOpenAdminDialog] = useState(false);
   const [adminEditingProduct, setAdminEditingProduct] = useState<any | null>(null);
@@ -108,7 +124,7 @@ const Store = () => {
   const handleAddToCart = async () => {
     if (!selectedProduct) return;
 
-    const imageUrl = selectedProduct.image_url || '';
+    const imageUrl = normalizeImageUrl(selectedProduct.image_url || '');
 
     const findShirtTypeName = (id?: number | '') => {
       if (!id || !Array.isArray(shirtTypes)) return undefined;
@@ -356,7 +372,8 @@ const Store = () => {
                         backgroundColor: '#f5f5f5',
                         padding: 2,
                       }}
-                      image={product.image_url || ''}
+                      image={normalizeImageUrl(product.image_url || '')}
+                      referrerPolicy="no-referrer"
                       alt={product.name}
                     />
                     <CardContent>
@@ -502,8 +519,9 @@ const Store = () => {
             <Box sx={{ mt: 1, mb: 2 }}>
               <Box
                 component="img"
-                src={adminProductData.image_url}
+                src={normalizeImageUrl(adminProductData.image_url)}
                 alt="preview"
+                referrerPolicy="no-referrer"
                 sx={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}
               />
             </Box>

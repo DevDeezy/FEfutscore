@@ -143,6 +143,22 @@ const ProductManagement = () => {
     fetchShirtTypes();
   }, []);
 
+  const normalizeImageUrl = (url: string): string => {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      if (u.host.includes('drive.google.com') || u.host.includes('drive.usercontent.google.com')) {
+        const byParam = u.searchParams.get('id');
+        let id = byParam || '';
+        if (!id && u.pathname.includes('/d/')) {
+          id = u.pathname.split('/d/')[1]?.split('/')[0] || '';
+        }
+        if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
+      }
+    } catch {}
+    return url;
+  };
+
   const flattenTypes = (nodes: any[]): any[] => {
     if (!Array.isArray(nodes)) return [];
     const out: any[] = [];
@@ -459,8 +475,9 @@ const ProductManagement = () => {
             <Box sx={{ mt: 1, mb: 2 }}>
               <Box
                 component="img"
-                src={newProduct.image_url}
+                src={normalizeImageUrl(newProduct.image_url)}
                 alt="preview"
+                referrerPolicy="no-referrer"
                 sx={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}
               />
             </Box>
