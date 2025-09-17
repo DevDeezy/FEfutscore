@@ -150,13 +150,28 @@ const ProductManagement = () => {
       if (u.host.includes('drive.google.com') || u.host.includes('drive.usercontent.google.com')) {
         const byParam = u.searchParams.get('id');
         let id = byParam || '';
-        if (!id && u.pathname.includes('/d/')) {
-          id = u.pathname.split('/d/')[1]?.split('/')[0] || '';
+        const path = u.pathname || '';
+        if (!id && path.includes('/file/d/')) {
+          id = path.split('/file/d/')[1]?.split('/')[0] || '';
+        }
+        if (!id && path.includes('/d/')) {
+          id = path.split('/d/')[1]?.split('/')[0] || '';
         }
         if (id) return `https://drive.google.com/uc?export=view&id=${id}`;
       }
     } catch {}
     return url;
+  };
+
+  const isUnsupportedDriveViewer = (url: string): boolean => {
+    try {
+      const u = new URL(url);
+      const path = u.pathname || '';
+      const hasId = !!u.searchParams.get('id') || path.includes('/file/d/') || path.includes('/d/');
+      return (u.host.includes('drive.google.com') && path.includes('/drive-viewer/')) && !hasId;
+    } catch {
+      return false;
+    }
   };
 
   const flattenTypes = (nodes: any[]): any[] => {
@@ -471,7 +486,12 @@ const ProductManagement = () => {
             onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
             placeholder="https://..."
           />
-          {newProduct.image_url ? (
+          {isUnsupportedDriveViewer(newProduct.image_url) && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Este link do Google Drive não é incorporável. Usa "Partilhar → Obter ligação" e cola um link com ID (ex.: /file/d/ID ou ?id=ID). Será convertido para uc?export=view.
+            </Alert>
+          )}
+          {newProduct.image_url && !isUnsupportedDriveViewer(newProduct.image_url) ? (
             <Box sx={{ mt: 1, mb: 2 }}>
               <Box
                 component="img"
