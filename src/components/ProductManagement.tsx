@@ -310,6 +310,8 @@ const ProductManagement = () => {
         sexo: newProduct.sexo,
         ano: newProduct.ano,
       };
+      // Normalize and persist thumbnail URL based on Drive ID/URL
+      productData.image_url = buildDriveThumbnailUrl(newProduct.image_url);
       productData.shirt_type_id = newProduct.shirt_type_id ? Number(newProduct.shirt_type_id) : null;
       productData.available_shirt_type_ids = Array.isArray(newProduct.available_shirt_type_ids) ? newProduct.available_shirt_type_ids : [];
 

@@ -321,6 +321,8 @@ const Store = () => {
           .map((s: string) => s.trim())
           .filter(Boolean),
       };
+      // Normalize and persist thumbnail URL based on Drive ID/URL
+      payload.image_url = buildDriveThumbnailUrl(adminProductData.image_url);
       payload.shirt_type_id = adminProductData.shirt_type_id ? Number(adminProductData.shirt_type_id) : null;
 
       const token = localStorage.getItem('token');
