@@ -34,14 +34,13 @@ import { OrderItem } from '../types';
 import Checkbox from '@mui/material/Checkbox';
 import FilterSidebar from '../components/FilterSidebar';
 import PatchSelection from '../components/PatchSelection';
-import DragDropZone from '../components/DragDropZone';
+// Removido DragDropZone: passamos a usar URL direto da imagem
 import { RootState } from '../store';
 
 const Store = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const [products, setProducts] = useState<any[]>([]);
-  const [productImages, setProductImages] = useState<Record<number, string>>({});
   const [productTypes, setProductTypes] = useState<any[]>([]);
   const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string }[]>([]);
   const [selectedType, setSelectedType] = useState('');
@@ -74,7 +73,7 @@ const Store = () => {
     product_type_id: '',
     shirt_type_id: '',
   });
-  const [adminProductImage, setAdminProductImage] = useState<string>('');
+  // Preview será feito com base no próprio campo image_url
   const [adminError, setAdminError] = useState<string | null>(null);
 
 
@@ -109,20 +108,7 @@ const Store = () => {
   const handleAddToCart = async () => {
     if (!selectedProduct) return;
 
-    const productId = selectedProduct.id;
-    // Prefer already loaded image; fall back to product data; as a last resort fetch the product
-    let imageUrl = productImages[productId] || selectedProduct.image_url || '';
-    if (!imageUrl) {
-      try {
-        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${productId}`);
-        if (res?.data?.image_url) {
-          imageUrl = res.data.image_url;
-          setProductImages(prev => ({ ...prev, [productId]: imageUrl }));
-        }
-      } catch (_) {
-        // ignore fetch errors; proceed without image
-      }
-    }
+    const imageUrl = selectedProduct.image_url || '';
 
     const findShirtTypeName = (id?: number | '') => {
       if (!id || !Array.isArray(shirtTypes)) return undefined;
@@ -169,17 +155,7 @@ const Store = () => {
       } else {
         setProducts(res.data.products);
       }
-      // Lazy-load images for visible products after the list renders
-      setTimeout(() => {
-        const list = Array.isArray(res.data) ? res.data : res.data.products;
-        if (Array.isArray(list)) {
-          list.forEach((p: any) => {
-            if (!productImages[p.id]) {
-              loadProductImage(p.id);
-            }
-          });
-        }
-      }, 0);
+      // Imagens já vêm por URL diretamente no payload
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch products');
@@ -187,16 +163,7 @@ const Store = () => {
     }
   };
 
-  const loadProductImage = async (productId: number) => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${productId}`);
-      if (res?.data?.image_url) {
-        setProductImages(prev => ({ ...prev, [productId]: res.data.image_url }));
-      }
-    } catch (e) {
-      // ignore per-image errors
-    }
-  };
+  // Removido: carregamento adicional de imagens por produto
 
   const fetchProductTypes = async () => {
     try {
@@ -248,13 +215,12 @@ const Store = () => {
       description: product.description || '',
       price: product.price || 0,
       cost_price: product.cost_price || 0,
-      image_url: product.image_url || productImages[product.id] || '',
+        image_url: product.image_url || '',
       available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : (product.available_sizes || ''),
       product_type_id: String(product.product_type_id ?? product?.productType?.id ?? ''),
       shirt_type_id: String(product.shirt_type_id || ''),
     };
     setAdminProductData(base);
-    setAdminProductImage(base.image_url);
     // Fetch full product for complete data (image/sizes)
     try {
       const full = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${product.id}`);
@@ -270,7 +236,6 @@ const Store = () => {
         description: typeof p.description === 'string' ? p.description : prev.description,
         name: typeof p.name === 'string' ? p.name : prev.name,
       }));
-      if (p.image_url) setAdminProductImage(p.image_url);
     } catch {}
     setOpenAdminDialog(true);
   };
@@ -281,23 +246,7 @@ const Store = () => {
     setAdminProductData({
       name: '', description: '', price: 0, cost_price: 0, image_url: '', available_sizes: '', product_type_id: '', shirt_type_id: ''
     });
-    setAdminProductImage('');
     setAdminError(null);
-  };
-
-  const handleAdminImageChange = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      setAdminProductImage(imageUrl);
-      setAdminProductData((prev: any) => ({ ...prev, image_url: imageUrl }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAdminImageRemove = () => {
-    setAdminProductImage('');
-    setAdminProductData((prev: any) => ({ ...prev, image_url: '' }));
   };
 
   const handleSaveAdminProduct = async () => {
@@ -407,7 +356,7 @@ const Store = () => {
                         backgroundColor: '#f5f5f5',
                         padding: 2,
                       }}
-                      image={productImages[product.id] || product.image_url || ''}
+                      image={product.image_url || ''}
                       alt={product.name}
                     />
                     <CardContent>
@@ -541,19 +490,24 @@ const Store = () => {
             value={adminProductData.cost_price}
             onChange={(e) => setAdminProductData({ ...adminProductData, cost_price: Number(e.target.value) })}
           />
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagem do Produto:</Typography>
-            <DragDropZone
-              title="Carregar Imagem do Produto"
-              subtitle="Escolhe uma imagem ou arrasta-a para aqui"
-              onFileSelect={handleAdminImageChange}
-              onFileRemove={handleAdminImageRemove}
-              currentImage={adminProductImage || adminProductData.image_url}
-              accept="image/*"
-              multiple={false}
-              height={150}
-            />
-          </Box>
+          <TextField
+            label="URL da Imagem"
+            fullWidth
+            margin="normal"
+            value={adminProductData.image_url}
+            onChange={(e) => setAdminProductData({ ...adminProductData, image_url: e.target.value })}
+            placeholder="https://..."
+          />
+          {adminProductData.image_url ? (
+            <Box sx={{ mt: 1, mb: 2 }}>
+              <Box
+                component="img"
+                src={adminProductData.image_url}
+                alt="preview"
+                sx={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}
+              />
+            </Box>
+          ) : null}
           <TextField
             label="Tamanhos Disponíveis (separados por vírgula)"
             fullWidth

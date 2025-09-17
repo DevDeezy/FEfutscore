@@ -26,7 +26,7 @@ import {
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { Product, ProductType } from '../types';
-import DragDropZone from './DragDropZone';
+// Removido DragDropZone: passamos a usar URL direto da imagem
 
 const ProductManagement = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -60,28 +60,7 @@ const ProductManagement = () => {
     ano: '25/26',
   });
 
-  // State for image upload
-  const [productImage, setProductImage] = useState<string>('');
-  const [imageChanged, setImageChanged] = useState<boolean>(false);
-
-  // Handle product image upload
-  const handleProductImageChange = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      setProductImage(imageUrl);
-      setNewProduct({ ...newProduct, image_url: imageUrl });
-      setImageChanged(true);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Remove product image
-  const handleRemoveProductImage = () => {
-    setProductImage('');
-    setNewProduct({ ...newProduct, image_url: '' });
-    setImageChanged(true);
-  };
+  // Removido estado/handlers de upload; usamos apenas URL da imagem
 
   // Handle opening product dialog for editing
   const handleOpenProductDialog = async (product: Product | null = null) => {
@@ -101,8 +80,7 @@ const ProductManagement = () => {
         sexo: product.sexo || 'Neutro',
         ano: product.ano || '25/26',
       });
-      setProductImage((product as any).image_url || '');
-      setImageChanged(false);
+      // Preview será feito diretamente do campo image_url
       try {
         const full = await axios.get(`${API_BASE_URL}/.netlify/functions/getProduct?id=${(product as any).id}`);
         const p = full.data || {};
@@ -116,7 +94,7 @@ const ProductManagement = () => {
           sexo: p.sexo || prev.sexo,
           ano: p.ano || prev.ano,
         }));
-        if (p.image_url) setProductImage(p.image_url);
+        // Preview usa o campo image_url
       } catch (e) {}
     } else {
       setNewProduct({
@@ -133,8 +111,7 @@ const ProductManagement = () => {
         sexo: 'Neutro',
         ano: '25/26',
       });
-      setProductImage('');
-      setImageChanged(false);
+      // Limpeza não necessária para preview via URL
     }
     setOpenProductDialog(true);
   };
@@ -157,7 +134,7 @@ const ProductManagement = () => {
       sexo: 'Neutro',
       ano: '25/26',
     });
-    setProductImage('');
+    // Limpeza não necessária para preview via URL
   };
 
   useEffect(() => {
@@ -470,19 +447,24 @@ const ProductManagement = () => {
             value={newProduct.cost_price}
             onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })}
           />
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Imagem do Produto:</Typography>
-            <DragDropZone
-              title="Carregar Imagem do Produto"
-              subtitle="Escolhe uma imagem ou arrasta-a para aqui"
-              onFileSelect={handleProductImageChange}
-              onFileRemove={handleRemoveProductImage}
-              currentImage={productImage || newProduct.image_url}
-              accept="image/*"
-              multiple={false}
-              height={150}
-            />
-          </Box>
+          <TextField
+            label="URL da Imagem"
+            fullWidth
+            margin="normal"
+            value={newProduct.image_url}
+            onChange={(e) => setNewProduct({ ...newProduct, image_url: e.target.value })}
+            placeholder="https://..."
+          />
+          {newProduct.image_url ? (
+            <Box sx={{ mt: 1, mb: 2 }}>
+              <Box
+                component="img"
+                src={newProduct.image_url}
+                alt="preview"
+                sx={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}
+              />
+            </Box>
+          ) : null}
           <TextField
             label="Tamanhos Disponíveis (separados por vírgula)"
             fullWidth
