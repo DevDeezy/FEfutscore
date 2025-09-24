@@ -14,6 +14,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from './store/slices/authSlice';
 import { jwtDecode } from 'jwt-decode';
 import { RootState } from './store';
+import axios from 'axios';
+import { API_BASE_URL } from './api';
 import theme from './theme';
 import Footer from './components/Footer';
 import ChangePassword from './pages/ChangePassword';
@@ -79,7 +81,27 @@ function useAuthRestore() {
             return;
           }
         }
-        dispatch(setUser({ ...decoded, token }));
+        // First, set what we have from the token so the app renders quickly
+        const baseUser: any = { ...decoded, token };
+        dispatch(setUser(baseUser));
+
+        // Then, enrich from backend to restore fields not present in the token
+        const userId = (decoded as any)?.id;
+        if (userId) {
+          axios
+            .get(`${API_BASE_URL}/.netlify/functions/getusers?userId=${userId}`)
+            .then((res) => {
+              const data = res?.data;
+              // Handle both array response and single object
+              const profile = Array.isArray(data) ? data[0] : data;
+              if (profile) {
+                dispatch(setUser({ ...baseUser, ...profile, token }));
+              }
+            })
+            .catch(() => {
+              // ignore profile load errors; keep token-based user
+            });
+        }
       } catch (e) {
         localStorage.removeItem('token');
       }
