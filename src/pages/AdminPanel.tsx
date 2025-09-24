@@ -29,6 +29,7 @@ import {
   Checkbox,
   InputAdornment,
   Pagination,
+  TableSortLabel,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -1293,35 +1294,7 @@ const AdminPanel = () => {
                   </Select>
                 </FormControl>
                 
-                {/* Sort By */}
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Ordenar por</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Ordenar por"
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                  >
-                    <MenuItem value="created_at">Data de Criação</MenuItem>
-                    <MenuItem value="id">ID da Encomenda</MenuItem>
-                    <MenuItem value="status">Estado</MenuItem>
-                    <MenuItem value="email">Utilizador (Email)</MenuItem>
-                    <MenuItem value="address">Morada</MenuItem>
-                    <MenuItem value="price">Preço</MenuItem>
-                  </Select>
-                </FormControl>
-                
-                {/* Sort Order */}
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>Ordem</InputLabel>
-                  <Select
-                    value={sortOrder}
-                    label="Ordem"
-                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                  >
-                    <MenuItem value="desc">Descendente</MenuItem>
-                    <MenuItem value="asc">Ascendente</MenuItem>
-                  </Select>
-                </FormControl>
+                {/* Removed selects: sorting now via clickable table headers */}
                 
                 <Button variant="contained" onClick={handleExportOrders} disabled={exporting}>
                   Exportar para CSV
@@ -1379,12 +1352,60 @@ const AdminPanel = () => {
                         onChange={e => handleSelectAllOrders(e.target.checked)}
                       />
                     </TableCell>
-                    <TableCell>ID da Encomenda</TableCell>
-                    <TableCell>Utilizador</TableCell>
-                    <TableCell>Estado</TableCell>
-                      <TableCell>Morada</TableCell>
-                    <TableCell>Data de Criação</TableCell>
-                    <TableCell>Preço</TableCell>
+                      <TableCell sortDirection={sortBy === 'id' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'id'}
+                          direction={sortBy === 'id' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'id' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('id'); }}
+                        >
+                          ID da Encomenda
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortBy === 'email' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'email'}
+                          direction={sortBy === 'email' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'email' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('email'); }}
+                        >
+                          Utilizador
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortBy === 'status' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'status'}
+                          direction={sortBy === 'status' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'status' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('status'); }}
+                        >
+                          Estado
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortBy === 'address' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'address'}
+                          direction={sortBy === 'address' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'address' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('address'); }}
+                        >
+                          Morada
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortBy === 'created_at' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'created_at'}
+                          direction={sortBy === 'created_at' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'created_at' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('created_at'); }}
+                        >
+                          Data de Criação
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sortDirection={sortBy === 'price' ? sortOrder : false as any}>
+                        <TableSortLabel
+                          active={sortBy === 'price'}
+                          direction={sortBy === 'price' ? sortOrder : 'asc'}
+                          onClick={() => { setSortOrder(sortBy === 'price' ? (sortOrder === 'asc' ? 'desc' : 'asc') : sortOrder); setSortBy('price'); }}
+                        >
+                          Preço
+                        </TableSortLabel>
+                      </TableCell>
                     <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
