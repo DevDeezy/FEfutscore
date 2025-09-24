@@ -154,7 +154,7 @@ const AdminPanel = () => {
   const [patchesError, setPatchesError] = useState<string | null>(null);
   const [openPatchDialog, setOpenPatchDialog] = useState(false);
   const [editingPatch, setEditingPatch] = useState<any | null>(null);
-  const [patchForm, setPatchForm] = useState({ name: '', image: '', price: 0 });
+  const [patchForm, setPatchForm] = useState({ name: '', image: '', price: 0, units: 1 });
   const [pricingError, setPricingError] = useState<string | null>(null);
 
   // Handle patch image file selection
@@ -957,10 +957,10 @@ const AdminPanel = () => {
     
     if (patch) {
       setEditingPatch(patch);
-      setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0 });
+      setPatchForm({ name: patch.name, image: patch.image, price: patch.price || 0, units: patch.units || 1 });
     } else {
       setEditingPatch(null);
-      setPatchForm({ name: '', image: '', price: 0 });
+      setPatchForm({ name: '', image: '', price: 0, units: 1 });
     }
     setOpenPatchDialog(true);
   };
@@ -1705,6 +1705,15 @@ const AdminPanel = () => {
               value={patchForm.price}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, price: Number(e.target.value) })}
               inputProps={{ step: 0.01, min: 0 }}
+            />
+            <TextField
+              label="Equivale a (n.º de patches)"
+              type="number"
+              fullWidth
+              margin="normal"
+              value={patchForm.units}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatchForm({ ...patchForm, units: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
+              inputProps={{ step: 1, min: 1 }}
             />
           </DialogContent>
           <DialogActions>

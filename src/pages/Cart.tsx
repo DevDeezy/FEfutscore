@@ -308,13 +308,14 @@ const Cart = () => {
       if (bestUnit != null) {
         const currentUnit = typeof item.price === 'number' ? item.price : 0;
         const cheaperWithPack = bestUnit < currentUnit;
+        const qty = item.quantity || 1;
         return (
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Preço base: €{currentUnit.toFixed(2)}
+              Preço base: €{(currentUnit * qty).toFixed(2)}
             </Typography>
             <Typography variant="body2" color={cheaperWithPack ? 'success.main' : 'text.secondary'}>
-              Preço com PACK ({countForType}): €{bestUnit.toFixed(2)} por unidade
+              Preço com PACK ({countForType}): €{(bestUnit * qty).toFixed(2)}
             </Typography>
           </Box>
         );
@@ -324,7 +325,7 @@ const Cart = () => {
     if (typeof item.price === 'number') {
       return (
         <Typography variant="body2" color="text.secondary">
-          Preço base: €{item.price.toFixed(2)}
+          Preço base: €{((item.quantity || 1) * item.price).toFixed(2)}
         </Typography>
       );
     }
@@ -435,11 +436,15 @@ const Cart = () => {
                             + Personalização (nome/número): +€{personalizationPrice.toFixed(2)}
                           </Typography>
                         )}
-                        {(item.patch_images && item.patch_images.length > 0) && (
-                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            + Patches ({item.patch_images.length}): +€{(item.patch_images.length * patchPrice).toFixed(2)}
-                          </Typography>
-                        )}
+                        {(item.patch_images && item.patch_images.length > 0) && (() => {
+                          const qty = item.quantity || 1;
+                          const count = item.patch_images.length * qty;
+                          return (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                              + Patches ({qty}x{item.patch_images.length}): +€{(count * patchPrice).toFixed(2)}
+                            </Typography>
+                          );
+                        })()}
                         {item.player_name && (
                           <Typography variant="body2" color="text.secondary">
                             Nome do Jogador: {item.player_name}
@@ -503,6 +508,21 @@ const Cart = () => {
                   <Typography variant="body1" sx={{ color: '#d84315', fontWeight: 'bold' }}>
                     Portes de Envio - €2.00
                   </Typography>
+                </Box>
+              );
+            })()}
+            {!hasCustomItems && cartPrice !== null && (() => {
+              const shippingCost = calculateShipping(items);
+              return (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6">
+                    Preço Total: €{(cartPrice + shippingCost).toFixed(2)}
+                  </Typography>
+                  {shippingCost > 0 && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      (Inclui portes de envio: €2.00)
+                    </Typography>
+                  )}
                 </Box>
               );
             })()}
@@ -780,20 +800,6 @@ const Cart = () => {
               )}
               </Box>
             )}
-            {!hasCustomItems && cartPrice !== null && (() => {
-              const shippingCost = calculateShipping(items);
-              
-              return (
-                <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                  Preço Total: €{(cartPrice + shippingCost).toFixed(2)}
-                  {shippingCost > 0 && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      (Inclui portes de envio: €2.00)
-                    </Typography>
-                  )}
-                </Typography>
-              );
-            })()}
             <Box sx={{ mt: 4, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 variant="outlined"

@@ -18,6 +18,7 @@ interface Patch {
   name: string;
   image: string;
   price?: number;
+  units?: number;
   active: boolean;
 }
 
@@ -61,11 +62,18 @@ const PatchSelection: React.FC<PatchSelectionProps> = ({
     fetchPatches();
   }, []);
 
-  const handlePatchToggle = (patchImage: string) => {
-    const newSelectedPatches = selectedPatches.includes(patchImage)
-      ? selectedPatches.filter(img => img !== patchImage)
-      : [...selectedPatches, patchImage];
-    
+  const handlePatchToggle = (patch: Patch) => {
+    const patchImage = patch.image;
+    const units = Math.max(1, Math.floor(patch.units || 1));
+    const alreadySelected = selectedPatches.includes(patchImage);
+    let newSelectedPatches: string[] = [];
+    if (alreadySelected) {
+      // remove all occurrences of this image
+      newSelectedPatches = selectedPatches.filter(img => img !== patchImage);
+    } else {
+      // add as many entries as units
+      newSelectedPatches = [...selectedPatches, ...Array(units).fill(patchImage)];
+    }
     onPatchesChange(newSelectedPatches);
   };
 
@@ -158,7 +166,7 @@ const PatchSelection: React.FC<PatchSelectionProps> = ({
                   borderColor: '#1976d2',
                 },
               }}
-              onClick={() => handlePatchToggle(patch.image)}
+              onClick={() => handlePatchToggle(patch)}
             >
               <Box
                 component="img"
