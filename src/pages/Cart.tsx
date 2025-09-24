@@ -76,6 +76,8 @@ const Cart = () => {
   // Pricing configuration state
   const [patchPrice, setPatchPrice] = useState<number>(2); // Default value
   const [personalizationPrice, setPersonalizationPrice] = useState<number>(3); // Default value
+  const [packs, setPacks] = useState<any[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<any[]>([]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -157,7 +159,8 @@ const Cart = () => {
         items: getBackendItems(items), 
         address: { ...address, proofImage, proofReference, selectedRecipient }, 
         paymentMethod,
-        clientInstagram: user.role === 'admin' ? clientInstagram : undefined
+        clientInstagram: user.role === 'admin' ? clientInstagram : undefined,
+        finalPrice: cartPrice !== null ? Number(cartPrice) + (calculateShipping(items) || 0) : undefined,
       }));
       dispatch(clearCart());
       setAddress(initialAddress);
@@ -197,6 +200,7 @@ const Cart = () => {
       fetchPaymentMethods();
     }
     fetchPricingConfiguration();
+    fetchPacksAndShirtTypes();
   }, [dispatch, user]);
 
   // Fetch payment methods
@@ -247,6 +251,84 @@ const Cart = () => {
       console.error('Error fetching pricing configuration:', error);
       // Keep default values if loading fails
     }
+  };
+
+  const fetchPacksAndShirtTypes = async () => {
+    try {
+      const [packsRes, shirtsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/.netlify/functions/getpacks?page=1&limit=200`),
+        axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=1&limit=200`),
+      ]);
+      setPacks((packsRes.data?.packs) || []);
+      setShirtTypes((shirtsRes.data?.shirtTypes) || []);
+    } catch (error) {
+      console.error('Error fetching packs/shirt types:', error);
+    }
+  };
+
+  const calculateShipping = (cartItems: any[]) => {
+    const totalQuantity = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+    return totalQuantity === 1 ? 2 : 0;
+  };
+
+  const findShirtTypeNameById = (id?: number) => {
+    if (!id) return undefined;
+    const st = shirtTypes.find((t: any) => t.id === id);
+    return st?.name;
+  };
+
+  const getBestUnitPriceForShirtType = (shirtTypeId: number, countForType: number) => {
+    let bestUnit = Infinity;
+    for (const pack of packs) {
+      if (!Array.isArray(pack.items) || pack.items.length !== 1) continue;
+      const packItem = pack.items[0];
+      if (packItem.product_type !== 'tshirt') continue;
+      const packTypeId = parseInt(packItem.shirt_type_id, 10);
+      if (packTypeId !== shirtTypeId) continue;
+      const threshold = Number(packItem.quantity || 0);
+      if (threshold <= countForType && typeof pack.price === 'number') {
+        bestUnit = Math.min(bestUnit, Number(pack.price));
+      }
+    }
+    return bestUnit === Infinity ? null : bestUnit;
+  };
+
+  const renderBasePriceInfo = (item: any) => {
+    // Only try pack logic for t-shirts with shirt_type_id
+    if (item.product_type === 'tshirt' && item.shirt_type_id) {
+      const shirtTypeId = Number(item.shirt_type_id);
+      // Count how many items in cart share the same shirt_type_id (expanded by quantity)
+      const countForType = items.reduce((acc, it) => {
+        if (it.product_type === 'tshirt' && Number(it.shirt_type_id) === shirtTypeId) {
+          return acc + (it.quantity || 1);
+        }
+        return acc;
+      }, 0);
+      const bestUnit = getBestUnitPriceForShirtType(shirtTypeId, countForType);
+      if (bestUnit != null) {
+        const currentUnit = typeof item.price === 'number' ? item.price : 0;
+        const cheaperWithPack = bestUnit < currentUnit;
+        return (
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Preço base: €{currentUnit.toFixed(2)}
+            </Typography>
+            <Typography variant="body2" color={cheaperWithPack ? 'success.main' : 'text.secondary'}>
+              Preço com PACK ({countForType}): €{bestUnit.toFixed(2)} por unidade
+            </Typography>
+          </Box>
+        );
+      }
+    }
+    // Default: show item unit price when available
+    if (typeof item.price === 'number') {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          Preço base: €{item.price.toFixed(2)}
+        </Typography>
+      );
+    }
+    return null;
   };
 
   // Handler to edit/fill the manual form with a saved address (like AddressManager)
@@ -329,6 +411,16 @@ const Cart = () => {
                         <Typography variant="subtitle1">
                           {item.product_type === 'tshirt' ? 'Camisola' : (item.name || 'Produto')}
                         </Typography>
+                        {item.product_type && (
+                          <Typography variant="body2" color="text.secondary">
+                            Tipo: {item.product_type}
+                          </Typography>
+                        )}
+                        {item.shirt_type_id && (
+                          <Typography variant="body2" color="text.secondary">
+                            Tipo de Camisola: {item.shirt_type_name || findShirtTypeNameById(item.shirt_type_id) || item.shirt_type_id}
+                          </Typography>
+                        )}
                         <Typography variant="body2" color="text.secondary">
                           Tamanho: {item.size}
                         </Typography>
@@ -336,11 +428,7 @@ const Cart = () => {
                           Quantidade: {item.quantity}
                         </Typography>
                         {/* Price per item */}
-                        {typeof item.price === 'number' && (
-                          <Typography variant="body2" color="text.secondary">
-                            Preço base: €{item.price.toFixed(2)}
-                          </Typography>
-                        )}
+                        {renderBasePriceInfo(item)}
                         {/* Show personalization costs */}
                         {(item.player_name || item.numero) && (
                           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
@@ -693,15 +781,12 @@ const Cart = () => {
               </Box>
             )}
             {!hasCustomItems && cartPrice !== null && (() => {
-              // Calculate total quantity of all items
-              const totalQuantity = items.reduce((total, item) => total + (item.quantity || 1), 0);
-              const shouldChargeShipping = totalQuantity === 1;
-              const shippingCost = shouldChargeShipping ? 2 : 0;
+              const shippingCost = calculateShipping(items);
               
               return (
                 <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
                   Preço Total: €{(cartPrice + shippingCost).toFixed(2)}
-                  {shouldChargeShipping && (
+                  {shippingCost > 0 && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       (Inclui portes de envio: €2.00)
                     </Typography>
