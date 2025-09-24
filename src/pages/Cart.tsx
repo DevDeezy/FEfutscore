@@ -457,23 +457,25 @@ const Cart = () => {
                               Patches:
                             </Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              {(item.patch_images ?? []).map((img: string, idx: number) => (
-                                <Box key={idx} sx={{ position: 'relative', display: 'inline-block' }}>
-                                  <img src={img} alt={`patch ${idx + 1}`} style={{ height: 40, border: '1px solid #ccc', borderRadius: 4 }} />
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
-                                    onClick={() => {
-                                      // Remove patch image from item
-                                      const newImages = (item.patch_images ?? []).filter((_: string, i: number) => i !== idx);
-                                      handleCartItemFieldChange(index, 'patch_images', newImages as any);
-                                    }}
-                                  >
-                                    <DeleteIcon fontSize="small" />
-                                  </IconButton>
-                                </Box>
-                              ))}
+                              {Array.from(new Set(item.patch_images ?? [])).map((img: string, idx: number) => {
+                                return (
+                                  <Box key={`${img}-${idx}`} sx={{ position: 'relative', display: 'inline-block' }}>
+                                    <img src={img} alt={`patch ${idx + 1}`} style={{ height: 40, border: '1px solid #ccc', borderRadius: 4 }} />
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      sx={{ position: 'absolute', top: 0, right: 0, minWidth: 0, p: 0.5 }}
+                                      onClick={() => {
+                                        // Remove all occurrences of this patch image
+                                        const newImages = (item.patch_images ?? []).filter((p: string) => p !== img);
+                                        handleCartItemFieldChange(index, 'patch_images', newImages as any);
+                                      }}
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </Box>
+                                );
+                              })}
                             </Box>
                           </Box>
                         )}

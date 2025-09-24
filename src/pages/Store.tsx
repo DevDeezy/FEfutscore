@@ -443,7 +443,6 @@ const Store = () => {
         </Grid>
       </Grid>
       <Dialog open={openDialog} onClose={handleCloseDialog} fullScreen={fullScreen}>
-        <DialogTitle>{selectedProduct?.name}{selectedProduct?.ano ? ` ${selectedProduct.ano}` : ''}</DialogTitle>
         <DialogContent>
           {selectedProduct && (
             <>

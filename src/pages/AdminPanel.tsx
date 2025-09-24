@@ -182,6 +182,9 @@ const AdminPanel = () => {
         order.id.toString().includes(query) ||
         order.user?.email?.toLowerCase().includes(query) ||
         order.address_nome?.toLowerCase().includes(query) ||
+        order.address_morada?.toLowerCase().includes(query) ||
+        order.address_cidade?.toLowerCase().includes(query) ||
+        order.address_codigo_postal?.toLowerCase().includes(query) ||
         order.status.toLowerCase().includes(query)
       );
     }
@@ -226,6 +229,7 @@ const AdminPanel = () => {
   // Handle pagination change
   const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
+    dispatch(fetchOrders({ page, limit: pagination?.limit || 20 }));
   };
   const [usersPage, setUsersPage] = useState(1);
   const [packsPage, setPacksPage] = useState(1);
@@ -1352,7 +1356,7 @@ const AdminPanel = () => {
             )}
             <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
-                <TableHead>
+                  <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
                       <Checkbox
@@ -1364,6 +1368,7 @@ const AdminPanel = () => {
                     <TableCell>ID da Encomenda</TableCell>
                     <TableCell>Utilizador</TableCell>
                     <TableCell>Estado</TableCell>
+                      <TableCell>Morada</TableCell>
                     <TableCell>Data de Criação</TableCell>
                     <TableCell>Preço</TableCell>
                     <TableCell>Ações</TableCell>
@@ -1418,6 +1423,9 @@ const AdminPanel = () => {
                             order.status === 'cancelled' ? 'Cancelada' :
                             order.status}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {order.address_morada}, {order.address_cidade} {order.address_codigo_postal}
                       </TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                       <TableCell>€{order.total_price.toFixed(2)}</TableCell>
