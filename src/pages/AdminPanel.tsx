@@ -129,7 +129,7 @@ const AdminPanel = () => {
   const fullScreenDialog = useMediaQuery(theme.breakpoints.down('md'));
 
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState<'id' | 'created_at'>('created_at');
+  const [sortBy, setSortBy] = useState<'id' | 'created_at' | 'status' | 'email' | 'address' | 'price'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchQuery, setSearchQuery] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -197,6 +197,16 @@ const AdminPanel = () => {
         comparison = parseInt(a.id) - parseInt(b.id);
       } else if (sortBy === 'created_at') {
         comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortBy === 'status') {
+        comparison = (a.status || '').localeCompare(b.status || '');
+      } else if (sortBy === 'email') {
+        comparison = (a.user?.email || '').localeCompare(b.user?.email || '');
+      } else if (sortBy === 'address') {
+        const addrA = `${a.address_morada || ''} ${a.address_cidade || ''} ${a.address_codigo_postal || ''}`.trim();
+        const addrB = `${b.address_morada || ''} ${b.address_cidade || ''} ${b.address_codigo_postal || ''}`.trim();
+        comparison = addrA.localeCompare(addrB);
+      } else if (sortBy === 'price') {
+        comparison = (a.total_price || 0) - (b.total_price || 0);
       }
       
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -1284,15 +1294,19 @@ const AdminPanel = () => {
                 </FormControl>
                 
                 {/* Sort By */}
-                <FormControl size="small" sx={{ minWidth: 150 }}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
                   <InputLabel>Ordenar por</InputLabel>
                   <Select
                     value={sortBy}
                     label="Ordenar por"
-                    onChange={(e) => setSortBy(e.target.value as 'id' | 'created_at')}
+                    onChange={(e) => setSortBy(e.target.value as any)}
                   >
                     <MenuItem value="created_at">Data de Criação</MenuItem>
                     <MenuItem value="id">ID da Encomenda</MenuItem>
+                    <MenuItem value="status">Estado</MenuItem>
+                    <MenuItem value="email">Utilizador (Email)</MenuItem>
+                    <MenuItem value="address">Morada</MenuItem>
+                    <MenuItem value="price">Preço</MenuItem>
                   </Select>
                 </FormControl>
                 
