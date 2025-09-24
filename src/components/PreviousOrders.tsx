@@ -74,7 +74,15 @@ const PreviousOrders: React.FC = () => {
   };
 
   const handleOpenModal = async (order: Order) => {
-    setSelectedOrder(order);
+    try {
+      // Fetch full order details (includes images, patches, payment/address fields)
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?orderId=${order.id}`);
+      const fullOrder = Array.isArray(res.data) ? res.data[0] : res.data;
+      setSelectedOrder(fullOrder || order);
+    } catch (err) {
+      // Fallback to existing order data if detailed fetch fails
+      setSelectedOrder(order);
+    }
     
     // Load videos separately to avoid payload size issues
     try {
@@ -187,7 +195,41 @@ const PreviousOrders: React.FC = () => {
                   ? `€${selectedOrder.total_price.toFixed(2)}`
                   : '-'}
               </Typography>
+              {/* Address & Payment */}
               <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+                Morada de Entrega
+              </Typography>
+              <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
+                <Typography variant="body2">{selectedOrder.address_nome}</Typography>
+                <Typography variant="body2">{selectedOrder.address_morada}</Typography>
+                <Typography variant="body2">{selectedOrder.address_codigo_postal} {selectedOrder.address_cidade}, {selectedOrder.address_distrito}</Typography>
+                <Typography variant="body2">{selectedOrder.address_pais}</Typography>
+                <Typography variant="body2">Telemóvel: {selectedOrder.address_telemovel}</Typography>
+              </Paper>
+
+              {(selectedOrder.paymentMethod || selectedOrder.paymentAccountInfo || selectedOrder.paymentRecipient || selectedOrder.proofReference) && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                    Pagamento
+                  </Typography>
+                  <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
+                    {selectedOrder.paymentMethod && (
+                      <Typography variant="body2">Método: {selectedOrder.paymentMethod}</Typography>
+                    )}
+                    {selectedOrder.paymentAccountInfo && (
+                      <Typography variant="body2">Conta: {selectedOrder.paymentAccountInfo}</Typography>
+                    )}
+                    {selectedOrder.paymentRecipient && (
+                      <Typography variant="body2">Destinatário: {selectedOrder.paymentRecipient}</Typography>
+                    )}
+                    {selectedOrder.proofReference && (
+                      <Typography variant="body2">Referência: {selectedOrder.proofReference}</Typography>
+                    )}
+                  </Paper>
+                </>
+              )}
+
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
                 Artigos
               </Typography>
               <List>
@@ -196,11 +238,16 @@ const PreviousOrders: React.FC = () => {
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
                         <Typography>
-                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Produto:</Typography> {translateProductType(item.product_type)}
+                          <Typography component="span" sx={{ fontWeight: 'bold' }}>Produto:</Typography> {item.name || translateProductType(item.product_type)}
                         </Typography>
                         <Typography>
                           <Typography component="span" sx={{ fontWeight: 'bold' }}>Tamanho:</Typography> {item.size}
                         </Typography>
+                        {item.product_type === 'tshirt' && item.shirt_type_id && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Tipo de Camisola:</Typography> {item.shirt_type_id}
+                          </Typography>
+                        )}
                         {item.player_name && (
                           <Typography>
                             <Typography component="span" sx={{ fontWeight: 'bold' }}>Nome do Jogador:</Typography> {item.player_name}
@@ -214,6 +261,21 @@ const PreviousOrders: React.FC = () => {
                         {item.quantity && (
                           <Typography>
                             <Typography component="span" sx={{ fontWeight: 'bold' }}>Quantidade:</Typography> {item.quantity}
+                          </Typography>
+                        )}
+                        {Array.isArray(item.patch_images) && item.patch_images.length > 0 && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Patches:</Typography> {item.patch_images.length}
+                          </Typography>
+                        )}
+                        {item.sexo && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Sexo:</Typography> {item.sexo}
+                          </Typography>
+                        )}
+                        {item.ano && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Ano:</Typography> {item.ano}
                           </Typography>
                         )}
                       </Grid>
@@ -234,7 +296,32 @@ const PreviousOrders: React.FC = () => {
                             />
                           </Box>
                         )}
-                        {/* Removido: visualização de imagem das costas */}
+                        {item.image_back && (
+                          <Box sx={{ mb: 1 }}>
+                            <Typography variant="body2">Imagem das Costas:</Typography>
+                            <img
+                              src={item.image_back}
+                              alt="Design das costas"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '150px',
+                                border: '1px solid #ddd',
+                                cursor: 'zoom-in',
+                              }}
+                              onClick={() => setImagePreview(item.image_back || null)}
+                            />
+                          </Box>
+                        )}
+                        {Array.isArray(item.patch_images) && item.patch_images.length > 0 && (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="body2">Patches:</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {item.patch_images.map((img: string, idx: number) => (
+                                <img key={idx} src={img} alt={`patch ${idx + 1}`} style={{ height: 40, border: '1px solid #ccc', borderRadius: 4, cursor: 'zoom-in' }} onClick={() => setImagePreview(img)} />
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
                       </Grid>
                     </Grid>
                   </Paper>
