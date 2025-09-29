@@ -324,7 +324,25 @@ const ProductManagement = () => {
         await axios.put(`${API_BASE_URL}/.netlify/functions/updateProduct/${editingProduct.id}`, productData, headers);
       } else {
         // Create new product
-        await axios.post(`${API_BASE_URL}/.netlify/functions/createProduct`, productData, headers);
+        const endpoint = `${API_BASE_URL}/.netlify/functions/createProduct`;
+        try {
+          console.log('[createProduct] endpoint', endpoint);
+          console.log('[createProduct] headers present', !!token);
+          console.log('[createProduct] payload', productData);
+          const res = await axios.post(endpoint, productData, headers);
+          console.log('[createProduct] success', res.status, res.data);
+        } catch (err: any) {
+          if (axios.isAxiosError(err)) {
+            console.error('[createProduct] axios error', {
+              status: err.response?.status,
+              data: err.response?.data,
+              headers: err.response?.headers,
+            });
+          } else {
+            console.error('[createProduct] unknown error', err);
+          }
+          throw err;
+        }
       }
 
       handleCloseProductDialog();
@@ -535,18 +553,6 @@ const ProductManagement = () => {
             value={newProduct.available_sizes}
             onChange={(e) => setNewProduct({ ...newProduct, available_sizes: e.target.value })}
           />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Tipo de Produto</InputLabel>
-            <Select
-              value={newProduct.shirt_type_id}
-              label="Tipo de Produto (Principal)"
-              onChange={(e) => setNewProduct({ ...newProduct, shirt_type_id: e.target.value })}
-            >
-              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
-                <MenuItem key={st.id} value={st.id}>{st.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Tipos Disponíveis para o Produto</InputLabel>
             <Select
