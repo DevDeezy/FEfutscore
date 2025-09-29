@@ -554,6 +554,18 @@ const ProductManagement = () => {
             onChange={(e) => setNewProduct({ ...newProduct, available_sizes: e.target.value })}
           />
           <FormControl fullWidth margin="normal">
+            <InputLabel>Família do produto</InputLabel>
+            <Select
+              value={newProduct.product_type_id}
+              label="Família do produto"
+              onChange={(e) => setNewProduct({ ...newProduct, product_type_id: String(e.target.value) })}
+            >
+              {flattenTypes(Array.isArray(productTypes) ? productTypes : []).map((pt) => (
+                <MenuItem key={pt.id} value={String(pt.id)}>{pt.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
             <InputLabel>Tipos Disponíveis para o Produto</InputLabel>
             <Select
               multiple
