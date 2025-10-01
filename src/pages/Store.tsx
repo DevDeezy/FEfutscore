@@ -610,18 +610,7 @@ const Store = () => {
               ))}
             </Select>
           </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Tipo de Produto</InputLabel>
-            <Select
-              value={adminProductData.shirt_type_id}
-              label="Tipo de Produto"
-              onChange={(e) => setAdminProductData({ ...adminProductData, shirt_type_id: e.target.value })}
-            >
-              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
-                <MenuItem key={st.id} value={String(st.id)}>{st.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* Removed single select 'Tipo de Produto' from admin edit as requested */}
           <FormControl fullWidth margin="normal">
             <InputLabel>Tipos Disponíveis para o Produto</InputLabel>
             <Select
