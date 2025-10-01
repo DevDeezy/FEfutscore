@@ -2017,26 +2017,33 @@ const AdminPanel = () => {
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Detalhes de Pagamento</Typography>
                   <Paper sx={{ p: 2, bgcolor: 'grey.50' }} variant="outlined">
-                    {orderImages.paymentMethod && (
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Método de Pagamento:</strong> {orderImages.paymentMethod}
-                      </Typography>
-                    )}
-                    {orderImages.paymentAccountInfo && (
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Conta de Destino:</strong> {orderImages.paymentAccountInfo}
-                      </Typography>
-                    )}
-                    {orderImages.paymentRecipient && (
-                      <Typography variant="body2" sx={{ mb: 1 }}>
-                        <strong>Destinatário:</strong> {orderImages.paymentRecipient}
-                      </Typography>
-                    )}
-                    {orderImages.proofReference && (
-                      <Typography variant="body2">
-                        <strong>Referência de Pagamento:</strong> {orderImages.proofReference}
-                      </Typography>
-                    )}
+                    {(() => {
+                      const parts: string[] = [];
+                      if (orderImages.paymentRecipient) parts.push(orderImages.paymentRecipient);
+                      if (orderImages.paymentMethod) parts.push(orderImages.paymentMethod);
+                      const combined = orderImages.paymentAccountInfo && /-/.test(orderImages.paymentAccountInfo)
+                        ? orderImages.paymentAccountInfo
+                        : [parts.join(' - '), orderImages.paymentAccountInfo].filter(Boolean).join(parts.length && orderImages.paymentAccountInfo ? ' - ' : '');
+                      return (
+                        <>
+                          {combined && (
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              <strong>Pagamento:</strong> {combined}
+                            </Typography>
+                          )}
+                          {!combined && parts.length > 0 && (
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                              <strong>Pagamento:</strong> {parts.join(' - ')}
+                            </Typography>
+                          )}
+                          {orderImages.proofReference && (
+                            <Typography variant="body2">
+                              <strong>Referência de Pagamento:</strong> {orderImages.proofReference}
+                            </Typography>
+                          )}
+                        </>
+                      );
+                    })()}
                   </Paper>
                 </Box>
               )}

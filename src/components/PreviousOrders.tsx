@@ -213,18 +213,32 @@ const PreviousOrders: React.FC = () => {
                     Pagamento
                   </Typography>
                   <Paper sx={{ p: 2, mb: 2 }} variant="outlined">
-                    {selectedOrder.paymentMethod && (
-                      <Typography variant="body2">Método: {selectedOrder.paymentMethod}</Typography>
-                    )}
-                    {selectedOrder.paymentAccountInfo && (
-                      <Typography variant="body2">Conta: {selectedOrder.paymentAccountInfo}</Typography>
-                    )}
-                    {selectedOrder.paymentRecipient && (
-                      <Typography variant="body2">Destinatário: {selectedOrder.paymentRecipient}</Typography>
-                    )}
-                    {selectedOrder.proofReference && (
-                      <Typography variant="body2">Referência: {selectedOrder.proofReference}</Typography>
-                    )}
+                    {(() => {
+                      const parts: string[] = [];
+                      if (selectedOrder.paymentRecipient) parts.push(selectedOrder.paymentRecipient);
+                      if (selectedOrder.paymentMethod) parts.push(selectedOrder.paymentMethod);
+                      // If paymentAccountInfo already includes name/method, prefer it wholly
+                      const hasCombined = !!selectedOrder.paymentAccountInfo && /-/.test(selectedOrder.paymentAccountInfo);
+                      return (
+                        <>
+                          {hasCombined ? (
+                            <Typography variant="body2">{selectedOrder.paymentAccountInfo}</Typography>
+                          ) : (
+                            <>
+                              {parts.length > 0 && (
+                                <Typography variant="body2">{parts.join(' - ')}</Typography>
+                              )}
+                              {selectedOrder.paymentAccountInfo && (
+                                <Typography variant="body2">Conta: {selectedOrder.paymentAccountInfo}</Typography>
+                              )}
+                            </>
+                          )}
+                          {selectedOrder.proofReference && (
+                            <Typography variant="body2">Referência: {selectedOrder.proofReference}</Typography>
+                          )}
+                        </>
+                      );
+                    })()}
                   </Paper>
                 </>
               )}
