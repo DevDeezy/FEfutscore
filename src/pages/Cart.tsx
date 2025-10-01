@@ -480,9 +480,11 @@ const Cart = () => {
                           </Box>
                         )}
                         {/* END PATCH IMAGES SECTION */}
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                          Número: {item.numero || '-'}
-                        </Typography>
+                        {item.numero && String(item.numero).trim() !== '' && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Número: {item.numero}
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                     <IconButton
