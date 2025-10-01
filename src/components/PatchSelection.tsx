@@ -202,59 +202,83 @@ const PatchSelection: React.FC<PatchSelectionProps> = ({
         </Box>
       )}
 
-      {/* Display selected patches */}
-      {selectedPatches.length > 0 && (
-        <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Patches Selecionados ({selectedPatches.length}):
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {selectedPatches.map((patch, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  width: 60,
-                  height: 60,
-                  border: isCustomPatch(patch) ? '2px solid #4caf50' : '2px solid #1976d2',
-                  borderRadius: 1,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
+      {/* Display selected patches (grouped by image with quantity badge) */}
+      {selectedPatches.length > 0 && (() => {
+        const grouped: Record<string, number> = selectedPatches.reduce((acc: Record<string, number>, img: string) => {
+          acc[img] = (acc[img] || 0) + 1;
+          return acc;
+        }, {});
+        const entries = Object.entries(grouped);
+        return (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Patches Selecionados ({selectedPatches.length}):
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {entries.map(([patch, count], idx) => (
                 <Box
-                  component="img"
-                  src={patch}
-                  alt={`selected patch ${idx + 1}`}
+                  key={`${patch}-${idx}`}
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    p: 0.5,
+                    width: 60,
+                    height: 60,
+                    border: isCustomPatch(patch) ? '2px solid #4caf50' : '2px solid #1976d2',
+                    borderRadius: 1,
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
-                />
-                <IconButton
-                  size="small"
-                  color="error"
-                  sx={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    minWidth: 0,
-                    p: 0.2,
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,1)',
-                    },
-                  }}
-                  onClick={() => handleRemovePatch(patch)}
                 >
-                  <DeleteIcon sx={{ fontSize: 12 }} />
-                </IconButton>
-              </Box>
-            ))}
+                  <Box
+                    component="img"
+                    src={patch}
+                    alt={`selected patch ${idx + 1}`}
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      p: 0.5,
+                    }}
+                  />
+                  {count > 1 && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 2,
+                        right: 2,
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        color: 'white',
+                        borderRadius: 1,
+                        px: 0.5,
+                        fontSize: 10,
+                        lineHeight: '14px',
+                      }}
+                    >
+                      x{count}
+                    </Box>
+                  )}
+                  <IconButton
+                    size="small"
+                    color="error"
+                    sx={{
+                      position: 'absolute',
+                      top: -4,
+                      right: -4,
+                      minWidth: 0,
+                      p: 0.2,
+                      backgroundColor: 'rgba(255,255,255,0.9)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,1)',
+                      },
+                    }}
+                    onClick={() => handleRemovePatch(patch)}
+                  >
+                    <DeleteIcon sx={{ fontSize: 12 }} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
           </Box>
-        </Box>
-      )}
+        );
+      })()}
 
       {/* Hidden file input for custom patches */}
       <input
