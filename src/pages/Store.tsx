@@ -60,6 +60,10 @@ const Store = () => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
+  // Options used in admin edit modal to mirror admin Add Product form
+  const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
+  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
+
   const normalizeImageUrl = (url: string): string => {
     if (!url) return '';
     try {
@@ -131,6 +135,9 @@ const Store = () => {
     available_sizes: '',
     product_type_id: '',
     shirt_type_id: '',
+    available_shirt_type_ids: [] as number[],
+    sexo: 'Neutro',
+    ano: '25/26',
   });
   // Preview será feito com base no próprio campo image_url
   const [adminError, setAdminError] = useState<string | null>(null);
@@ -278,6 +285,9 @@ const Store = () => {
       available_sizes: Array.isArray(product.available_sizes) ? product.available_sizes.join(', ') : (product.available_sizes || ''),
       product_type_id: String(product.product_type_id ?? product?.productType?.id ?? ''),
       shirt_type_id: String(product.shirt_type_id || ''),
+      available_shirt_type_ids: Array.isArray(product.available_shirt_type_ids) ? product.available_shirt_type_ids : [],
+      sexo: product.sexo || 'Neutro',
+      ano: product.ano || '25/26',
     };
     setAdminProductData(base);
     // Fetch full product for complete data (image/sizes)
@@ -290,10 +300,13 @@ const Store = () => {
         available_sizes: Array.isArray(p.available_sizes) ? p.available_sizes.join(', ') : (prev.available_sizes || ''),
         product_type_id: String(p.product_type_id ?? prev.product_type_id),
         shirt_type_id: p.shirt_type_id != null ? String(p.shirt_type_id) : prev.shirt_type_id,
+        available_shirt_type_ids: Array.isArray(p.available_shirt_type_ids) ? p.available_shirt_type_ids : prev.available_shirt_type_ids,
         price: typeof p.price === 'number' ? p.price : prev.price,
         cost_price: typeof p.cost_price === 'number' ? p.cost_price : prev.cost_price,
         description: typeof p.description === 'string' ? p.description : prev.description,
         name: typeof p.name === 'string' ? p.name : prev.name,
+        sexo: typeof p.sexo === 'string' ? p.sexo : prev.sexo,
+        ano: typeof p.ano === 'string' ? p.ano : prev.ano,
       }));
     } catch {}
     setOpenAdminDialog(true);
@@ -303,7 +316,7 @@ const Store = () => {
     setOpenAdminDialog(false);
     setAdminEditingProduct(null);
     setAdminProductData({
-      name: '', description: '', price: 0, cost_price: 0, image_url: '', available_sizes: '', product_type_id: '', shirt_type_id: ''
+      name: '', description: '', price: 0, cost_price: 0, image_url: '', available_sizes: '', product_type_id: '', shirt_type_id: '', available_shirt_type_ids: [], sexo: 'Neutro', ano: '25/26'
     });
     setAdminError(null);
   };
@@ -324,6 +337,9 @@ const Store = () => {
       // Normalize and persist thumbnail URL based on Drive ID/URL
       payload.image_url = buildDriveThumbnailUrl(adminProductData.image_url);
       payload.shirt_type_id = adminProductData.shirt_type_id ? Number(adminProductData.shirt_type_id) : null;
+      payload.available_shirt_type_ids = Array.isArray(adminProductData.available_shirt_type_ids) ? adminProductData.available_shirt_type_ids.map((n: any) => Number(n)) : [];
+      payload.sexo = adminProductData.sexo;
+      payload.ano = adminProductData.ano;
 
       const token = localStorage.getItem('token');
       const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
@@ -604,6 +620,47 @@ const Store = () => {
               {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
                 <MenuItem key={st.id} value={String(st.id)}>{st.name}</MenuItem>
               ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Tipos Disponíveis para o Produto</InputLabel>
+            <Select
+              multiple
+              value={(adminProductData.available_shirt_type_ids || []).map(String)}
+              label="Tipos Disponíveis para o Produto"
+              onChange={(e) => {
+                const value = e.target.value as unknown as string[];
+                setAdminProductData({ ...adminProductData, available_shirt_type_ids: value.map(v => Number(v)) });
+              }}
+              renderValue={(selected) => {
+                const ids = (selected as string[]).map(v => Number(v));
+                const names = shirtTypes.filter(st => ids.includes(st.id)).map(st => st.name);
+                return names.join(', ');
+              }}
+            >
+              {Array.isArray(shirtTypes) && shirtTypes.map((st) => (
+                <MenuItem key={st.id} value={String(st.id)}>{st.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Sexo</InputLabel>
+            <Select
+              value={adminProductData.sexo}
+              label="Sexo"
+              onChange={(e) => setAdminProductData({ ...adminProductData, sexo: e.target.value })}
+            >
+              {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Ano</InputLabel>
+            <Select
+              value={adminProductData.ano}
+              label="Ano"
+              onChange={(e) => setAdminProductData({ ...adminProductData, ano: e.target.value })}
+            >
+              {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
             </Select>
           </FormControl>
         </DialogContent>
