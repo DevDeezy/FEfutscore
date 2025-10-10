@@ -370,7 +370,7 @@ const Cart = () => {
     });
   };
 
-  const handleCartItemFieldChange = (index: number, field: string, value: string) => {
+  const handleCartItemFieldChange = (index: number, field: string, value: any) => {
     const updatedItems = items.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     );
