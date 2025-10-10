@@ -20,6 +20,7 @@ export interface OrderItem {
   image_front?: string;
   image_back?: string;
   size: string;
+  available_sizes?: string[]; // for store items, used to render dropdown in cart
   quantity: number;
   player_name?: string;
   shirt_type_id?: number;

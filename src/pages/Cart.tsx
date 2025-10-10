@@ -355,9 +355,12 @@ const Cart = () => {
   const computePatchCost = (images: string[] | undefined, qty: number): number => {
     if (!Array.isArray(images) || images.length === 0) return 0;
     const perItem = images.reduce((acc, img) => {
+      // Custom uploads: always apply global admin patch price
       if (typeof img === 'string' && img.startsWith('data:')) return acc + patchPrice;
+      // Predefined patches: use per-patch price when present, otherwise fall back to global price
       const found = patchCatalog.find(p => p.image === img);
-      return acc + (found?.price ?? patchPrice);
+      const price = typeof found?.price === 'number' && !Number.isNaN(found.price) ? found.price : patchPrice;
+      return acc + price;
     }, 0);
     return perItem * (qty || 1);
   };
@@ -536,13 +539,28 @@ const Cart = () => {
                               sx={{ width: 110 }}
                               InputProps={{ inputProps: { min: 1 } }}
                             />
-                            <TextField
-                              label="Tamanho"
-                              size="small"
-                              value={item.size}
-                              onChange={(e) => handleCartItemFieldChange(index, 'size', (e.target as any).value)}
-                              sx={{ width: 140 }}
-                            />
+                            {Array.isArray(item.available_sizes) && item.available_sizes.length > 0 ? (
+                              <FormControl size="small" sx={{ width: 160 }}>
+                                <InputLabel>Tamanho</InputLabel>
+                                <Select
+                                  label="Tamanho"
+                                  value={item.size}
+                                  onChange={(e: any) => handleCartItemFieldChange(index, 'size', e.target.value)}
+                                >
+                                  {item.available_sizes.map((s: string) => (
+                                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            ) : (
+                              <TextField
+                                label="Tamanho"
+                                size="small"
+                                value={item.size}
+                                onChange={(e) => handleCartItemFieldChange(index, 'size', (e.target as any).value)}
+                                sx={{ width: 140 }}
+                              />
+                            )}
                             <TextField
                               label="Nome do Jogador"
                               size="small"

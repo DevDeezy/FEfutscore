@@ -191,6 +191,7 @@ const Store = () => {
       price: selectedProduct.price,
       image_front: imageUrl,
       size,
+      available_sizes: Array.isArray(selectedProduct.available_sizes) ? selectedProduct.available_sizes : undefined,
       quantity,
       player_name: playerName,
       numero: playerNumber,
