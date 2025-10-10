@@ -23,6 +23,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -36,6 +40,7 @@ import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import AddressManager from '../components/AddressManager';
+import PatchSelection from '../components/PatchSelection';
 import Check from '@mui/icons-material/Check';
 
 const initialAddress = {
@@ -78,6 +83,11 @@ const Cart = () => {
   const [personalizationPrice, setPersonalizationPrice] = useState<number>(3); // Default value
   const [packs, setPacks] = useState<any[]>([]);
   const [shirtTypes, setShirtTypes] = useState<any[]>([]);
+  const [patchCatalog, setPatchCatalog] = useState<{ image: string; price: number }[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [patchEditorOpen, setPatchEditorOpen] = useState(false);
+  const [patchEditorIndex, setPatchEditorIndex] = useState<number | null>(null);
+  const [patchEditorSelection, setPatchEditorSelection] = useState<string[]>([]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -140,9 +150,8 @@ const Cart = () => {
   };
 
   // Check if cart contains custom orders (items from "Novo Pedido")
-  // This includes: 1) Items without product_id, 2) Admin creating orders with clientInstagram
-  const hasCustomItems = items.some(item => !item.product_id) || 
-                         (user?.role === 'admin' && clientInstagram.trim() !== '');
+  // Only items without product_id are considered custom
+  const hasCustomItems = items.some(item => !item.product_id);
 
   const allFieldsFilled = Object.values(address).every((v) => v.trim() !== '');
   const proofProvided = proofImage || selectedRecipient || selectedPaymentMethod;
@@ -202,6 +211,17 @@ const Cart = () => {
     fetchPricingConfiguration();
     fetchPacksAndShirtTypes();
   }, [dispatch, user]);
+  
+  useEffect(() => {
+    const fetchPatchCatalog = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getPatches?page=1&limit=1000`);
+        const list = Array.isArray(res.data) ? res.data : (res.data?.patches || []);
+        setPatchCatalog(list.map((p: any) => ({ image: p.image, price: Number(p.price || 0) })));
+      } catch {}
+    };
+    fetchPatchCatalog();
+  }, []);
 
   // Fetch payment methods
   const fetchPaymentMethods = async () => {
@@ -332,6 +352,16 @@ const Cart = () => {
     return null;
   };
 
+  const computePatchCost = (images: string[] | undefined, qty: number): number => {
+    if (!Array.isArray(images) || images.length === 0) return 0;
+    const perItem = images.reduce((acc, img) => {
+      if (typeof img === 'string' && img.startsWith('data:')) return acc + patchPrice;
+      const found = patchCatalog.find(p => p.image === img);
+      return acc + (found?.price ?? patchPrice);
+    }, 0);
+    return perItem * (qty || 1);
+  };
+
   // Handler to edit/fill the manual form with a saved address (like AddressManager)
   const handleEdit = (addr: any) => {
     setAddress({
@@ -438,10 +468,10 @@ const Cart = () => {
                         )}
                         {(item.patch_images && item.patch_images.length > 0) && (() => {
                           const qty = item.quantity || 1;
-                          const count = item.patch_images.length * qty;
+                          const total = computePatchCost(item.patch_images, qty);
                           return (
                             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                              + Patches ({qty}x{item.patch_images.length}): +€{(count * patchPrice).toFixed(2)}
+                              + Patches ({qty}x{item.patch_images.length}): +€{total.toFixed(2)}
                             </Typography>
                           );
                         })()}
@@ -480,6 +510,55 @@ const Cart = () => {
                           </Box>
                         )}
                         {/* END PATCH IMAGES SECTION */}
+                        {/* Edit controls */}
+                        <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Button size="small" variant="outlined" onClick={() => setEditingIndex(editingIndex === index ? null : index)}>
+                            {editingIndex === index ? 'Fechar Edição' : 'Editar'}
+                          </Button>
+                          <Button size="small" variant="outlined" onClick={() => {
+                            setPatchEditorIndex(index);
+                            setPatchEditorSelection(item.patch_images || []);
+                            setPatchEditorOpen(true);
+                          }}>Editar Patches</Button>
+                        </Box>
+
+                        {editingIndex === index && (
+                          <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <TextField
+                              label="Quantidade"
+                              type="number"
+                              size="small"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = Math.max(1, parseInt((e.target as any).value || '1', 10));
+                                handleCartItemFieldChange(index, 'quantity', String(val));
+                              }}
+                              sx={{ width: 110 }}
+                              InputProps={{ inputProps: { min: 1 } }}
+                            />
+                            <TextField
+                              label="Tamanho"
+                              size="small"
+                              value={item.size}
+                              onChange={(e) => handleCartItemFieldChange(index, 'size', (e.target as any).value)}
+                              sx={{ width: 140 }}
+                            />
+                            <TextField
+                              label="Nome do Jogador"
+                              size="small"
+                              value={item.player_name || ''}
+                              onChange={(e) => handleCartItemFieldChange(index, 'player_name', (e.target as any).value)}
+                              sx={{ minWidth: 160 }}
+                            />
+                            <TextField
+                              label="Número"
+                              size="small"
+                              value={item.numero || ''}
+                              onChange={(e) => handleCartItemFieldChange(index, 'numero', (e.target as any).value)}
+                              sx={{ width: 120 }}
+                            />
+                          </Box>
+                        )}
                         {item.numero && String(item.numero).trim() !== '' && (
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             Número: {item.numero}
@@ -826,8 +905,37 @@ const Cart = () => {
           </>
         )}
       </Paper>
+
+      {/* Patch editor modal */}
+      <Dialog open={patchEditorOpen} onClose={() => setPatchEditorOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Editar Patches</DialogTitle>
+        <DialogContent>
+          <PatchSelection
+            onPatchesChange={(imgs) => setPatchEditorSelection(imgs)}
+            selectedPatches={patchEditorSelection}
+            title="Seleciona os Patches"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPatchEditorOpen(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (patchEditorIndex != null) {
+                handleCartItemFieldChange(patchEditorIndex, 'patch_images', patchEditorSelection as any);
+              }
+              setPatchEditorOpen(false);
+            }}
+          >
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
 
-export default Cart; 
+export default Cart;
+ 
+// Patch editor dialog (mounted at end to keep file cohesive)
+// We append it after the main return by reopening the component scope via JSX fragment inside return above if needed.

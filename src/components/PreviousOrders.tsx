@@ -63,6 +63,32 @@ const PreviousOrders: React.FC = () => {
     return translations[status] || status;
   };
 
+  const statusStyles = (status: string) => {
+    const backgroundColor =
+      status === 'pending'
+        ? 'orange'
+        : status === 'Para analizar'
+        ? 'purple'
+        : status === 'A Orçamentar'
+        ? 'darkblue'
+        : status === 'Em pagamento'
+        ? 'red'
+        : status === 'Em Processamento'
+        ? 'blue'
+        : status === 'completed'
+        ? 'green'
+        : status === 'CSV'
+        ? 'brown'
+        : 'red';
+    return {
+      padding: '2px 8px',
+      borderRadius: '12px',
+      color: 'white',
+      backgroundColor,
+      display: 'inline-block',
+    } as const;
+  };
+
   // Translation function for product types
   const translateProductType = (productType: string): string => {
     const translations: { [key: string]: string } = {
@@ -158,7 +184,12 @@ const PreviousOrders: React.FC = () => {
             }
           >
             <ListItemText
-              primary={`Encomenda #${order.id} - Estado: ${translateStatus(order.status)}`}
+              primary={
+                <>
+                  {`Encomenda #${order.id} - Estado: `}
+                  <span style={statusStyles(order.status)}>{translateStatus(order.status)}</span>
+                </>
+              }
               secondary={
                 <>
                   {order.total_price != null
