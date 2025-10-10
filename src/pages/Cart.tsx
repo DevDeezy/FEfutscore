@@ -79,7 +79,6 @@ const Cart = () => {
   const [paymentMode, setPaymentMode] = useState<'manual' | 'saved'>('manual');
 
   // Pricing configuration state
-  const [patchPrice, setPatchPrice] = useState<number>(2); // Default value
   const [personalizationPrice, setPersonalizationPrice] = useState<number>(3); // Default value
   const [packs, setPacks] = useState<any[]>([]);
   const [shirtTypes, setShirtTypes] = useState<any[]>([]);
@@ -249,16 +248,12 @@ const Cart = () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getpricingconfig`);
       const configs = Array.isArray(response.data) ? response.data : response.data.pricingConfigs;
-      
       configs.forEach((config: any) => {
         switch (config.key) {
-          case 'patch_price':
-            setPatchPrice(config.price);
-            break;
           case 'personalization_price':
             setPersonalizationPrice(config.price);
             break;
-          // Keep backward compatibility
+          // Backward compatibility if legacy keys exist
           case 'number_price':
           case 'name_price':
             if (!configs.find((c: any) => c.key === 'personalization_price')) {
@@ -355,11 +350,8 @@ const Cart = () => {
   const computePatchCost = (images: string[] | undefined, qty: number): number => {
     if (!Array.isArray(images) || images.length === 0) return 0;
     const perItem = images.reduce((acc, img) => {
-      // Custom uploads: always apply global admin patch price
-      if (typeof img === 'string' && img.startsWith('data:')) return acc + patchPrice;
-      // Predefined patches: use per-patch price when present, otherwise fall back to global price
       const found = patchCatalog.find(p => p.image === img);
-      const price = typeof found?.price === 'number' && !Number.isNaN(found.price) ? found.price : patchPrice;
+      const price = typeof found?.price === 'number' && !Number.isNaN(found.price) ? found.price : 0;
       return acc + price;
     }, 0);
     return perItem * (qty || 1);
