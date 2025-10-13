@@ -10,6 +10,7 @@ import {
   Typography,
   Alert,
   CircularProgress,
+  MenuItem,
 } from '@mui/material';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -28,6 +29,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
   const [proofReference, setProofReference] = useState('');
   const [proofImage, setProofImage] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Revolut');
+  const [selectedRecipient, setSelectedRecipient] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +72,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
           proofReference: proofReference.trim() || null,
           proofImage: proofImage || null,
           paymentMethod,
+          paymentRecipient: selectedRecipient || null,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -85,11 +88,12 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
         }
       );
 
-      dispatch(fetchOrders());
+      dispatch(fetchOrders({} as any));
       onClose();
       setProofReference('');
       setProofImage('');
       setPaymentMethod('Revolut');
+      setSelectedRecipient('');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao atualizar a prova de pagamento');
     } finally {
@@ -103,6 +107,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
       setProofReference('');
       setProofImage('');
       setPaymentMethod('Revolut');
+      setSelectedRecipient('');
       setError(null);
     }
   };
@@ -132,10 +137,33 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({ open, onClose, or
           onChange={(e) => setPaymentMethod(e.target.value)}
           margin="normal"
         >
-          <option value="Revolut">Revolut</option>
-          <option value="PayPal">PayPal</option>
-          <option value="Bank Transfer">Transferência Bancária</option>
+          <MenuItem value="Revolut">Revolut</MenuItem>
+          <MenuItem value="PayPal">PayPal</MenuItem>
+          <MenuItem value="Bank Transfer">Transferência Bancária</MenuItem>
         </TextField>
+
+        {/* Recipient quick-select, like Cart */}
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            Enviei para:
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant={selectedRecipient === 'MIGUEL' ? 'contained' : 'outlined'}
+              onClick={() => setSelectedRecipient('MIGUEL')}
+              sx={{ minWidth: 120 }}
+            >
+              MIGUEL
+            </Button>
+            <Button
+              variant={selectedRecipient === 'HUGO' ? 'contained' : 'outlined'}
+              onClick={() => setSelectedRecipient('HUGO')}
+              sx={{ minWidth: 120 }}
+            >
+              HUGO
+            </Button>
+          </Box>
+        </Box>
 
         <Box sx={{ mt: 2 }}>
           <Button variant="outlined" component="label" fullWidth>

@@ -493,11 +493,17 @@ const AdminPanel = () => {
     setOrderPriceError(null);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderprice/${selectedOrder.id}`, 
+      const res = await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderprice/${selectedOrder.id}`, 
         { total_price: orderPrice },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Refresh table and reflect immediately in modal
       dispatch(fetchOrders({ page: currentPage, limit: 10 }));
+      if (res && res.data) {
+        setSelectedOrder(res.data);
+        setOrderPrice(res.data.total_price || 0);
+        setOrderStatus(res.data.status || selectedOrder.status);
+      }
       setOrderPriceError(null);
     } catch (err: any) {
       setOrderPriceError(err.response?.data?.error || 'Falha ao atualizar o preço');
@@ -609,28 +615,23 @@ const AdminPanel = () => {
       // Wait for all updates to complete
       await Promise.all(updates);
       
-      // Refresh the order data
+      // Refresh table and modal with latest data
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
       const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders`);
       if (response.data && response.data.orders) {
         const updatedOrder = response.data.orders.find((o: any) => o.id === selectedOrder.id);
         if (updatedOrder) {
           setSelectedOrder(updatedOrder);
+          setOrderStatus(updatedOrder.status);
+          setOrderPrice(updatedOrder.total_price || 0);
         }
       }
       
-      // Clear all pending changes
-      setPendingChanges({
-        status: false,
-        price: false,
-        tracking: false
-      });
-      
-      // Clear form fields
-      setOrderStatus('');
-      setOrderPrice(0);
+      // Clear pending flags and transient inputs, keep modal fields in sync
+      setPendingChanges({ status: false, price: false, tracking: false });
       setTrackingText('');
       setTrackingImages([]);
-      setTrackingVideos([]);
+      // Keep selectedOrder-related fields (status/price) as updated
       
     } catch (error: any) {
       setUpdateAllError(error.response?.data?.message || 'Erro ao atualizar alterações');
