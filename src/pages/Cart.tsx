@@ -282,7 +282,7 @@ const Cart = () => {
   };
 
   const calculateShipping = (cartItems: any[]) => {
-    const totalQuantity = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+    const totalQuantity = cartItems.reduce((total, item) => total + (Number(item.quantity) || 1), 0);
     return totalQuantity === 1 ? 2 : 0;
   };
 
@@ -466,7 +466,7 @@ const Cart = () => {
                           const total = computePatchCost(item.patch_images, qty);
                           return (
                             <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                              + Patches ({qty}x{item.patch_images.length}): +€{total.toFixed(2)}
+                              + Patches ({qty}): +€{total.toFixed(2)}
                             </Typography>
                           );
                         })()}
@@ -526,7 +526,7 @@ const Cart = () => {
                               value={item.quantity}
                               onChange={(e) => {
                                 const val = Math.max(1, parseInt((e.target as any).value || '1', 10));
-                                handleCartItemFieldChange(index, 'quantity', String(val));
+                                handleCartItemFieldChange(index, 'quantity', val);
                               }}
                               sx={{ width: 110 }}
                               InputProps={{ inputProps: { min: 1 } }}

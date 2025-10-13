@@ -76,7 +76,10 @@ const cartSlice = createSlice({
     updateCartItem: (state, action: PayloadAction<{ index: number; field: string; value: any }>) => {
       const { index, field, value } = action.payload;
       if (state.items[index]) {
-        (state.items[index] as any)[field] = value;
+        const current = state.items[index] as any;
+        const nextValue = field === 'quantity' ? Number(value) : value;
+        // Replace the element to ensure array reference changes and selectors update
+        state.items[index] = { ...current, [field]: nextValue } as any;
         saveState(state);
       }
     },
