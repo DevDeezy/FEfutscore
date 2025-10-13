@@ -1540,12 +1540,32 @@ const AdminPanel = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <TextField
-                            size="small"
-                            value={user.instagramName || (() => { try { const arr = typeof user.instagramNames === 'string' ? JSON.parse(user.instagramNames) : []; return Array.isArray(arr) && arr.length > 0 ? arr[0] : ''; } catch { return ''; } })()}
-                            onChange={(e) => handleUpdateInstagramName(user._id || user.id, e.target.value)}
-                            placeholder="Nome Instagram"
-                          />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            {/* Editable primary Instagram name */}
+                            <TextField
+                              size="small"
+                              value={user.instagramName || ''}
+                              onChange={(e) => handleUpdateInstagramName(user._id || user.id, e.target.value)}
+                              placeholder="Nome Instagram"
+                              sx={{ minWidth: 200 }}
+                            />
+                            {/* Read-only chips for additional names */}
+                            {(() => {
+                              try {
+                                const arr = typeof user.instagramNames === 'string' ? JSON.parse(user.instagramNames) : [];
+                                const names = Array.isArray(arr) ? arr : [];
+                                return names
+                                  .filter((n) => typeof n === 'string' && n.trim() !== '' && n !== user.instagramName)
+                                  .map((name: string, i: number) => (
+                                    <Box key={`${user.id}-ig-${i}`} sx={{ px: 1, py: 0.5, bgcolor: 'grey.200', borderRadius: 1, fontSize: '0.8rem' }}>
+                                      {name}
+                                    </Box>
+                                  ));
+                              } catch {
+                                return null;
+                              }
+                            })()}
+                          </Box>
                         </TableCell>
                         <TableCell>{typeof user.role === 'string' ? user.role : ''}</TableCell>
                         <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : ''}</TableCell>
