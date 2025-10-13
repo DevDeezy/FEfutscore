@@ -1541,26 +1541,23 @@ const AdminPanel = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                            {/* Editable primary Instagram name */}
-                            <TextField
-                              size="small"
-                              value={user.instagramName || ''}
-                              onChange={(e) => handleUpdateInstagramName(user._id || user.id, e.target.value)}
-                              placeholder="Nome Instagram"
-                              sx={{ minWidth: 200 }}
-                            />
-                            {/* Read-only chips for additional names */}
                             {(() => {
                               try {
+                                const list = new Set<string>();
+                                if (typeof user.instagramName === 'string' && user.instagramName.trim() !== '') {
+                                  list.add(user.instagramName);
+                                }
                                 const arr = typeof user.instagramNames === 'string' ? JSON.parse(user.instagramNames) : [];
-                                const names = Array.isArray(arr) ? arr : [];
-                                return names
-                                  .filter((n) => typeof n === 'string' && n.trim() !== '' && n !== user.instagramName)
-                                  .map((name: string, i: number) => (
-                                    <Box key={`${user.id}-ig-${i}`} sx={{ px: 1, py: 0.5, bgcolor: 'grey.200', borderRadius: 1, fontSize: '0.8rem' }}>
-                                      {name}
-                                    </Box>
-                                  ));
+                                if (Array.isArray(arr)) {
+                                  for (const n of arr) {
+                                    if (typeof n === 'string' && n.trim() !== '') list.add(n);
+                                  }
+                                }
+                                return Array.from(list).map((name: string, i: number) => (
+                                  <Box key={`${user.id}-ig-${i}`} sx={{ px: 1, py: 0.5, bgcolor: 'grey.200', borderRadius: 1, fontSize: '0.8rem' }}>
+                                    {name}
+                                  </Box>
+                                ));
                               } catch {
                                 return null;
                               }
