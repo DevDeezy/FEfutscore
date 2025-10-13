@@ -1541,7 +1541,7 @@ const AdminPanel = () => {
                         <TableCell>
                           <TextField
                             size="small"
-                            value={user.instagramName || ''}
+                            value={user.instagramName || (() => { try { const arr = typeof user.instagramNames === 'string' ? JSON.parse(user.instagramNames) : []; return Array.isArray(arr) && arr.length > 0 ? arr[0] : ''; } catch { return ''; } })()}
                             onChange={(e) => handleUpdateInstagramName(user._id || user.id, e.target.value)}
                             placeholder="Nome Instagram"
                           />

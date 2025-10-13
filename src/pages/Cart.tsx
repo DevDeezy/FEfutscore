@@ -475,6 +475,11 @@ const Cart = () => {
                             Nome do Jogador: {item.player_name}
                           </Typography>
                         )}
+                        {item.numero && String(item.numero).trim() !== '' && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            Número: {item.numero}
+                          </Typography>
+                        )}
                         {/* PATCH IMAGES SECTION */}
                         {(item.patch_images ?? []).length > 0 && (
                           <Box sx={{ mt: 1 }}>
@@ -568,11 +573,6 @@ const Cart = () => {
                               sx={{ width: 120 }}
                             />
                           </Box>
-                        )}
-                        {item.numero && String(item.numero).trim() !== '' && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Número: {item.numero}
-                          </Typography>
                         )}
                       </Box>
                     </Box>
