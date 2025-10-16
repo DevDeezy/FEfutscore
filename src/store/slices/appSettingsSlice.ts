@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { updateAppSettings as updateAppSettingsAPI } from '../../api';
 import { AppSettings } from '../../types';
 
 interface AppSettingsSliceState {
