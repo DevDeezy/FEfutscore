@@ -19,6 +19,7 @@ import {
   Alert,
   CircularProgress,
   Grid,
+  InputAdornment,
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
@@ -33,7 +34,7 @@ const OrderStateManager: React.FC = () => {
   const [selectedState, setSelectedState] = useState<OrderState | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
-    color: '',
+    color: '#ff9800', // Default to orange
     description: '',
   });
 
@@ -45,7 +46,7 @@ const OrderStateManager: React.FC = () => {
     setSelectedState(orderState);
     setEditForm({
       name: orderState.name,
-      color: orderState.color,
+      color: getColorValue(orderState.color),
       description: orderState.description || '',
     });
     setEditDialogOpen(true);
@@ -72,10 +73,11 @@ const OrderStateManager: React.FC = () => {
   const handleCancelEdit = () => {
     setEditDialogOpen(false);
     setSelectedState(null);
-    setEditForm({ name: '', color: '', description: '' });
+    setEditForm({ name: '', color: '#ff9800', description: '' });
   };
 
-  const getColorPreview = (color: string) => {
+  // Convert color names to hex values
+  const getColorValue = (color: string) => {
     const colorMap: { [key: string]: string } = {
       orange: '#ff9800',
       purple: '#9c27b0',
@@ -84,8 +86,18 @@ const OrderStateManager: React.FC = () => {
       blue: '#2196f3',
       green: '#4caf50',
       brown: '#795548',
+      gray: '#757575'
     };
     return colorMap[color] || color;
+  };
+
+  const getColorPreview = (color: string) => {
+    // If it's already a hex color, use it directly
+    if (color.startsWith('#')) {
+      return color;
+    }
+    // Otherwise, convert from color name
+    return getColorValue(color);
   };
 
   if (loading && orderStates.length === 0) {
@@ -181,10 +193,26 @@ const OrderStateManager: React.FC = () => {
               <TextField
                 fullWidth
                 label="Cor"
+                type="color"
                 value={editForm.color}
                 onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
                 margin="normal"
-                helperText="Cores disponíveis: orange, purple, darkblue, red, blue, green, brown"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          backgroundColor: editForm.color,
+                          borderRadius: 1,
+                          border: '1px solid #ccc',
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="Selecione a cor desejada ou insira um código hexadecimal (ex: #ff0000)"
               />
             </Grid>
             <Grid item xs={12}>
@@ -206,7 +234,7 @@ const OrderStateManager: React.FC = () => {
                 <Chip
                   label={editForm.name || 'Nome do Estado'}
                   style={{
-                    backgroundColor: getColorPreview(editForm.color),
+                    backgroundColor: editForm.color,
                     color: 'white',
                   }}
                 />
@@ -219,7 +247,7 @@ const OrderStateManager: React.FC = () => {
           <Button 
             onClick={handleSaveEdit} 
             variant="contained"
-            disabled={!editForm.name || !editForm.color}
+            disabled={!editForm.name || !editForm.color || !editForm.color.startsWith('#')}
           >
             Guardar
           </Button>

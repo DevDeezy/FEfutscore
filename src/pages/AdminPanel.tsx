@@ -258,6 +258,11 @@ const AdminPanel = () => {
 
   const getStatusColor = (status: string) => {
     const orderState = getOrderStateInfo(status);
+    // If it's already a hex color, use it directly
+    if (orderState.color.startsWith('#')) {
+      return orderState.color;
+    }
+    // Otherwise, convert from color name
     const colorMap: { [key: string]: string } = {
       orange: '#ff9800',
       purple: '#9c27b0',

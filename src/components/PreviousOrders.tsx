@@ -57,22 +57,27 @@ const PreviousOrders: React.FC = () => {
 
   const statusStyles = (status: string) => {
     const orderState = getOrderStateInfo(status);
-    const colorMap: { [key: string]: string } = {
-      orange: '#ff9800',
-      purple: '#9c27b0',
-      darkblue: '#1565c0',
-      red: '#f44336',
-      blue: '#2196f3',
-      green: '#4caf50',
-      brown: '#795548',
-      gray: '#757575'
-    };
+    // If it's already a hex color, use it directly
+    let backgroundColor = orderState.color;
+    if (!backgroundColor.startsWith('#')) {
+      const colorMap: { [key: string]: string } = {
+        orange: '#ff9800',
+        purple: '#9c27b0',
+        darkblue: '#1565c0',
+        red: '#f44336',
+        blue: '#2196f3',
+        green: '#4caf50',
+        brown: '#795548',
+        gray: '#757575'
+      };
+      backgroundColor = colorMap[orderState.color] || orderState.color;
+    }
     
     return {
       padding: '2px 8px',
       borderRadius: '12px',
       color: 'white',
-      backgroundColor: colorMap[orderState.color] || orderState.color,
+      backgroundColor,
       display: 'inline-block',
     } as const;
   };
