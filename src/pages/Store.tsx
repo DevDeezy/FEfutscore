@@ -553,22 +553,6 @@ const Store = () => {
             onChange={(e) => setAdminProductData({ ...adminProductData, description: e.target.value })}
           />
           <TextField
-            label="Preço"
-            type="number"
-            fullWidth
-            margin="normal"
-            value={adminProductData.price}
-            onChange={(e) => setAdminProductData({ ...adminProductData, price: Number(e.target.value) })}
-          />
-          <TextField
-            label="Preço Custo"
-            type="number"
-            fullWidth
-            margin="normal"
-            value={adminProductData.cost_price}
-            onChange={(e) => setAdminProductData({ ...adminProductData, cost_price: Number(e.target.value) })}
-          />
-          <TextField
             label="Imagem (ID do Drive ou URL)"
             fullWidth
             margin="normal"
