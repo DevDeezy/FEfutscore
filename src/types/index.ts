@@ -33,13 +33,24 @@ export interface OrderItem {
   anuncios?: boolean;
 }
 
+export interface OrderState {
+  id: number;
+  key: string;
+  name: string;
+  color: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Order {
   id: string;
   user_id: string;
   user?: { email: string; instagramName?: string };
   items: OrderItem[];
   total_price: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento' | 'A Orçamentar';
+  status: string; // Now dynamic based on OrderState
+  orderState?: OrderState;
   created_at: string;
   address_nome: string;
   address_morada: string;

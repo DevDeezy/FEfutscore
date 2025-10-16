@@ -34,4 +34,19 @@ export async function deleteAddress(id: number, userId: number) {
     data: { id, userId },
   });
   return response.data;
+}
+
+// Order States API
+export async function getOrderStates() {
+  const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getOrderStates`);
+  return response.data;
+}
+
+export async function updateOrderState(data: { id: number; name: string; color: string; description?: string }) {
+  const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderState`, data, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
 } 

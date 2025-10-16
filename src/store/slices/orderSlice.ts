@@ -3,7 +3,20 @@ import axios from 'axios';
 import { Order, OrderState } from '../../types';
 import { API_BASE_URL } from '../../api';
 
-const initialState: OrderState = {
+interface OrderSliceState {
+  orders: Order[];
+  currentOrder: Order | null;
+  loading: boolean;
+  error: string | null;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+const initialState: OrderSliceState = {
   orders: [],
   currentOrder: null,
   loading: false,
@@ -35,7 +48,7 @@ export const fetchOrders = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   'order/updateStatus',
-  async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
+  async ({ orderId, status }: { orderId: string; status: string }) => {
     const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateorderstatus/${orderId}`, { status });
     return response.data;
   }

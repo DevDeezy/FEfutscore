@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchOrders } from '../store/slices/orderSlice';
+import { fetchOrderStates } from '../store/slices/orderStateSlice';
 import { RootState, AppDispatch } from '../store';
 import {
   Box,
@@ -44,47 +45,34 @@ const PreviousOrders: React.FC = () => {
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState<Order | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { orders, loading, error, pagination } = useSelector((state: RootState) => state.order);
+  const { orderStates } = useSelector((state: RootState) => state.orderStates);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [orderVideos, setOrderVideos] = useState<string[]>([]);
 
-  // Translation function for order status
-  const translateStatus = (status: string): string => {
-    const translations: { [key: string]: string } = {
-      'pending': 'Pendente',
-      'processing': 'Em Processamento',
-      'completed': 'Concluída',
-      'cancelled': 'Cancelada',
-      'CSV': 'CSV',
-      'Em Processamento': 'Em Processamento',
-      'Para analizar': 'Para Analisar',
-      'Em pagamento': 'Em Pagamento',
-      'A Orçamentar': 'A Orçamentar'
-    };
-    return translations[status] || status;
+  // Get order state info dynamically
+  const getOrderStateInfo = (status: string) => {
+    const orderState = orderStates.find(state => state.key === status);
+    return orderState || { name: status, color: 'gray' };
   };
 
   const statusStyles = (status: string) => {
-    const backgroundColor =
-      status === 'pending'
-        ? 'orange'
-        : status === 'Para analizar'
-        ? 'purple'
-        : status === 'A Orçamentar'
-        ? 'darkblue'
-        : status === 'Em pagamento'
-        ? 'red'
-        : status === 'Em Processamento'
-        ? 'blue'
-        : status === 'completed'
-        ? 'green'
-        : status === 'CSV'
-        ? 'brown'
-        : 'red';
+    const orderState = getOrderStateInfo(status);
+    const colorMap: { [key: string]: string } = {
+      orange: '#ff9800',
+      purple: '#9c27b0',
+      darkblue: '#1565c0',
+      red: '#f44336',
+      blue: '#2196f3',
+      green: '#4caf50',
+      brown: '#795548',
+      gray: '#757575'
+    };
+    
     return {
       padding: '2px 8px',
       borderRadius: '12px',
       color: 'white',
-      backgroundColor,
+      backgroundColor: colorMap[orderState.color] || orderState.color,
       display: 'inline-block',
     } as const;
   };
@@ -137,6 +125,7 @@ const PreviousOrders: React.FC = () => {
   useEffect(() => {
     if (user) {
       dispatch(fetchOrders({ userId: user.id, page: currentPage, limit: 10 }));
+      dispatch(fetchOrderStates());
     }
   }, [dispatch, user, currentPage]);
 
@@ -187,7 +176,7 @@ const PreviousOrders: React.FC = () => {
               primary={
                 <>
                   {`Encomenda #${order.id} - Estado: `}
-                  <span style={statusStyles(order.status)}>{translateStatus(order.status)}</span>
+                  <span style={statusStyles(order.status)}>{getOrderStateInfo(order.status).name}</span>
                 </>
               }
               secondary={
@@ -218,7 +207,7 @@ const PreviousOrders: React.FC = () => {
                 Detalhes da Encomenda #{selectedOrder.id}
               </Typography>
               <Typography sx={{ mt: 2 }}>
-                <Typography component="span" sx={{ fontWeight: 'bold' }}>Estado:</Typography> {translateStatus(selectedOrder.status)}
+                <Typography component="span" sx={{ fontWeight: 'bold' }}>Estado:</Typography> {getOrderStateInfo(selectedOrder.status).name}
               </Typography>
               <Typography>
                 <Typography component="span" sx={{ fontWeight: 'bold' }}>Total:</Typography>{' '}

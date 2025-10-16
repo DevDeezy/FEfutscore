@@ -35,6 +35,7 @@ import { Search as SearchIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
+import { fetchOrderStates } from '../store/slices/orderStateSlice';
 import { AppDispatch } from '../store';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -44,10 +45,12 @@ import { Order, OrderItem, Pack, PackItem } from '../types';
 import ProductManagement from '../components/ProductManagement';
 import { sendOrderEmail, EmailTemplateParams } from '../services/emailService';
 import DragDropZone from '../components/DragDropZone';
+import OrderStateManager from '../components/OrderStateManager';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { orders, pagination } = useSelector((state: RootState) => state.order);
+  const { orderStates } = useSelector((state: RootState) => state.orderStates);
   const [tab, setTab] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -247,9 +250,31 @@ const AdminPanel = () => {
   const [shirtTypesPage, setShirtTypesPage] = useState(1);
   const [patchesPage, setPatchesPage] = useState(1);
 
+  // Helper functions for dynamic order states
+  const getOrderStateInfo = (status: string) => {
+    const orderState = orderStates.find(state => state.key === status);
+    return orderState || { name: status, color: 'gray' };
+  };
+
+  const getStatusColor = (status: string) => {
+    const orderState = getOrderStateInfo(status);
+    const colorMap: { [key: string]: string } = {
+      orange: '#ff9800',
+      purple: '#9c27b0',
+      darkblue: '#1565c0',
+      red: '#f44336',
+      blue: '#2196f3',
+      green: '#4caf50',
+      brown: '#795548',
+      gray: '#757575'
+    };
+    return colorMap[orderState.color] || orderState.color;
+  };
+
   // Fetch orders, users, and packs on mount
   useEffect(() => {
     dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+    dispatch(fetchOrderStates());
     fetchUsers(usersPage);
     fetchPacks(packsPage);
     fetchShirtTypes(shirtTypesPage);
@@ -447,10 +472,10 @@ const AdminPanel = () => {
     setOrderStatusLoading(true);
     setOrderStatusError(null);
     try {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus as 'pending' | 'processing' | 'completed' | 'cancelled' | 'Para analizar' | 'Em pagamento' | 'A Orçamentar' }));
+      await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus }));
       
       // Send email notification if status is "Em pagamento"
-      if (orderStatus === 'Em pagamento') {
+      if (orderStatus === 'em_pagamento' || orderStatus === 'Em pagamento') {
         try {
           const user = users.find(u => u.id === selectedOrder.user_id);
           if (user && (user.email || user.userEmail)) {
@@ -1242,6 +1267,7 @@ const AdminPanel = () => {
           <Tab label="Produtos" />
           <Tab label="Patches" />
           <Tab label="Configuração de Preços" />
+          <Tab label="Estados das Encomendas" />
         </Tabs>
 
         {/* Orders Tab */}
@@ -1284,14 +1310,11 @@ const AdminPanel = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
                     <MenuItem value="all">Todos</MenuItem>
-                    <MenuItem value="pending">Pendente</MenuItem>
-                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
-                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
-                    <MenuItem value="A Orçamentar">A Orçamentar</MenuItem>
-                    <MenuItem value="CSV">CSV</MenuItem>
-                    <MenuItem value="Em Processamento">Em Processamento</MenuItem>
-                    <MenuItem value="completed">Concluída</MenuItem>
-                    <MenuItem value="cancelled">Cancelada</MenuItem>
+                    {orderStates.map((orderState) => (
+                      <MenuItem key={orderState.key} value={orderState.key}>
+                        {orderState.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 
@@ -1431,33 +1454,10 @@ const AdminPanel = () => {
                             padding: '4px 8px',
                             borderRadius: '12px',
                             color: 'white',
-                                                      backgroundColor:
-                            order.status === 'pending'
-                              ? 'orange'
-                              : order.status === 'Para analizar'
-                              ? 'purple'
-                              : order.status === 'A Orçamentar'
-                              ? 'darkblue'
-                              : order.status === 'Em pagamento'
-                              ? 'red'
-                              : order.status === 'Em Processamento'
-                              ? 'blue'
-                              : order.status === 'completed'
-                              ? 'green'
-                              : order.status === 'CSV'
-                              ? 'brown'
-                              : 'red',
+                            backgroundColor: getStatusColor(order.status),
                           }}
                         >
-                          {order.status === 'pending' ? 'Pendente' :
-                                                         order.status === 'Para analizar' ? 'Para Analisar' :
-                            order.status === 'A Orçamentar' ? 'A Orçamentar' :
-                            order.status === 'Em pagamento' ? 'Em Pagamento' :
-                            order.status === 'Em Processamento' ? 'Em Processamento' :
-                            order.status === 'completed' ? 'Concluída' :
-                            order.status === 'CSV' ? 'CSV' :
-                            order.status === 'cancelled' ? 'Cancelada' :
-                            order.status}
+                          {getOrderStateInfo(order.status).name}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -2004,6 +2004,13 @@ const AdminPanel = () => {
             }
           </Box>
         )}
+
+        {/* Order States Management Tab */}
+        {tab === 7 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <OrderStateManager />
+          </Box>
+        )}
       </Paper>
       
       {/* Dialogs */}
@@ -2137,13 +2144,11 @@ const AdminPanel = () => {
                     label="Atualizar Estado"
                     onChange={handleStatusChange}
                     >
-                    <MenuItem value="pending">Pendente</MenuItem>
-                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
-                    <MenuItem value="A Orçamentar">A Orçamentar</MenuItem>
-                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
-                    <MenuItem value="processing">Em Processamento</MenuItem>
-                    <MenuItem value="completed">Concluída</MenuItem>
-                    <MenuItem value="cancelled">Cancelada</MenuItem>
+                    {orderStates.map((orderState) => (
+                      <MenuItem key={orderState.key} value={orderState.key}>
+                        {orderState.name}
+                      </MenuItem>
+                    ))}
                     </Select>
                   </FormControl>
                 {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
