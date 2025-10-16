@@ -23,7 +23,13 @@ export const fetchAppSettings = createAsyncThunk(
       logo: '',
       backgroundImage: '',
       logoHeight: 40,
-      backgroundOpacity: 0.1
+      backgroundOpacity: 0.1,
+      navbarColor: '#1976d2',
+      navbarTextColor: '#ffffff',
+      footerColor: '#f5f5f5',
+      footerTextColor: '#666666',
+      primaryColor: '#1976d2',
+      secondaryColor: '#dc004e'
     };
   }
 );
@@ -54,6 +60,26 @@ export const updateAppSettings = createAsyncThunk(
     } else {
       document.documentElement.style.removeProperty('--app-background');
       document.documentElement.style.removeProperty('--app-background-opacity');
+    }
+    
+    // Update color CSS custom properties
+    if (newSettings.navbarColor) {
+      document.documentElement.style.setProperty('--navbar-color', newSettings.navbarColor);
+    }
+    if (newSettings.navbarTextColor) {
+      document.documentElement.style.setProperty('--navbar-text-color', newSettings.navbarTextColor);
+    }
+    if (newSettings.footerColor) {
+      document.documentElement.style.setProperty('--footer-color', newSettings.footerColor);
+    }
+    if (newSettings.footerTextColor) {
+      document.documentElement.style.setProperty('--footer-text-color', newSettings.footerTextColor);
+    }
+    if (newSettings.primaryColor) {
+      document.documentElement.style.setProperty('--primary-color', newSettings.primaryColor);
+    }
+    if (newSettings.secondaryColor) {
+      document.documentElement.style.setProperty('--secondary-color', newSettings.secondaryColor);
     }
     
     return newSettings as AppSettings;
