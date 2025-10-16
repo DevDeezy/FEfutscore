@@ -46,6 +46,7 @@ import ProductManagement from '../components/ProductManagement';
 import { sendOrderEmail, EmailTemplateParams } from '../services/emailService';
 import DragDropZone from '../components/DragDropZone';
 import OrderStateManager from '../components/OrderStateManager';
+import AppCustomization from '../components/AppCustomization';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -1273,6 +1274,7 @@ const AdminPanel = () => {
           <Tab label="Patches" />
           <Tab label="Configuração de Preços" />
           <Tab label="Estados das Encomendas" />
+          <Tab label="Personalização" />
         </Tabs>
 
         {/* Orders Tab */}
@@ -2014,6 +2016,13 @@ const AdminPanel = () => {
         {tab === 7 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <OrderStateManager />
+          </Box>
+        )}
+
+        {/* App Customization Tab */}
+        {tab === 8 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <AppCustomization />
           </Box>
         )}
       </Paper>

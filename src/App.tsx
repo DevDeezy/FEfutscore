@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'reac
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import Navbar from './components/Navbar';
+import AppBackground from './components/AppBackground';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import OrderForm from './pages/OrderForm';
@@ -114,6 +115,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <AppBackground />
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />

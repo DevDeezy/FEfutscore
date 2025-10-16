@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -27,6 +27,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { logout } from '../store/slices/authSlice';
+import { fetchAppSettings } from '../store/slices/appSettingsSlice';
 import NotificationBell from './NotificationBell';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
@@ -38,10 +39,15 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.cart);
+  const { appSettings } = useSelector((state: RootState) => state.appSettings);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    dispatch(fetchAppSettings());
+  }, [dispatch]);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -93,9 +99,21 @@ const Navbar = () => {
 
   const drawerItems = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center', width: 250 }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        FutScore
-      </Typography>
+      <Box sx={{ my: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {appSettings?.logo ? (
+          <img 
+            src={appSettings.logo} 
+            alt="Logo" 
+            style={{ 
+              height: `${appSettings.logoHeight || 40}px`,
+              maxWidth: '200px',
+              objectFit: 'contain'
+            }} 
+          />
+        ) : (
+          <Typography variant="h6">FutScore</Typography>
+        )}
+      </Box>
       <List>
         <ListItemButton component={RouterLink} to="/store">
           <ListItemText primary="Loja" />
@@ -140,14 +158,31 @@ const Navbar = () => {
             <MenuIcon />
           </MuiIconButton>
         )}
-        <Typography
-          variant="h6"
+        <Box
           component={RouterLink}
           to="/"
-          sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}
+          sx={{ 
+            flexGrow: 1, 
+            textDecoration: 'none', 
+            color: 'inherit',
+            display: 'flex',
+            alignItems: 'center'
+          }}
         >
-          FutScore
-        </Typography>
+          {appSettings?.logo ? (
+            <img 
+              src={appSettings.logo} 
+              alt="Logo" 
+              style={{ 
+                height: `${appSettings.logoHeight || 40}px`,
+                maxWidth: '200px',
+                objectFit: 'contain'
+              }} 
+            />
+          ) : (
+            <Typography variant="h6">FutScore</Typography>
+          )}
+        </Box>
         <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
             {commonLinks}
         </Box>

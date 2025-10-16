@@ -43,6 +43,13 @@ export interface OrderState {
   updated_at: string;
 }
 
+export interface AppSettings {
+  logo?: string;
+  backgroundImage?: string;
+  logoHeight?: number;
+  backgroundOpacity?: number;
+}
+
 export interface Order {
   id: string;
   user_id: string;
