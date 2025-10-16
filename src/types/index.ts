@@ -48,12 +48,6 @@ export interface AppSettings {
   backgroundImage?: string;
   logoHeight?: number;
   backgroundOpacity?: number;
-  navbarColor?: string;
-  navbarTextColor?: string;
-  footerColor?: string;
-  footerTextColor?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
 }
 
 export interface Order {

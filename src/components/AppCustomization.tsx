@@ -15,11 +15,8 @@ import {
   CardContent,
   CardActions,
   Divider,
-  TextField,
-  InputAdornment,
-  Slider,
 } from '@mui/material';
-import { CloudUpload, Image, Business, Palette, Navigation, Copyright } from '@mui/icons-material';
+import { CloudUpload, Image, Business } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
 import { updateAppSettings } from '../store/slices/appSettingsSlice';
@@ -29,12 +26,6 @@ interface AppSettings {
   backgroundImage?: string;
   logoHeight?: number;
   backgroundOpacity?: number;
-  navbarColor?: string;
-  navbarTextColor?: string;
-  footerColor?: string;
-  footerTextColor?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
 }
 
 const AppCustomization: React.FC = () => {
@@ -43,21 +34,12 @@ const AppCustomization: React.FC = () => {
   
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [backgroundDialogOpen, setBackgroundDialogOpen] = useState(false);
-  const [colorsDialogOpen, setColorsDialogOpen] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [backgroundPreview, setBackgroundPreview] = useState<string>('');
   const [logoHeight, setLogoHeight] = useState<number>(40);
   const [backgroundOpacity, setBackgroundOpacity] = useState<number>(0.1);
-  
-  // Color states
-  const [navbarColor, setNavbarColor] = useState<string>('#1976d2');
-  const [navbarTextColor, setNavbarTextColor] = useState<string>('#ffffff');
-  const [footerColor, setFooterColor] = useState<string>('#f5f5f5');
-  const [footerTextColor, setFooterTextColor] = useState<string>('#666666');
-  const [primaryColor, setPrimaryColor] = useState<string>('#1976d2');
-  const [secondaryColor, setSecondaryColor] = useState<string>('#dc004e');
 
   useEffect(() => {
     if (appSettings) {
@@ -65,14 +47,6 @@ const AppCustomization: React.FC = () => {
       setBackgroundPreview(appSettings.backgroundImage || '');
       setLogoHeight(appSettings.logoHeight || 40);
       setBackgroundOpacity(appSettings.backgroundOpacity || 0.1);
-      
-      // Color settings
-      setNavbarColor(appSettings.navbarColor || '#1976d2');
-      setNavbarTextColor(appSettings.navbarTextColor || '#ffffff');
-      setFooterColor(appSettings.footerColor || '#f5f5f5');
-      setFooterTextColor(appSettings.footerTextColor || '#666666');
-      setPrimaryColor(appSettings.primaryColor || '#1976d2');
-      setSecondaryColor(appSettings.secondaryColor || '#dc004e');
     }
   }, [appSettings]);
 
@@ -160,43 +134,6 @@ const AppCustomization: React.FC = () => {
     }
   };
 
-  const handleSaveColors = async () => {
-    try {
-      await dispatch(updateAppSettings({
-        navbarColor,
-        navbarTextColor,
-        footerColor,
-        footerTextColor,
-        primaryColor,
-        secondaryColor,
-      })).unwrap();
-
-      setColorsDialogOpen(false);
-    } catch (err) {
-      console.error('Erro ao atualizar cores:', err);
-    }
-  };
-
-  const handleResetColors = async () => {
-    const defaultColors = {
-      navbarColor: '#1976d2',
-      navbarTextColor: '#ffffff',
-      footerColor: '#f5f5f5',
-      footerTextColor: '#666666',
-      primaryColor: '#1976d2',
-      secondaryColor: '#dc004e',
-    };
-
-    setNavbarColor(defaultColors.navbarColor);
-    setNavbarTextColor(defaultColors.navbarTextColor);
-    setFooterColor(defaultColors.footerColor);
-    setFooterTextColor(defaultColors.footerTextColor);
-    setPrimaryColor(defaultColors.primaryColor);
-    setSecondaryColor(defaultColors.secondaryColor);
-
-    await dispatch(updateAppSettings(defaultColors)).unwrap();
-  };
-
   if (loading && !appSettings) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -212,7 +149,7 @@ const AppCustomization: React.FC = () => {
       </Typography>
       
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Personalize o visual da aplicação alterando o logo, imagem de fundo e cores dos elementos da interface.
+        Personalize o visual da aplicação alterando o logo e a imagem de fundo.
       </Typography>
 
       {error && (
@@ -325,149 +262,6 @@ const AppCustomization: React.FC = () => {
                   Remover
                 </Button>
               )}
-            </CardActions>
-          </Card>
-        </Grid>
-
-        {/* Colors Section */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <Palette sx={{ mr: 1 }} />
-                <Typography variant="h6">Cores da Interface</Typography>
-              </Box>
-              
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Personalize as cores da barra de navegação, footer e elementos principais da aplicação.
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Current Colors Preview */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Pré-visualização das Cores:
-                  </Typography>
-                  
-                  {/* Navbar Preview */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" gutterBottom>Navbar:</Typography>
-                    <Box
-                      sx={{
-                        height: 40,
-                        backgroundColor: navbarColor,
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        px: 2,
-                        mb: 1
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ color: navbarTextColor }}>
-                        FutScore
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Footer Preview */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" gutterBottom>Footer:</Typography>
-                    <Box
-                      sx={{
-                        height: 30,
-                        backgroundColor: footerColor,
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        px: 2,
-                        mb: 1
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: footerTextColor }}>
-                        ©2025 FutScore. Todos os direitos reservados.
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Primary & Secondary Colors */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" gutterBottom>Cores Principais:</Typography>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          backgroundColor: primaryColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc'
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          backgroundColor: secondaryColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc'
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </Grid>
-
-                {/* Color Values Display */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Cores Atuais:
-                  </Typography>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Navbar: <Box component="span" sx={{ color: navbarColor, fontWeight: 'bold' }}>{navbarColor}</Box>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Texto Navbar: <Box component="span" sx={{ color: navbarTextColor, fontWeight: 'bold' }}>{navbarTextColor}</Box>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Footer: <Box component="span" sx={{ color: footerColor, fontWeight: 'bold' }}>{footerColor}</Box>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Texto Footer: <Box component="span" sx={{ color: footerTextColor, fontWeight: 'bold' }}>{footerTextColor}</Box>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Primária: <Box component="span" sx={{ color: primaryColor, fontWeight: 'bold' }}>{primaryColor}</Box>
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Secundária: <Box component="span" sx={{ color: secondaryColor, fontWeight: 'bold' }}>{secondaryColor}</Box>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-            <CardActions>
-              <Button
-                variant="contained"
-                startIcon={<Palette />}
-                onClick={() => setColorsDialogOpen(true)}
-              >
-                Personalizar Cores
-              </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleResetColors}
-              >
-                Restaurar Padrões
-              </Button>
             </CardActions>
           </Card>
         </Grid>
@@ -612,276 +406,6 @@ const AppCustomization: React.FC = () => {
             disabled={!backgroundFile}
           >
             Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Colors Dialog */}
-      <Dialog open={colorsDialogOpen} onClose={() => setColorsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Personalizar Cores da Interface</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {/* Navbar Colors */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                <Navigation sx={{ mr: 1 }} />
-                Cores da Barra de Navegação
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor de Fundo da Navbar"
-                type="color"
-                value={navbarColor}
-                onChange={(e) => setNavbarColor(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: navbarColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor do Texto da Navbar"
-                type="color"
-                value={navbarTextColor}
-                onChange={(e) => setNavbarTextColor(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: navbarTextColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Footer Colors */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                <Copyright sx={{ mr: 1 }} />
-                Cores do Footer
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor de Fundo do Footer"
-                type="color"
-                value={footerColor}
-                onChange={(e) => setFooterColor(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: footerColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor do Texto do Footer"
-                type="color"
-                value={footerTextColor}
-                onChange={(e) => setFooterTextColor(e.target.value)}
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: footerTextColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Primary & Secondary Colors */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                <Palette sx={{ mr: 1 }} />
-                Cores Principais
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor Primária"
-                type="color"
-                value={primaryColor}
-                onChange={(e) => setPrimaryColor(e.target.value)}
-                margin="normal"
-                helperText="Usada em botões principais e elementos destacados"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: primaryColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Cor Secundária"
-                type="color"
-                value={secondaryColor}
-                onChange={(e) => setSecondaryColor(e.target.value)}
-                margin="normal"
-                helperText="Usada em botões secundários e elementos de apoio"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          backgroundColor: secondaryColor,
-                          borderRadius: 1,
-                          border: '1px solid #ccc',
-                        }}
-                      />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-
-            {/* Live Preview */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Pré-visualização em Tempo Real:
-              </Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="body2" gutterBottom>Navbar:</Typography>
-                  <Box
-                    sx={{
-                      height: 50,
-                      backgroundColor: navbarColor,
-                      borderRadius: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      px: 2,
-                      mb: 2
-                    }}
-                  >
-                    <Typography variant="body1" sx={{ color: navbarTextColor, fontWeight: 'bold' }}>
-                      FutScore
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: navbarTextColor, ml: 'auto', opacity: 0.8 }}>
-                      Menu
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Typography variant="body2" gutterBottom>Footer:</Typography>
-                  <Box
-                    sx={{
-                      height: 40,
-                      backgroundColor: footerColor,
-                      borderRadius: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      px: 2,
-                      mb: 2
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: footerTextColor }}>
-                      ©2025 FutScore. Todos os direitos reservados.
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="body2" gutterBottom>Botões de Exemplo:</Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button 
-                      variant="contained" 
-                      sx={{ backgroundColor: primaryColor, '&:hover': { backgroundColor: primaryColor, opacity: 0.9 } }}
-                    >
-                      Botão Primário
-                    </Button>
-                    <Button 
-                      variant="contained" 
-                      sx={{ backgroundColor: secondaryColor, '&:hover': { backgroundColor: secondaryColor, opacity: 0.9 } }}
-                    >
-                      Botão Secundário
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setColorsDialogOpen(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSaveColors} 
-            variant="contained"
-          >
-            Guardar Cores
           </Button>
         </DialogActions>
       </Dialog>

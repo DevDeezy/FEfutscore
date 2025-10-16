@@ -49,28 +49,4 @@ export async function updateOrderState(data: { id: number; name: string; color: 
     },
   });
   return response.data;
-}
-
-// App Settings API
-export async function getAppSettings() {
-  const response = await axios.get(`${API_BASE_URL}/.netlify/functions/getAppSettings`, {
-    headers: {
-      'Cache-Control': 'max-age=3600', // Cache for 1 hour
-    },
-  });
-  return response.data;
-}
-
-export async function updateAppSettings(settings: any) {
-  const token = localStorage.getItem('token');
-  const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateAppSettings`, 
-    { settings }, 
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    }
-  );
-  return response.data;
 } 

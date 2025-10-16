@@ -3,12 +3,12 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: 'var(--primary-color, #1976d2)', // dynamic primary color
-      contrastText: '#ffffff',
+      main: '#cbbfae', // muted beige
+      contrastText: '#222',
     },
     secondary: {
-      main: 'var(--secondary-color, #dc004e)', // dynamic secondary color
-      contrastText: '#ffffff',
+      main: '#f5f5f5', // soft gray
+      contrastText: '#222',
     },
     background: {
       default: '#faf9f6', // off-white
@@ -73,20 +73,20 @@ const theme = createTheme({
           padding: '12px 28px',
           fontWeight: 700,
           fontSize: '1rem',
-          background: 'var(--primary-color, #1976d2)',
-          color: '#ffffff',
+          background: '#cbbfae',
+          color: '#222',
           '&:hover': {
-            opacity: 0.9,
-            boxShadow: '0 2px 8px 0 rgba(25,118,210,0.10)',
+            background: '#b3a692',
+            boxShadow: '0 2px 8px 0 rgba(203,191,174,0.10)',
           },
         },
         containedPrimary: {
-          background: 'var(--primary-color, #1976d2)',
-          color: '#ffffff',
+          background: '#cbbfae',
+          color: '#222',
         },
         containedSecondary: {
-          background: 'var(--secondary-color, #dc004e)',
-          color: '#ffffff',
+          background: '#f5f5f5',
+          color: '#222',
         },
       },
     },
