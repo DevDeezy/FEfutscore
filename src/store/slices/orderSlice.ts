@@ -9,10 +9,12 @@ interface OrderSliceState {
   loading: boolean;
   error: string | null;
   pagination?: {
-    page: number;
-    limit: number;
-    total: number;
+    currentPage: number;
     totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
   };
 }
 
