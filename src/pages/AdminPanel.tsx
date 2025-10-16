@@ -744,6 +744,28 @@ const AdminPanel = () => {
     }
   };
 
+  // Validate payment handler (pending -> enviar_para_fabrica)
+  const handleValidatePayment = async (orderId: string) => {
+    try {
+      await dispatch(updateOrderStatus({ orderId, status: 'enviar_para_fabrica' }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
+      alert('Pagamento validado! Encomenda pronta para enviar à fábrica.');
+    } catch (err) {
+      alert('Falha ao validar pagamento');
+    }
+  };
+
+  // Mark factory payment as paid handler
+  const handleMarkFactoryPaid = async (orderId: string) => {
+    try {
+      await dispatch(updateOrderStatus({ orderId, status: 'em_processamento' }));
+      dispatch(fetchOrders({ page: currentPage, limit: 10 }));
+      alert('Pagamento à fábrica confirmado! Encomenda em processamento.');
+    } catch (err) {
+      alert('Falha ao marcar pagamento como pago');
+    }
+  };
+
   // Export only orders with status 'csv'
   const handleExportOrders = async () => {
     const csvOrders = orders.filter((o) => o.status === 'csv');
@@ -1472,9 +1494,28 @@ const AdminPanel = () => {
                         <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
                         </Button>
-                        {order.status !== 'csv' && (
-                          <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined">
+                        {order.status === 'pending' && (
+                          <Button 
+                            onClick={() => handleValidatePayment(order.id.toString())} 
+                            color="primary" 
+                            variant="contained"
+                            sx={{ mr: 1 }}
+                          >
+                            Validar Pagamento
+                          </Button>
+                        )}
+                        {order.status === 'enviar_para_fabrica' && (
+                          <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined" sx={{ mr: 1 }}>
                             Adicionar ao CSV
+                          </Button>
+                        )}
+                        {order.status === 'em_pagamento_fabrica' && (
+                          <Button 
+                            onClick={() => handleMarkFactoryPaid(order.id.toString())} 
+                            color="success" 
+                            variant="contained"
+                          >
+                            Marcar como Pago
                           </Button>
                         )}
                       </TableCell>
