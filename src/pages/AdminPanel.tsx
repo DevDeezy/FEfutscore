@@ -1294,7 +1294,6 @@ const AdminPanel = () => {
           <Tab label="Patches" />
           <Tab label="Configuração de Preços" />
           <Tab label="Estados das Encomendas" />
-          <Tab label="Personalização" />
         </Tabs>
 
         {/* Orders Tab */}
