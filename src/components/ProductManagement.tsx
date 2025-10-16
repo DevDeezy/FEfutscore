@@ -424,8 +424,6 @@ const ProductManagement = () => {
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
-                <TableCell>€{product.price.toFixed(2)}</TableCell>
-                <TableCell>€{product.cost_price ? product.cost_price.toFixed(2) : '-'}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button 
