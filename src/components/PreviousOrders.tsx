@@ -161,7 +161,7 @@ const PreviousOrders: React.FC = () => {
             key={order.id}
             secondaryAction={
               <Box sx={{ display: 'flex', gap: 1 }}>
-                {order.status === 'Em pagamento' && (
+                {order.status === 'em_pagamento' && (
                   <Button 
                     variant="contained" 
                     color="warning" 
@@ -189,7 +189,7 @@ const PreviousOrders: React.FC = () => {
                   {order.total_price != null
                     ? `Total: €${order.total_price.toFixed(2)}`
                     : 'Total: -'}
-                  {order.status === 'Em pagamento' && (
+                  {order.status === 'em_pagamento' && (
                     <Typography variant="body2" color="error" sx={{ mt: 0.5 }}>
                       ⚠️ Pagamento pendente - Adicione a prova de pagamento
                     </Typography>

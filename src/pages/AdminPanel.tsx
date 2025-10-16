@@ -139,9 +139,7 @@ const AdminPanel = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [exporting, setExporting] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
-  const [bulkStatus, setBulkStatus] = useState<
-    'pending' | 'processing' | 'completed' | 'cancelled' | 'CSV' | 'Em Processamento' | 'Para analizar' | 'Em pagamento' | ''
-  >('');
+  const [bulkStatus, setBulkStatus] = useState<string>('');
   const [bulkLoading, setBulkLoading] = useState(false);
 
   // Search state
@@ -480,8 +478,8 @@ const AdminPanel = () => {
     try {
       await dispatch(updateOrderStatus({ orderId: selectedOrder.id, status: orderStatus }));
       
-      // Send email notification if status is "Em pagamento"
-      if (orderStatus === 'em_pagamento' || orderStatus === 'Em pagamento') {
+      // Send email notification if status is "em_pagamento"
+      if (orderStatus === 'em_pagamento') {
         try {
           const user = users.find(u => u.id === selectedOrder.user_id);
           if (user && (user.email || user.userEmail)) {
@@ -739,16 +737,16 @@ const AdminPanel = () => {
   // Add to CSV handler
   const handleAddToCSV = async (orderId: string) => {
     try {
-      await dispatch(updateOrderStatus({ orderId, status: 'CSV' }));
+      await dispatch(updateOrderStatus({ orderId, status: 'csv' }));
       dispatch(fetchOrders({ page: currentPage, limit: 10 }));
     } catch (err) {
       alert('Falha ao marcar encomenda para CSV');
     }
   };
 
-  // Export only orders with status 'CSV'
+  // Export only orders with status 'csv'
   const handleExportOrders = async () => {
-    const csvOrders = orders.filter((o) => o.status === 'CSV');
+    const csvOrders = orders.filter((o) => o.status === 'csv');
     if (csvOrders.length === 0) {
       alert('Não há encomendas marcadas para exportar.');
       return;
@@ -1350,13 +1348,11 @@ const AdminPanel = () => {
                     label="Alterar Estado Selecionados"
                     onChange={handleBulkStatusChange}
                   >
-                    <MenuItem value="pending">Pendente</MenuItem>
-                    <MenuItem value="Para analizar">Para Analisar</MenuItem>
-                    <MenuItem value="Em pagamento">Em Pagamento</MenuItem>
-                    <MenuItem value="processing">Em Processamento</MenuItem>
-                    <MenuItem value="completed">Concluída</MenuItem>
-                    <MenuItem value="cancelled">Cancelada</MenuItem>
-                    <MenuItem value="CSV">CSV</MenuItem>
+                    {orderStates.map((orderState) => (
+                      <MenuItem key={orderState.key} value={orderState.key}>
+                        {orderState.name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <Button
@@ -1476,7 +1472,7 @@ const AdminPanel = () => {
                         <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
                         </Button>
-                        {order.status !== 'CSV' && order.status !== 'Para analizar' && order.status !== 'A Orçamentar' && order.status !== 'Em pagamento' && order.status !== 'Em Processamento' && order.status !== 'completed' && order.status !== 'cancelled' && (
+                        {order.status !== 'csv' && (
                           <Button onClick={() => handleAddToCSV(order.id.toString())} color="secondary" variant="outlined">
                             Adicionar ao CSV
                           </Button>
@@ -2190,7 +2186,7 @@ const AdminPanel = () => {
               )}
 
               {/* Price update section - only show for "A Orçamentar" orders */}
-              {selectedOrder?.status === 'A Orçamentar' && (
+              {selectedOrder?.status === 'a_orcamentar' && (
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Definir Preço</Typography>
                   <TextField
