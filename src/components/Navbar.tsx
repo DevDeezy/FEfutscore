@@ -145,7 +145,23 @@ const Navbar = () => {
   );
 
   return (
-    <AppBar position="static" sx={{ borderRadius: '0px' }}>
+    <AppBar 
+      position="static" 
+      sx={{ 
+        borderRadius: '0px',
+        backgroundColor: 'var(--navbar-color, #1976d2)',
+        color: 'var(--navbar-text-color, #ffffff)',
+        '& .MuiButton-root': {
+          color: 'var(--navbar-text-color, #ffffff)',
+        },
+        '& .MuiIconButton-root': {
+          color: 'var(--navbar-text-color, #ffffff)',
+        },
+        '& .MuiTypography-root': {
+          color: 'var(--navbar-text-color, #ffffff)',
+        }
+      }}
+    >
       <Toolbar>
         {isMobile && (
           <MuiIconButton

@@ -6,18 +6,23 @@ const Footer = () => (
     component="footer"
     sx={{
       width: '100%',
-      bgcolor: '#f5f5f5',
+      bgcolor: 'var(--footer-color, #f5f5f5)',
       borderTop: '1px solid #ececec',
       py: 3,
       mt: 6,
       textAlign: 'center',
       fontWeight: 600,
-      color: 'text.primary',
+      color: 'var(--footer-text-color, #666666)',
       fontSize: '1.1rem',
       letterSpacing: 0.5,
     }}
   >
-    <Typography variant="body1" color="text.primary">
+    <Typography 
+      variant="body1" 
+      sx={{ 
+        color: 'var(--footer-text-color, #666666)'
+      }}
+    >
       &copy; {new Date().getFullYear()} FutScore. Todos os direitos reservados.
     </Typography>
   </Box>

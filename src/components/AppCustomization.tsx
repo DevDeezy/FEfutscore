@@ -171,14 +171,6 @@ const AppCustomization: React.FC = () => {
         secondaryColor,
       })).unwrap();
 
-      // Apply colors to CSS variables
-      document.documentElement.style.setProperty('--navbar-color', navbarColor);
-      document.documentElement.style.setProperty('--navbar-text-color', navbarTextColor);
-      document.documentElement.style.setProperty('--footer-color', footerColor);
-      document.documentElement.style.setProperty('--footer-text-color', footerTextColor);
-      document.documentElement.style.setProperty('--primary-color', primaryColor);
-      document.documentElement.style.setProperty('--secondary-color', secondaryColor);
-
       setColorsDialogOpen(false);
     } catch (err) {
       console.error('Erro ao atualizar cores:', err);
@@ -203,14 +195,6 @@ const AppCustomization: React.FC = () => {
     setSecondaryColor(defaultColors.secondaryColor);
 
     await dispatch(updateAppSettings(defaultColors)).unwrap();
-
-    // Reset CSS variables
-    document.documentElement.style.setProperty('--navbar-color', defaultColors.navbarColor);
-    document.documentElement.style.setProperty('--navbar-text-color', defaultColors.navbarTextColor);
-    document.documentElement.style.setProperty('--footer-color', defaultColors.footerColor);
-    document.documentElement.style.setProperty('--footer-text-color', defaultColors.footerTextColor);
-    document.documentElement.style.setProperty('--primary-color', defaultColors.primaryColor);
-    document.documentElement.style.setProperty('--secondary-color', defaultColors.secondaryColor);
   };
 
   if (loading && !appSettings) {
