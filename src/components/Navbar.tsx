@@ -25,7 +25,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import EditIcon from '@mui/icons-material/Edit';
 import PersonIcon from '@mui/icons-material/Person';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
+import { RootState, AppDispatch } from '../store';
 import { logout } from '../store/slices/authSlice';
 import { fetchAppSettings } from '../store/slices/appSettingsSlice';
 import NotificationBell from './NotificationBell';
@@ -36,7 +36,7 @@ import { setUser } from '../store/slices/authSlice';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const { items } = useSelector((state: RootState) => state.cart);
   const { appSettings } = useSelector((state: RootState) => state.appSettings);

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
+import { RootState, AppDispatch } from '../store';
 import { fetchAppSettings } from '../store/slices/appSettingsSlice';
 
 const AppBackground: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const { appSettings } = useSelector((state: RootState) => state.appSettings);
 
   useEffect(() => {

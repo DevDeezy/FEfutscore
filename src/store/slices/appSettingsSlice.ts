@@ -31,7 +31,7 @@ export const fetchAppSettings = createAsyncThunk(
 
 export const updateAppSettings = createAsyncThunk(
   'appSettings/updateAppSettings',
-  async (settings: Partial<AppSettings>) => {
+  async (settings: Partial<AppSettings>): Promise<AppSettings> => {
     // For now, we'll use localStorage to persist settings
     // In a real app, this would be an API call
     const currentSettings = localStorage.getItem('appSettings');
@@ -57,7 +57,7 @@ export const updateAppSettings = createAsyncThunk(
       document.documentElement.style.removeProperty('--app-background-opacity');
     }
     
-    return newSettings;
+    return newSettings as AppSettings;
   }
 );
 
