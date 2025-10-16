@@ -19,7 +19,7 @@ import {
   InputAdornment,
   Slider,
 } from '@mui/material';
-import { CloudUpload, Image, Business, Palette, Navigation, Footer } from '@mui/icons-material';
+import { CloudUpload, Image, Business, Palette, Navigation, Copyright } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store';
 import { updateAppSettings } from '../store/slices/appSettingsSlice';
@@ -700,7 +700,7 @@ const AppCustomization: React.FC = () => {
             {/* Footer Colors */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                <Footer sx={{ mr: 1 }} />
+                <Copyright sx={{ mr: 1 }} />
                 Cores do Footer
               </Typography>
             </Grid>
