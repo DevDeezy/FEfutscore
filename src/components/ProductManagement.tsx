@@ -416,8 +416,6 @@ const ProductManagement = () => {
             <TableRow>
               <TableCell>Nome</TableCell>
               <TableCell>Tipo</TableCell>
-              <TableCell>Preço</TableCell>
-              <TableCell>Preço Custo</TableCell>
               <TableCell>Ações</TableCell>
             </TableRow>
           </TableHead>
@@ -505,22 +503,6 @@ const ProductManagement = () => {
             rows={2}
             value={newProduct.description}
             onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-          />
-          <TextField
-            label="Preço"
-            type="number"
-            fullWidth
-            margin="normal"
-            value={newProduct.price}
-            onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
-          />
-          <TextField
-            label="Preço Custo"
-            type="number"
-            fullWidth
-            margin="normal"
-            value={newProduct.cost_price}
-            onChange={(e) => setNewProduct({ ...newProduct, cost_price: Number(e.target.value) })}
           />
           <TextField
             label="Imagem (ID do Drive ou URL)"
