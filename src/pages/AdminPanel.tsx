@@ -188,7 +188,8 @@ const AdminPanel = () => {
         order.address_morada?.toLowerCase().includes(query) ||
         order.address_cidade?.toLowerCase().includes(query) ||
         order.address_codigo_postal?.toLowerCase().includes(query) ||
-        order.status.toLowerCase().includes(query)
+        order.status.toLowerCase().includes(query) ||
+        order.orderState?.name?.toLowerCase().includes(query)
       );
     }
     
@@ -2225,9 +2226,8 @@ const AdminPanel = () => {
                 </Alert>
               )}
 
-              {/* Price update section - only show for "A Orçamentar" orders */}
-              {selectedOrder?.status === 'a_orcamentar' && (
-                <Box sx={{ mt: 3 }}>
+              {/* Price update section - admin can edit price regardless of status */}
+              <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>Definir Preço</Typography>
                   <TextField
                     fullWidth
@@ -2240,8 +2240,7 @@ const AdminPanel = () => {
                   />
 
                   {orderPriceError && <Alert severity="error" sx={{ mt: 1 }}>{orderPriceError}</Alert>}
-                </Box>
-              )}
+              </Box>
 
               {/* Tracking section */}
               <Box sx={{ mt: 3 }}>
