@@ -86,6 +86,19 @@ const AdminPanel = () => {
   const [orderPrice, setOrderPrice] = useState<number>(0);
   const [orderPriceLoading, setOrderPriceLoading] = useState(false);
   const [orderPriceError, setOrderPriceError] = useState<string | null>(null);
+  const [addressForm, setAddressForm] = useState({
+    address_nome: '',
+    address_morada: '',
+    address_cidade: '',
+    address_distrito: '',
+    address_pais: '',
+    address_codigo_postal: '',
+    address_telemovel: '',
+    clientInstagram: ''
+  });
+  const [paymentAccountInfoForm, setPaymentAccountInfoForm] = useState('');
+  const [detailsSaving, setDetailsSaving] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
   
   // Tracking state
   const [trackingText, setTrackingText] = useState('');
@@ -880,6 +893,17 @@ const AdminPanel = () => {
     setSelectedOrder(order);
     setOrderStatus(order.status);
     setOrderPrice(order.total_price);
+    setAddressForm({
+      address_nome: order.address_nome || '',
+      address_morada: order.address_morada || '',
+      address_cidade: order.address_cidade || '',
+      address_distrito: order.address_distrito || '',
+      address_pais: order.address_pais || '',
+      address_codigo_postal: order.address_codigo_postal || '',
+      address_telemovel: order.address_telemovel || '',
+      clientInstagram: order.clientInstagram || ''
+    });
+    setPaymentAccountInfoForm(order.paymentAccountInfo || '');
     setTrackingText('');
     setTrackingImages([]);
     setTrackingVideos([]);
@@ -923,6 +947,27 @@ const AdminPanel = () => {
     });
     setUpdateAllError(null);
     setOpenOrderDialog(true);
+  };
+
+  const handleSaveOrderDetails = async () => {
+    if (!selectedOrder) return;
+    try {
+      setDetailsSaving(true);
+      setDetailsError(null);
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderDetails`, {
+        orderId: selectedOrder.id,
+        ...addressForm,
+        paymentAccountInfo: paymentAccountInfoForm
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      // Refresh orders list and selected order
+      await dispatch(fetchOrders({ page: pagination.currentPage, limit: pagination.limit }));
+      setSelectedOrder((prev: any) => prev ? { ...prev, ...addressForm, paymentAccountInfo: paymentAccountInfoForm } : prev);
+    } catch (err: any) {
+      setDetailsError('Falha ao guardar detalhes da encomenda');
+    } finally {
+      setDetailsSaving(false);
+    }
   };
 
   // Pricing Configuration functions
@@ -2073,20 +2118,54 @@ const AdminPanel = () => {
               <Typography variant="h6" sx={{ mb: 1 }}>
                 Morada de Entrega
                 </Typography>
-              <Box>
-                <Typography component="p">{selectedOrder.address_nome}</Typography>
-                <Typography component="p">{selectedOrder.address_morada}</Typography>
-                <Typography component="p">{selectedOrder.address_codigo_postal} {selectedOrder.address_cidade}, {selectedOrder.address_distrito}</Typography>
-                <Typography component="p">{selectedOrder.address_pais}</Typography>
-                <Typography component="p">Telemóvel: {selectedOrder.address_telemovel}</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
+                <TextField label="Nome" value={addressForm.address_nome} onChange={(e) => setAddressForm(v => ({ ...v, address_nome: e.target.value }))} fullWidth />
+                <TextField label="Telemóvel" value={addressForm.address_telemovel} onChange={(e) => setAddressForm(v => ({ ...v, address_telemovel: e.target.value }))} fullWidth />
+                <TextField label="Morada" value={addressForm.address_morada} onChange={(e) => setAddressForm(v => ({ ...v, address_morada: e.target.value }))} fullWidth multiline />
+                <TextField label="Código Postal" value={addressForm.address_codigo_postal} onChange={(e) => setAddressForm(v => ({ ...v, address_codigo_postal: e.target.value }))} fullWidth />
+                <TextField label="Cidade" value={addressForm.address_cidade} onChange={(e) => setAddressForm(v => ({ ...v, address_cidade: e.target.value }))} fullWidth />
+                <TextField label="Distrito" value={addressForm.address_distrito} onChange={(e) => setAddressForm(v => ({ ...v, address_distrito: e.target.value }))} fullWidth />
+                <TextField label="País" value={addressForm.address_pais} onChange={(e) => setAddressForm(v => ({ ...v, address_pais: e.target.value }))} fullWidth />
               </Box>
 
-              {selectedOrder.clientInstagram && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="h6">Instagram do Cliente</Typography>
-                  <Typography component="p">📱 @{selectedOrder.clientInstagram}</Typography>
-                </Box>
-              )}
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="h6">Instagram do Cliente</Typography>
+                <TextField fullWidth placeholder="@username" value={addressForm.clientInstagram} onChange={(e) => setAddressForm(v => ({ ...v, clientInstagram: e.target.value }))} />
+                {selectedOrder?.user && (
+                  <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
+                    <TextField
+                      label="Email de Notificações do Utilizador"
+                      defaultValue={selectedOrder.user.userEmail || ''}
+                      onBlur={async (e) => {
+                        const value = e.target.value;
+                        if (!value || value === selectedOrder.user.userEmail) return;
+                        try {
+                          const token = localStorage.getItem('token');
+                          await axios.put(`${API_BASE_URL}/.netlify/functions/updateuseremail/${selectedOrder.user_id}`, { userEmail: value }, { headers: { Authorization: `Bearer ${token}` } });
+                        } catch (err) {
+                          alert('Falha ao atualizar email do utilizador');
+                        }
+                      }}
+                      fullWidth
+                    />
+                    <TextField
+                      label="Instagram (Perfil Principal) do Utilizador"
+                      defaultValue={selectedOrder.user.instagramName || ''}
+                      onBlur={async (e) => {
+                        const value = e.target.value;
+                        if (value === selectedOrder.user?.instagramName) return;
+                        try {
+                          const token = localStorage.getItem('token');
+                          await axios.put(`${API_BASE_URL}/.netlify/functions/updateInstagramName/${selectedOrder.user_id}`, { instagramName: value }, { headers: { Authorization: `Bearer ${token}` } });
+                        } catch (err) {
+                          alert('Falha ao atualizar instagram do utilizador');
+                        }
+                      }}
+                      fullWidth
+                    />
+                  </Box>
+                )}
+              </Box>
 
               {/* Payment Details section */}
               {(orderImages.paymentMethod || orderImages.paymentRecipient || orderImages.paymentAccountInfo || orderImages.proofReference) && (
@@ -2117,6 +2196,9 @@ const AdminPanel = () => {
                               <strong>Referência de Pagamento:</strong> {orderImages.proofReference}
                             </Typography>
                           )}
+                          <Box sx={{ mt: 2 }}>
+                            <TextField fullWidth label="Informação da Conta de Pagamento" value={paymentAccountInfoForm} onChange={(e) => setPaymentAccountInfoForm(e.target.value)} />
+                          </Box>
                         </>
                       );
                     })()}
@@ -2203,6 +2285,12 @@ const AdminPanel = () => {
                     </Select>
                   </FormControl>
                 {orderStatusError && <Alert severity="error" sx={{ mt: 1 }}>{orderStatusError}</Alert>}
+              </Box>
+
+              {/* Save Details */}
+              <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Button variant="contained" onClick={handleSaveOrderDetails} disabled={detailsSaving}>Guardar Detalhes</Button>
+                {detailsError && <Alert severity="error">{detailsError}</Alert>}
               </Box>
 
               {/* Pending Changes Summary */}

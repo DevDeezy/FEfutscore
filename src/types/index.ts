@@ -53,7 +53,7 @@ export interface AppSettings {
 export interface Order {
   id: string;
   user_id: string;
-  user?: { email: string; instagramName?: string };
+  user?: { email: string; instagramName?: string; userEmail?: string };
   items: OrderItem[];
   total_price: number;
   status: string; // Now dynamic based on OrderState
