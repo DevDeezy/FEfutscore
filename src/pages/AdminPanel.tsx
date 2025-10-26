@@ -961,7 +961,7 @@ const AdminPanel = () => {
         paymentAccountInfo: paymentAccountInfoForm
       }, { headers: { Authorization: `Bearer ${token}` } });
       // Refresh orders list and selected order
-      await dispatch(fetchOrders({ page: pagination.currentPage, limit: pagination.limit }));
+      await dispatch(fetchOrders({ page: pagination?.currentPage || 1, limit: pagination?.limit || 20 }));
       setSelectedOrder((prev: any) => prev ? { ...prev, ...addressForm, paymentAccountInfo: paymentAccountInfoForm } : prev);
     } catch (err: any) {
       setDetailsError('Falha ao guardar detalhes da encomenda');
