@@ -97,6 +97,7 @@ const AdminPanel = () => {
     clientInstagram: ''
   });
   const [paymentAccountInfoForm, setPaymentAccountInfoForm] = useState('');
+  const [paymentForm, setPaymentForm] = useState({ paymentRecipient: '', paymentMethod: '', proofReference: '' });
   const [detailsSaving, setDetailsSaving] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   
@@ -931,6 +932,12 @@ const AdminPanel = () => {
         proofReference: response.data.proofReference,
         items: response.data.items || []
       });
+      setPaymentAccountInfoForm(response.data.paymentAccountInfo || '');
+      setPaymentForm({
+        paymentRecipient: response.data.paymentRecipient || '',
+        paymentMethod: response.data.paymentMethod || '',
+        proofReference: response.data.proofReference || ''
+      });
       console.log('Images loaded successfully');
     } catch (error) {
       console.error('Error loading order images:', error);
@@ -955,14 +962,20 @@ const AdminPanel = () => {
       setDetailsSaving(true);
       setDetailsError(null);
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderDetails`, {
+      const saveDetails = axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderDetails`, {
         orderId: selectedOrder.id,
         ...addressForm,
         paymentAccountInfo: paymentAccountInfoForm
       }, { headers: { Authorization: `Bearer ${token}` } });
+      const savePayment = axios.put(`${API_BASE_URL}/.netlify/functions/updateorderpaymentproof/${selectedOrder.id}`, {
+        paymentRecipient: paymentForm.paymentRecipient,
+        paymentMethod: paymentForm.paymentMethod,
+        proofReference: paymentForm.proofReference
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      await Promise.all([saveDetails, savePayment]);
       // Refresh orders list and selected order
       await dispatch(fetchOrders({ page: pagination?.currentPage || 1, limit: pagination?.limit || 20 }));
-      setSelectedOrder((prev: any) => prev ? { ...prev, ...addressForm, paymentAccountInfo: paymentAccountInfoForm } : prev);
+      setSelectedOrder((prev: any) => prev ? { ...prev, ...addressForm, paymentAccountInfo: paymentAccountInfoForm, paymentRecipient: paymentForm.paymentRecipient, paymentMethod: paymentForm.paymentMethod, proofReference: paymentForm.proofReference } : prev);
     } catch (err: any) {
       setDetailsError('Falha ao guardar detalhes da encomenda');
     } finally {
@@ -2131,40 +2144,6 @@ const AdminPanel = () => {
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6">Instagram do Cliente</Typography>
                 <TextField fullWidth placeholder="@username" value={addressForm.clientInstagram} onChange={(e) => setAddressForm(v => ({ ...v, clientInstagram: e.target.value }))} />
-                {selectedOrder?.user && (
-                  <Box sx={{ mt: 2, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
-                    <TextField
-                      label="Email de Notificações do Utilizador"
-                      defaultValue={selectedOrder.user.userEmail || ''}
-                      onBlur={async (e) => {
-                        const value = e.target.value;
-                        if (!value || value === selectedOrder.user.userEmail) return;
-                        try {
-                          const token = localStorage.getItem('token');
-                          await axios.put(`${API_BASE_URL}/.netlify/functions/updateuseremail/${selectedOrder.user_id}`, { userEmail: value }, { headers: { Authorization: `Bearer ${token}` } });
-                        } catch (err) {
-                          alert('Falha ao atualizar email do utilizador');
-                        }
-                      }}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Instagram (Perfil Principal) do Utilizador"
-                      defaultValue={selectedOrder.user.instagramName || ''}
-                      onBlur={async (e) => {
-                        const value = e.target.value;
-                        if (value === selectedOrder.user?.instagramName) return;
-                        try {
-                          const token = localStorage.getItem('token');
-                          await axios.put(`${API_BASE_URL}/.netlify/functions/updateInstagramName/${selectedOrder.user_id}`, { instagramName: value }, { headers: { Authorization: `Bearer ${token}` } });
-                        } catch (err) {
-                          alert('Falha ao atualizar instagram do utilizador');
-                        }
-                      }}
-                      fullWidth
-                    />
-                  </Box>
-                )}
               </Box>
 
               {/* Payment Details section */}
@@ -2174,26 +2153,28 @@ const AdminPanel = () => {
                   <Paper sx={{ p: 2, bgcolor: 'grey.50' }} variant="outlined">
                     {(() => {
                       const parts: string[] = [];
-                      if (orderImages.paymentRecipient) parts.push(orderImages.paymentRecipient);
-                      if (orderImages.paymentMethod) parts.push(orderImages.paymentMethod);
-                      const combined = orderImages.paymentAccountInfo && /-/.test(orderImages.paymentAccountInfo)
-                        ? orderImages.paymentAccountInfo
-                        : [parts.join(' - '), orderImages.paymentAccountInfo].filter(Boolean).join(parts.length && orderImages.paymentAccountInfo ? ' - ' : '');
+                      if (paymentForm.paymentRecipient) parts.push(paymentForm.paymentRecipient);
+                      if (paymentForm.paymentMethod) parts.push(paymentForm.paymentMethod);
+                      const combined = paymentAccountInfoForm && /-/.test(paymentAccountInfoForm)
+                        ? paymentAccountInfoForm
+                        : [parts.join(' - '), paymentAccountInfoForm].filter(Boolean).join(parts.length && paymentAccountInfoForm ? ' - ' : '');
                       return (
                         <>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 2 }}>
+                            <TextField label="Destinatário do Pagamento" value={paymentForm.paymentRecipient} onChange={(e) => setPaymentForm(v => ({ ...v, paymentRecipient: e.target.value }))} fullWidth />
+                            <TextField label="Método de Pagamento" value={paymentForm.paymentMethod} onChange={(e) => setPaymentForm(v => ({ ...v, paymentMethod: e.target.value }))} fullWidth />
+                          </Box>
+                          <Box sx={{ mt: 2 }}>
+                            <TextField fullWidth label="Referência de Pagamento" value={paymentForm.proofReference} onChange={(e) => setPaymentForm(v => ({ ...v, proofReference: e.target.value }))} />
+                          </Box>
                           {combined && (
-                            <Typography variant="body2" sx={{ mb: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>
                               <strong>Pagamento:</strong> {combined}
                             </Typography>
                           )}
                           {!combined && parts.length > 0 && (
-                            <Typography variant="body2" sx={{ mb: 1 }}>
+                            <Typography variant="body2" sx={{ mb: 1, mt: 2 }}>
                               <strong>Pagamento:</strong> {parts.join(' - ')}
-                            </Typography>
-                          )}
-                          {orderImages.proofReference && (
-                            <Typography variant="body2">
-                              <strong>Referência de Pagamento:</strong> {orderImages.proofReference}
                             </Typography>
                           )}
                           <Box sx={{ mt: 2 }}>
@@ -2231,10 +2212,13 @@ const AdminPanel = () => {
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
                       {selectedOrder.items.map((item: any, idx: number) => (
                         <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
-                        <Typography variant="subtitle2">{item.name || (item.product_type === 'tshirt' ? 'Camisola Personalizada' : 'Sapatilhas')}</Typography>
+                        {item.name && (<Typography variant="subtitle2">{item.name}</Typography>)}
                         <Typography variant="body2">Tamanho: {item.size}</Typography>
                         <Typography variant="body2">Quantidade: {item.quantity || 1}</Typography>
                         {item.player_name && <Typography variant="body2">Nome do Jogador: {item.player_name}</Typography>}
+                        {typeof item.numero !== 'undefined' && item.numero !== null && item.numero !== '' && (
+                          <Typography variant="body2">Número do Jogador: {item.numero}</Typography>
+                        )}
                         {(() => {
                           const itemImages = orderImages.items.find(img => img.id === item.id);
                           return (itemImages && (itemImages.image_front || itemImages.image_back)) && (
