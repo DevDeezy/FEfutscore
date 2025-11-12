@@ -42,7 +42,7 @@ const Store = () => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [products, setProducts] = useState<any[]>([]);
   const [productTypes, setProductTypes] = useState<any[]>([]);
-  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string }[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<{ id: number; name: string; price?: number }[]>([]);
   const [selectedType, setSelectedType] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
