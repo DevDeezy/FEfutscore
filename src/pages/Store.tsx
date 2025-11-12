@@ -535,9 +535,16 @@ const Store = () => {
                     onChange={(e: any) => setSelectedShirtTypeId(e.target.value === '' ? '' : Number(e.target.value))}
                   >
                     {selectedProduct.available_shirt_type_ids.map((id: number) => (
-                      <MenuItem key={id} value={String(id)}>
-                        {shirtTypes.find(st => st.id === id)?.name || `Tipo ${id}`}
-                      </MenuItem>
+                      (() => {
+                        const st = shirtTypes.find(st => st.id === id);
+                        const name = st?.name || `Tipo ${id}`;
+                        const price = typeof st?.price === 'number' ? ` — €${st!.price.toFixed(2)}` : '';
+                        return (
+                          <MenuItem key={id} value={String(id)}>
+                            {name}{price}
+                          </MenuItem>
+                        );
+                      })()
                     ))}
                   </Select>
                 </FormControl>
