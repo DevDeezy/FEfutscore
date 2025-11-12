@@ -954,6 +954,64 @@ const AdminPanel = () => {
     });
     setUpdateAllError(null);
     setOpenOrderDialog(true);
+
+    // Auto-prefill missing item cost_price using packs and shirt types (admin cost)
+    try {
+      const toUpdate: Array<{ id: number; cost_price: number }> = [];
+      // Count quantities per shirt type
+      const countByType = new Map<number, number>();
+      (order.items || []).forEach((it: any) => {
+        if (it.product_type === 'tshirt' && it.shirt_type_id != null) {
+          const id = Number(it.shirt_type_id);
+          countByType.set(id, (countByType.get(id) || 0) + (Number(it.quantity || 1)));
+        }
+      });
+      const getShirtTypeCost = (typeId: number) => {
+        const st = shirtTypes.find((s: any) => s.id === typeId);
+        if (!st) return 0;
+        const v = typeof st?.cost_price === 'number' ? st.cost_price : st?.price;
+        return Number(v || 0);
+      };
+      const getBestUnitCostForType = (typeId: number, countForType: number) => {
+        let bestUnit = Infinity;
+        for (const pack of packs || []) {
+          if (!Array.isArray((pack as any).items) || (pack as any).items.length !== 1) continue;
+          const packItem = (pack as any).items[0];
+          if (packItem.product_type !== 'tshirt') continue;
+          const pid = Number(packItem.shirt_type_id);
+          if (pid !== typeId) continue;
+          const threshold = Number(packItem.quantity || 0);
+          if (threshold <= countForType) {
+            const unit = (typeof (pack as any).cost_price === 'number' && (pack as any).cost_price > 0)
+              ? Number((pack as any).cost_price)
+              : Number((pack as any).price || 0);
+            if (unit > 0) bestUnit = Math.min(bestUnit, unit);
+          }
+        }
+        if (bestUnit !== Infinity) return bestUnit;
+        return getShirtTypeCost(typeId);
+      };
+      for (const it of (order.items || [])) {
+        if (it.product_type === 'tshirt' && it.shirt_type_id != null) {
+          const qtyForType = countByType.get(Number(it.shirt_type_id)) || Number(it.quantity || 1);
+          const suggested = getBestUnitCostForType(Number(it.shirt_type_id), qtyForType);
+          const current = typeof it.cost_price === 'number' ? Number(it.cost_price) : 0;
+          if (!(current > 0) && suggested > 0) {
+            toUpdate.push({ id: Number(it.id), cost_price: suggested });
+          }
+        }
+      }
+      if (toUpdate.length > 0) {
+        const token = localStorage.getItem('token');
+        await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderItemCostPrice`, { items: toUpdate }, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+        // Reload the specific order to reflect updated costs
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?orderId=${order.id}`);
+        const fullOrder = Array.isArray(res.data) ? res.data[0] : res.data;
+        setSelectedOrder(fullOrder || order);
+      }
+    } catch (e) {
+      // silent: if prefill fails, admin can still edit manually
+    }
   };
   // Helpers to compute admin-side cost totals (mirror of export logic)
   const getConfigCost = (key: string, fallback: number) => {
@@ -1564,6 +1622,9 @@ const AdminPanel = () => {
                           Preço
                         </TableSortLabel>
                       </TableCell>
+                      <TableCell>
+                        Preço Admin
+                      </TableCell>
                     <TableCell>Ações</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1599,6 +1660,7 @@ const AdminPanel = () => {
                       </TableCell>
                       <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
                       <TableCell>€{order.total_price.toFixed(2)}</TableCell>
+                      <TableCell>€{computeAdminTotalForOrder(order).toFixed(2)}</TableCell>
                       <TableCell>
                         <Button onClick={() => handleOpenOrderDialog(order)} sx={{ mr: 1 }}>
                           Detalhes
