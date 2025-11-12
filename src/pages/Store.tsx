@@ -264,7 +264,7 @@ const Store = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=1&limit=1000`);
       const list = Array.isArray(res.data?.shirtTypes) ? res.data.shirtTypes : (Array.isArray(res.data) ? res.data : []);
-      setShirtTypes(list.map((t: any) => ({ id: t.id, name: t.name })));
+      setShirtTypes(list.map((t: any) => ({ id: t.id, name: t.name, price: t.price })));
     } catch {
       // silent
     }
@@ -283,6 +283,23 @@ const Store = () => {
     };
     walk(nodes);
     return out;
+  };
+
+  // Compute starting price for product based on available shirt types
+  const getProductStartingPrice = (product: any): number => {
+    const ids: number[] = Array.isArray(product.available_shirt_type_ids)
+      ? product.available_shirt_type_ids
+      : (product.shirt_type_id ? [product.shirt_type_id] : []);
+    const candidatePrices: number[] = ids
+      .map((id: number) => {
+        const st = shirtTypes.find((t: any) => t.id === id);
+        return typeof st?.price === 'number' ? st.price : undefined;
+      })
+      .filter((p: any) => typeof p === 'number') as number[];
+    if (candidatePrices.length > 0) {
+      return Math.min(...candidatePrices);
+    }
+    return typeof product.price === 'number' ? product.price : 0;
   };
 
   // Admin edit handlers
@@ -459,7 +476,7 @@ const Store = () => {
                         {product.description}
                       </Typography>
                       <Typography variant="h6" sx={{ mt: 1 }}>
-                        €{product.price.toFixed(2)}
+                        Desde €{getProductStartingPrice(product).toFixed(2)}
                       </Typography>
                       <Button variant="contained" sx={{ mt: 1 }} onClick={() => handleOpenDialog(product)}>
                         Adicionar ao Pedido
