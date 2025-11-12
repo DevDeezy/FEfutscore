@@ -31,6 +31,7 @@ export interface OrderItem {
   numero?: string;
   patch_images?: string[];
   anuncios?: boolean;
+  cost_price?: number;
 }
 
 export interface OrderState {
