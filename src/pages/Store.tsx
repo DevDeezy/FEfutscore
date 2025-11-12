@@ -62,7 +62,7 @@ const Store = () => {
 
   // Options used in admin edit modal to mirror admin Add Product form
   const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
-  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
+  // "Ano" passa a ser input livre com formatação "YY/ZZ"
 
   const normalizeImageUrl = (url: string): string => {
     if (!url) return '';
@@ -88,6 +88,19 @@ const Store = () => {
       }
     } catch {}
     return url;
+  };
+
+  // Converte entradas como "24" para "24/25" e "99" para "99/00"
+  const formatSeason = (input: string): string => {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+    const match = raw.match(/^(\d{2})\s*\/\s*(\d{2})$/);
+    if (match) return `${match[1]}/${match[2]}`;
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    const yy = (digits.length >= 2 ? digits.slice(-2) : digits).padStart(2, '0');
+    const next = (Number(yy) + 1) % 100;
+    return `${yy}/${String(next).padStart(2, '0')}`;
   };
 
   const buildDriveThumbnailUrl = (value: string): string => {
@@ -627,16 +640,15 @@ const Store = () => {
               {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
             </Select>
           </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Ano</InputLabel>
-            <Select
-              value={adminProductData.ano}
-              label="Ano"
-              onChange={(e) => setAdminProductData({ ...adminProductData, ano: e.target.value })}
-            >
-              {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <TextField
+            label="Ano"
+            fullWidth
+            margin="normal"
+            placeholder="24/25 ou 24"
+            value={adminProductData.ano}
+            onChange={(e) => setAdminProductData({ ...adminProductData, ano: e.target.value })}
+            onBlur={(e) => setAdminProductData({ ...adminProductData, ano: formatSeason(e.target.value) })}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteAdminProduct} color="error">Apagar</Button>

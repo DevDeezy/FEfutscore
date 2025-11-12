@@ -21,11 +21,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  InputAdornment,
+  TableSortLabel,
 } from '@mui/material';
 // Replaced x-tree-view with a simple indented list to avoid extra dependency
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
 import { Product, ProductType } from '../types';
+import { Search as SearchIcon } from '@mui/icons-material';
 // Removido DragDropZone: passamos a usar URL direto da imagem
 
 const ProductManagement = () => {
@@ -44,7 +47,6 @@ const ProductManagement = () => {
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const sexoOptions = ['Neutro', 'Masculino', 'Feminino'];
-  const anoOptions = ['21/22', '23/24', '24/25', '25/26'];
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -211,6 +213,59 @@ const ProductManagement = () => {
     };
     walk(nodes);
     return out;
+  };
+
+  // Converte entradas como "24" para "24/25" e "99" para "99/00"
+  const formatSeason = (input: string): string => {
+    const raw = String(input || '').trim();
+    if (!raw) return '';
+    const match = raw.match(/^(\d{2})\s*\/\s*(\d{2})$/);
+    if (match) return `${match[1]}/${match[2]}`;
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    const yy = (digits.length >= 2 ? digits.slice(-2) : digits).padStart(2, '0');
+    const next = (Number(yy) + 1) % 100;
+    return `${yy}/${String(next).padStart(2, '0')}`;
+  };
+
+  // Pesquisa e ordenação para a listagem de produtos
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'type'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const filteredSortedProducts = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const base = Array.isArray(products) ? products : [];
+    const filtered = q
+      ? base.filter((p: any) => {
+          const name = String(p?.name || '').toLowerCase();
+          const desc = String(p?.description || '').toLowerCase();
+          const ano = String(p?.ano || '').toLowerCase();
+          const typeName = String(p?.productType?.name || '').toLowerCase();
+          return name.includes(q) || desc.includes(q) || ano.includes(q) || typeName.includes(q);
+        })
+      : base;
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      const dir = sortDirection === 'asc' ? 1 : -1;
+      if (sortBy === 'name') {
+        return String(a?.name || '').localeCompare(String(b?.name || '')) * dir;
+      }
+      const at = String(a?.productType?.name || '');
+      const bt = String(b?.productType?.name || '');
+      const cmp = at.localeCompare(bt);
+      if (cmp !== 0) return cmp * dir;
+      return String(a?.name || '').localeCompare(String(b?.name || '')) * dir;
+    });
+    return sorted;
+  }, [products, searchQuery, sortBy, sortDirection]);
+
+  const handleRequestSort = (column: 'name' | 'type') => {
+    if (sortBy === column) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(column);
+      setSortDirection('asc');
+    }
   };
 
   const fetchProductTypes = async () => {
@@ -410,17 +465,49 @@ const ProductManagement = () => {
           Adicionar Produto
         </Button>
       </Box>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <TextField
+          size="small"
+          placeholder="Pesquisar por nome, tipo, ano..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ minWidth: 260 }}
+        />
+      </Box>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Tipo</TableCell>
+              <TableCell sortDirection={sortBy === 'name' ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortBy === 'name'}
+                  direction={sortBy === 'name' ? sortDirection : 'asc'}
+                  onClick={() => handleRequestSort('name')}
+                >
+                  Nome
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sortDirection={sortBy === 'type' ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortBy === 'type'}
+                  direction={sortBy === 'type' ? sortDirection : 'asc'}
+                  onClick={() => handleRequestSort('type')}
+                >
+                  Tipo
+                </TableSortLabel>
+              </TableCell>
               <TableCell>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {Array.isArray(products) && products.map((product) => (
+            {Array.isArray(filteredSortedProducts) && filteredSortedProducts.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.productType.name}</TableCell>
@@ -576,16 +663,15 @@ const ProductManagement = () => {
               {sexoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
             </Select>
           </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Ano</InputLabel>
-            <Select
-              value={newProduct.ano}
-              label="Ano"
-              onChange={e => setNewProduct({ ...newProduct, ano: e.target.value })}
-            >
-              {anoOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <TextField
+            label="Ano"
+            fullWidth
+            margin="normal"
+            placeholder="24/25 ou 24"
+            value={newProduct.ano}
+            onChange={(e) => setNewProduct({ ...newProduct, ano: e.target.value })}
+            onBlur={(e) => setNewProduct({ ...newProduct, ano: formatSeason(e.target.value) })}
+          />
           {/* Removed "Número" field from Add/Edit Product as requested */}
         </DialogContent>
         <DialogActions>
