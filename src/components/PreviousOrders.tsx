@@ -48,6 +48,18 @@ const PreviousOrders: React.FC = () => {
   const { orderStates } = useSelector((state: RootState) => state.orderStates);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [orderVideos, setOrderVideos] = useState<string[]>([]);
+  const [shirtTypes, setShirtTypes] = useState<Array<{ id: number; name: string }>>([]);
+
+  useEffect(() => {
+    const fetchShirtTypes = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getShirtTypes?page=1&limit=1000`);
+        const list = Array.isArray(res.data?.shirtTypes) ? res.data.shirtTypes : (Array.isArray(res.data) ? res.data : []);
+        setShirtTypes(list.map((t: any) => ({ id: t.id, name: t.name })));
+      } catch {}
+    };
+    fetchShirtTypes();
+  }, []);
 
   // Get order state info dynamically
   const getOrderStateInfo = (status: string) => {
@@ -284,7 +296,11 @@ const PreviousOrders: React.FC = () => {
                         </Typography>
                         {item.product_type === 'tshirt' && item.shirt_type_id && (
                           <Typography>
-                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Tipo de Camisola:</Typography> {item.shirt_type_id}
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Tipo de Camisola:</Typography>{' '}
+                            {(() => {
+                              const st = shirtTypes.find(st => st.id === Number(item.shirt_type_id));
+                              return st?.name || item.shirt_type_id;
+                            })()}
                           </Typography>
                         )}
                         {item.player_name && (
@@ -315,6 +331,11 @@ const PreviousOrders: React.FC = () => {
                         {item.ano && (
                           <Typography>
                             <Typography component="span" sx={{ fontWeight: 'bold' }}>Ano:</Typography> {item.ano}
+                          </Typography>
+                        )}
+                        {typeof (item as any).anuncios !== 'undefined' && (item as any).anuncios !== null && (
+                          <Typography>
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Anúncios:</Typography> {(item as any).anuncios ? 'Com' : 'Sem'}
                           </Typography>
                         )}
                       </Grid>

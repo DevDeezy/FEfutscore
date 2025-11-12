@@ -955,6 +955,57 @@ const AdminPanel = () => {
     setUpdateAllError(null);
     setOpenOrderDialog(true);
   };
+  // Helpers to compute admin-side cost totals (mirror of export logic)
+  const getConfigCost = (key: string, fallback: number) => {
+    const cfg = pricingConfigs.find((c: any) => c.key === key);
+    if (!cfg) return fallback;
+    return typeof cfg.cost_price === 'number' ? cfg.cost_price : (typeof cfg.price === 'number' ? cfg.price : fallback);
+  };
+  const computeAdminTotalForOrder = (order: any) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const patchPrice = getConfigCost('patch_price', 2);
+    const numberPrice = getConfigCost('number_price', 3);
+    const namePrice = getConfigCost('name_price', 3);
+    const personalization = getConfigCost('personalization_price', null as any);
+
+    let total = 0;
+    for (const item of order.items) {
+      const qty = Number(item.quantity || 1);
+      let base = Number(item.cost_price || 0) * qty;
+      if (item.product_type === 'tshirt') {
+        const patchesCount = Array.isArray(item.patch_images) ? item.patch_images.length : 0;
+        base += patchesCount * patchPrice * qty;
+        if (personalization != null) {
+          const hasPers = (item.player_name && String(item.player_name).trim() !== '') || (item.numero && String(item.numero).trim() !== '');
+          if (hasPers) base += Number(personalization) * qty;
+        } else {
+          if (item.numero && String(item.numero).trim() !== '') base += numberPrice * qty;
+          if (item.player_name && String(item.player_name).trim() !== '') base += namePrice * qty;
+        }
+      }
+      total += base;
+    }
+    return total;
+  };
+
+  const handleSaveItemCost = async (itemId: number, cost: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderItemCostPrice`, { items: [{ id: itemId, cost_price: Number(cost) }] }, token ? { headers: { Authorization: `Bearer ${token}` } } : undefined);
+      // Refresh orders to reflect cost updates
+      if (selectedOrder) {
+        // Reload the specific order fresh
+        const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?orderId=${selectedOrder.id}`);
+        const fullOrder = Array.isArray(res.data) ? res.data[0] : res.data;
+        setSelectedOrder(fullOrder || selectedOrder);
+      } else {
+        dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      }
+    } catch (e) {
+      alert('Falha ao guardar preço de custo do item');
+    }
+  };
+
 
   const handleSaveOrderDetails = async () => {
     if (!selectedOrder) return;
@@ -2208,13 +2259,59 @@ const AdminPanel = () => {
 
               <Box sx={{ mt: 3 }}>
                 <Typography variant="h6">Itens da Encomenda</Typography>
+                {selectedOrder && (
+                  <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="body1">
+                      Preço Cliente: €{(selectedOrder.total_price || 0).toFixed(2)}
+                    </Typography>
+                    <Typography variant="body1">
+                      Preço Admin: €{computeAdminTotalForOrder(selectedOrder).toFixed(2)}
+                    </Typography>
+                  </Box>
+                )}
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
                       {selectedOrder.items.map((item: any, idx: number) => (
                         <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
                         {item.name && (<Typography variant="subtitle2">{item.name}</Typography>)}
+                    {item.product_type && (
+                      <Typography variant="body2">Tipo: {item.product_type}</Typography>
+                    )}
+                    {item.product_type === 'tshirt' && item.shirt_type_id != null && (
+                      <Typography variant="body2">
+                        Tipo de Camisola: {(() => {
+                          const st = shirtTypes.find((s: any) => s.id === Number(item.shirt_type_id));
+                          return st?.name || item.shirt_type_id;
+                        })()}
+                      </Typography>
+                    )}
                         <Typography variant="body2">Tamanho: {item.size}</Typography>
                         <Typography variant="body2">Quantidade: {item.quantity || 1}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="body2">Preço Custo (admin):</Typography>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={typeof item.cost_price === 'number' ? item.cost_price : 0}
+                            onChange={(e) => {
+                              const val = Number((e.target as any).value);
+                              const updated = { ...item, cost_price: val };
+                              const clone = { ...selectedOrder, items: selectedOrder.items.map((it: any, i: number) => i === idx ? updated : it) } as any;
+                              setSelectedOrder(clone);
+                            }}
+                            sx={{ width: 120 }}
+                            inputProps={{ step: 0.5 }}
+                          />
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleSaveItemCost(item.id, Number(item.cost_price || 0))}
+                          >
+                            Guardar
+                          </Button>
+                        </Box>
+                    {item.sexo && <Typography variant="body2">Sexo: {item.sexo}</Typography>}
+                    {item.ano && <Typography variant="body2">Ano: {item.ano}</Typography>}
                         {item.player_name && <Typography variant="body2">Nome do Jogador: {item.player_name}</Typography>}
                         {typeof item.numero !== 'undefined' && item.numero !== null && item.numero !== '' && (
                           <Typography variant="body2">Número do Jogador: {item.numero}</Typography>

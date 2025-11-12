@@ -312,6 +312,11 @@ const Cart = () => {
     // Only try pack logic for t-shirts with shirt_type_id
     if (item.product_type === 'tshirt' && item.shirt_type_id) {
       const shirtTypeId = Number(item.shirt_type_id);
+      // Determine unit base price: prefer item.price, fallback to shirt type price
+      const shirtTypeObj = shirtTypes.find((t: any) => t.id === shirtTypeId);
+      const unitBase = (typeof item.price === 'number' && item.price > 0)
+        ? item.price
+        : (typeof shirtTypeObj?.price === 'number' ? Number(shirtTypeObj.price) : 0);
       // Count how many items in cart share the same shirt_type_id (expanded by quantity)
       const countForType = items.reduce((acc, it) => {
         if (it.product_type === 'tshirt' && Number(it.shirt_type_id) === shirtTypeId) {
@@ -321,13 +326,12 @@ const Cart = () => {
       }, 0);
       const bestUnit = getBestUnitPriceForShirtType(shirtTypeId, countForType);
       if (bestUnit != null) {
-        const currentUnit = typeof item.price === 'number' ? item.price : 0;
-        const cheaperWithPack = bestUnit < currentUnit;
+        const cheaperWithPack = bestUnit < unitBase;
         const qty = item.quantity || 1;
         return (
           <Box>
             <Typography variant="body2" color="text.secondary">
-              Preço base: €{(currentUnit * qty).toFixed(2)}
+              Preço base: €{(unitBase * qty).toFixed(2)}
             </Typography>
             <Typography variant="body2" color={cheaperWithPack ? 'success.main' : 'text.secondary'}>
               Preço com PACK ({countForType}): €{(bestUnit * qty).toFixed(2)}
@@ -335,6 +339,13 @@ const Cart = () => {
           </Box>
         );
       }
+      // If no pack discount applies, still show base price
+      const qty = item.quantity || 1;
+      return (
+        <Typography variant="body2" color="text.secondary">
+          Preço base: €{(unitBase * qty).toFixed(2)}
+        </Typography>
+      );
     }
     // Default: show item unit price when available
     if (typeof item.price === 'number') {
