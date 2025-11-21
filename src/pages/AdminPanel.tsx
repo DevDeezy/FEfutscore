@@ -1129,6 +1129,23 @@ const AdminPanel = () => {
     fetchProductsForSelection(typeId);
   };
 
+  // Compute starting price for product based on available shirt types
+  const getProductStartingPrice = (product: any): number => {
+    const ids: number[] = Array.isArray(product.available_shirt_type_ids)
+      ? product.available_shirt_type_ids
+      : (product.shirt_type_id ? [product.shirt_type_id] : []);
+    const candidatePrices: number[] = ids
+      .map((id: number) => {
+        const st = shirtTypes.find((t: any) => t.id === id);
+        return typeof st?.price === 'number' ? st.price : undefined;
+      })
+      .filter((p: any) => typeof p === 'number') as number[];
+    if (candidatePrices.length > 0) {
+      return Math.min(...candidatePrices);
+    }
+    return typeof product.price === 'number' ? product.price : 0;
+  };
+
   // Handle select product for order
   const handleSelectProductForOrder = (product: any) => {
     setSelectedProductForOrder(product);
@@ -2961,7 +2978,7 @@ const AdminPanel = () => {
                               <CardContent>
                                 <Typography variant="h6" noWrap>{product.name}</Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                  €{product.price?.toFixed(2) || '0.00'}
+                                  Desde €{getProductStartingPrice(product).toFixed(2)}
                                 </Typography>
                               </CardContent>
                             </Card>
