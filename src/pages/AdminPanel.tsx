@@ -2587,6 +2587,9 @@ const AdminPanel = () => {
                         {typeof item.numero !== 'undefined' && item.numero !== null && item.numero !== '' && (
                           <Typography variant="body2">Número do Jogador: {item.numero}</Typography>
                         )}
+                        {typeof item.anuncios !== 'undefined' && item.anuncios !== null && (
+                          <Typography variant="body2">Anúncios: {item.anuncios ? 'Com' : 'Sem'}</Typography>
+                        )}
                         {(() => {
                           const itemImages = orderImages.items.find(img => img.id === item.id);
                           return (itemImages && (itemImages.image_front || itemImages.image_back)) && (
