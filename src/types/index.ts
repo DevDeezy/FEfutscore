@@ -37,7 +37,9 @@ export interface OrderItem {
 export interface OrderState {
   id: number;
   key: string;
-  name: string;
+  name: string; // Mantido para compatibilidade (usado como fallback)
+  name_user?: string; // Nome do estado para utilizadores
+  name_admin?: string; // Nome do estado para administradores
   color: string;
   description?: string;
   created_at: string;

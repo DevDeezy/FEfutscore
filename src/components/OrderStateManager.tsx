@@ -34,6 +34,8 @@ const OrderStateManager: React.FC = () => {
   const [selectedState, setSelectedState] = useState<OrderState | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
+    name_user: '',
+    name_admin: '',
     color: '#ff9800', // Default to orange
     description: '',
   });
@@ -46,6 +48,8 @@ const OrderStateManager: React.FC = () => {
     setSelectedState(orderState);
     setEditForm({
       name: orderState.name,
+      name_user: orderState.name_user || orderState.name,
+      name_admin: orderState.name_admin || orderState.name,
       color: getColorValue(orderState.color),
       description: orderState.description || '',
     });
@@ -59,6 +63,8 @@ const OrderStateManager: React.FC = () => {
       await dispatch(updateOrderStateAsync({
         id: selectedState.id,
         name: editForm.name,
+        name_user: editForm.name_user,
+        name_admin: editForm.name_admin,
         color: editForm.color,
         description: editForm.description,
       })).unwrap();
@@ -73,7 +79,7 @@ const OrderStateManager: React.FC = () => {
   const handleCancelEdit = () => {
     setEditDialogOpen(false);
     setSelectedState(null);
-    setEditForm({ name: '', color: '#ff9800', description: '' });
+    setEditForm({ name: '', name_user: '', name_admin: '', color: '#ff9800', description: '' });
   };
 
   // Convert color names to hex values
@@ -139,15 +145,20 @@ const OrderStateManager: React.FC = () => {
               <TableRow key={orderState.id}>
                 <TableCell>
                   <Typography variant="body2" fontWeight="medium">
-                    {orderState.name}
+                    {orderState.name_admin || orderState.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Chave: {orderState.key}
                   </Typography>
+                  {orderState.name_user && orderState.name_user !== orderState.name_admin && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      User: {orderState.name_user}
+                    </Typography>
+                  )}
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={orderState.name}
+                    label={orderState.name_admin || orderState.name}
                     size="small"
                     style={{
                       backgroundColor: getColorPreview(orderState.color),
@@ -183,10 +194,31 @@ const OrderStateManager: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Nome do Estado"
+                label="Nome do Estado (Fallback/Compatibilidade)"
                 value={editForm.name}
                 onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 margin="normal"
+                helperText="Nome usado como fallback se name_user ou name_admin não estiverem definidos"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Nome para Utilizadores"
+                value={editForm.name_user}
+                onChange={(e) => setEditForm({ ...editForm, name_user: e.target.value })}
+                margin="normal"
+                helperText="Nome exibido para utilizadores normais"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Nome para Administradores"
+                value={editForm.name_admin}
+                onChange={(e) => setEditForm({ ...editForm, name_admin: e.target.value })}
+                margin="normal"
+                helperText="Nome exibido para administradores"
               />
             </Grid>
             <Grid item xs={12}>
@@ -231,13 +263,22 @@ const OrderStateManager: React.FC = () => {
                 <Typography variant="body2" gutterBottom>
                   Pré-visualização:
                 </Typography>
-                <Chip
-                  label={editForm.name || 'Nome do Estado'}
-                  style={{
-                    backgroundColor: editForm.color,
-                    color: 'white',
-                  }}
-                />
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`Admin: ${editForm.name_admin || editForm.name || 'Nome do Estado'}`}
+                    style={{
+                      backgroundColor: editForm.color,
+                      color: 'white',
+                    }}
+                  />
+                  <Chip
+                    label={`User: ${editForm.name_user || editForm.name || 'Nome do Estado'}`}
+                    style={{
+                      backgroundColor: editForm.color,
+                      color: 'white',
+                    }}
+                  />
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -247,7 +288,7 @@ const OrderStateManager: React.FC = () => {
           <Button 
             onClick={handleSaveEdit} 
             variant="contained"
-            disabled={!editForm.name || !editForm.color || !editForm.color.startsWith('#')}
+            disabled={!editForm.color || !editForm.color.startsWith('#')}
           >
             Guardar
           </Button>

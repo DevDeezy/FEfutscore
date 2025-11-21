@@ -42,7 +42,7 @@ export async function getOrderStates() {
   return response.data;
 }
 
-export async function updateOrderState(data: { id: number; name: string; color: string; description?: string }) {
+export async function updateOrderState(data: { id: number; name?: string; name_user?: string; name_admin?: string; color: string; description?: string }) {
   const response = await axios.put(`${API_BASE_URL}/.netlify/functions/updateOrderState`, data, {
     headers: {
       'Content-Type': 'application/json',

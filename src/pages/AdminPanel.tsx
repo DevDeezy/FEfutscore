@@ -30,8 +30,13 @@ import {
   InputAdornment,
   Pagination,
   TableSortLabel,
+  IconButton,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { fetchOrders, updateOrderStatus } from '../store/slices/orderSlice';
@@ -170,6 +175,21 @@ const AdminPanel = () => {
   const [patchesLoading, setPatchesLoading] = useState(false);
   const [patchesError, setPatchesError] = useState<string | null>(null);
   const [openPatchDialog, setOpenPatchDialog] = useState(false);
+
+  // Add/Remove order items state
+  const [openProductSelectDialog, setOpenProductSelectDialog] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [selectedProductForOrder, setSelectedProductForOrder] = useState<any | null>(null);
+  const [productConfig, setProductConfig] = useState({
+    size: '',
+    quantity: 1,
+    shirtTypeId: null as number | null,
+    playerName: '',
+    numero: '',
+  });
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
+  const [addingItem, setAddingItem] = useState(false);
   const [editingPatch, setEditingPatch] = useState<any | null>(null);
   const [patchForm, setPatchForm] = useState({ name: '', image: '', price: 0, units: 1 });
   const [pricingError, setPricingError] = useState<string | null>(null);
@@ -265,9 +285,15 @@ const AdminPanel = () => {
   const [patchesPage, setPatchesPage] = useState(1);
 
   // Helper functions for dynamic order states
+  // No AdminPanel, sempre usamos name_admin (ou name como fallback)
   const getOrderStateInfo = (status: string) => {
     const orderState = orderStates.find(state => state.key === status);
-    return orderState || { name: status, color: 'gray' };
+    if (!orderState) {
+      return { name: status, color: 'gray' };
+    }
+    // Para admins, usar name_admin se disponível, senão name
+    const displayName = orderState.name_admin || orderState.name;
+    return { ...orderState, name: displayName };
   };
 
   const getStatusColor = (status: string) => {
@@ -1013,6 +1039,125 @@ const AdminPanel = () => {
       // silent: if prefill fails, admin can still edit manually
     }
   };
+
+  // Fetch products for selection
+  const fetchProductsForSelection = async () => {
+    try {
+      setProductsLoading(true);
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?summary=true&limit=1000`);
+      if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else {
+        setProducts(res.data.products || []);
+      }
+      setProductsLoading(false);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setProductsLoading(false);
+    }
+  };
+
+  // Handle remove order item
+  const handleRemoveOrderItem = async (itemId: number) => {
+    if (!selectedOrder) return;
+    
+    if (!window.confirm('Tem certeza que deseja remover este item da encomenda?')) {
+      return;
+    }
+
+    setRemovingItemId(itemId);
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/.netlify/functions/deleteOrderItem?orderItemId=${itemId}`);
+      
+      // Reload order to get updated items and price
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?orderId=${selectedOrder.id}`);
+      const updatedOrder = Array.isArray(res.data) ? res.data[0] : res.data;
+      setSelectedOrder(updatedOrder);
+      setOrderPrice(updatedOrder?.total_price || 0);
+      
+      // Refresh orders list
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+    } catch (error: any) {
+      console.error('Error removing item:', error);
+      alert('Erro ao remover item: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setRemovingItemId(null);
+    }
+  };
+
+  // Handle open product selection dialog
+  const handleOpenProductSelectDialog = () => {
+    setOpenProductSelectDialog(true);
+    setSelectedProductForOrder(null);
+    setProductConfig({
+      size: '',
+      quantity: 1,
+      shirtTypeId: null,
+      playerName: '',
+      numero: '',
+    });
+    fetchProductsForSelection();
+  };
+
+  // Handle select product for order
+  const handleSelectProductForOrder = (product: any) => {
+    setSelectedProductForOrder(product);
+    const availableSizes = Array.isArray(product.available_sizes) ? product.available_sizes : [];
+    const availableShirtTypeIds = Array.isArray(product.available_shirt_type_ids) ? product.available_shirt_type_ids : [];
+    
+    setProductConfig({
+      size: availableSizes[0] || '',
+      quantity: 1,
+      shirtTypeId: availableShirtTypeIds.length > 0 ? availableShirtTypeIds[0] : (product.shirt_type_id || null),
+      playerName: '',
+      numero: '',
+    });
+  };
+
+  // Handle add item to order
+  const handleAddItemToOrder = async () => {
+    if (!selectedOrder || !selectedProductForOrder) return;
+
+    if (!productConfig.size && selectedProductForOrder.available_sizes?.length > 0) {
+      alert('Por favor, selecione um tamanho');
+      return;
+    }
+
+    setAddingItem(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/.netlify/functions/addOrderItem`, {
+        orderId: selectedOrder.id,
+        productId: selectedProductForOrder.id,
+        shirtTypeId: productConfig.shirtTypeId,
+        size: productConfig.size,
+        quantity: productConfig.quantity,
+        playerName: productConfig.playerName || null,
+        numero: productConfig.numero || null,
+        sexo: selectedProductForOrder.sexo || null,
+        ano: selectedProductForOrder.ano || null,
+        patchImages: [],
+      });
+
+      // Reload order to get updated items and price
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getorders?orderId=${selectedOrder.id}`);
+      const updatedOrder = Array.isArray(res.data) ? res.data[0] : res.data;
+      setSelectedOrder(updatedOrder);
+      setOrderPrice(updatedOrder?.total_price || 0);
+      
+      // Refresh orders list
+      dispatch(fetchOrders({ page: currentPage, limit: 20 }));
+      
+      // Close dialogs
+      setOpenProductSelectDialog(false);
+      setSelectedProductForOrder(null);
+    } catch (error: any) {
+      console.error('Error adding item:', error);
+      alert('Erro ao adicionar item: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
   // Helpers to compute admin-side cost totals (mirror of export logic)
   const getConfigCost = (key: string, fallback: number) => {
     const cfg = pricingConfigs.find((c: any) => c.key === key);
@@ -1506,7 +1651,7 @@ const AdminPanel = () => {
                     <MenuItem value="all">Todos</MenuItem>
                     {orderStates.map((orderState) => (
                       <MenuItem key={orderState.key} value={orderState.key}>
-                        {orderState.name}
+                        {orderState.name_admin || orderState.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -1528,35 +1673,33 @@ const AdminPanel = () => {
               </Box>
             </Box>
             {/* Bulk status update controls */}
-            {statusFilter === 'all' && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
-                <FormControl size="small" sx={{ minWidth: 180 }}>
-                  <InputLabel>Alterar Estado Selecionados</InputLabel>
-                  <Select
-                    value={bulkStatus}
-                    label="Alterar Estado Selecionados"
-                    onChange={handleBulkStatusChange}
-                  >
-                    {orderStates.map((orderState) => (
-                      <MenuItem key={orderState.key} value={orderState.key}>
-                        {orderState.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={bulkLoading || !bulkStatus || selectedOrderIds.length === 0}
-                  onClick={handleApplyBulkStatus}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>Alterar Estado Selecionados</InputLabel>
+                <Select
+                  value={bulkStatus}
+                  label="Alterar Estado Selecionados"
+                  onChange={handleBulkStatusChange}
                 >
-                  {bulkLoading ? 'A atualizar...' : 'Aplicar Estado'}
-                </Button>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedOrderIds.length} selecionado(s)
-                </Typography>
-              </Box>
-            )}
+                  {orderStates.map((orderState) => (
+                    <MenuItem key={orderState.key} value={orderState.key}>
+                      {orderState.name_admin || orderState.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={bulkLoading || !bulkStatus || selectedOrderIds.length === 0}
+                onClick={handleApplyBulkStatus}
+              >
+                {bulkLoading ? 'A atualizar...' : 'Aplicar Estado'}
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                {selectedOrderIds.length} selecionado(s)
+              </Typography>
+            </Box>
             <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
               <Table stickyHeader>
                   <TableHead>
@@ -2320,7 +2463,17 @@ const AdminPanel = () => {
               )}
 
               <Box sx={{ mt: 3 }}>
-                <Typography variant="h6">Itens da Encomenda</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="h6">Itens da Encomenda</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenProductSelectDialog}
+                    size="small"
+                  >
+                    Adicionar Camisola
+                  </Button>
+                </Box>
                 {selectedOrder && (
                   <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
                     <Typography variant="body1">
@@ -2334,7 +2487,16 @@ const AdminPanel = () => {
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
                       {selectedOrder.items.map((item: any, idx: number) => (
-                        <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200 }}>
+                        <Box key={idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, minWidth: 200, position: 'relative' }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveOrderItem(item.id)}
+                            disabled={removingItemId === item.id}
+                            sx={{ position: 'absolute', top: 8, right: 8 }}
+                            color="error"
+                          >
+                            {removingItemId === item.id ? <CircularProgress size={20} /> : <DeleteIcon />}
+                          </IconButton>
                         {item.name && (<Typography variant="subtitle2">{item.name}</Typography>)}
                     {item.product_type && (
                       <Typography variant="body2">Tipo: {item.product_type}</Typography>
@@ -2422,7 +2584,7 @@ const AdminPanel = () => {
                     >
                     {orderStates.map((orderState) => (
                       <MenuItem key={orderState.key} value={orderState.key}>
-                        {orderState.name}
+                        {orderState.name_admin || orderState.name}
                       </MenuItem>
                     ))}
                     </Select>
@@ -2640,6 +2802,125 @@ const AdminPanel = () => {
                 {updatingAll ? <CircularProgress size={24} /> : 'Atualizar Todas as Alterações'}
               </Button>
             )}
+          </DialogActions>
+        </Dialog>
+
+        {/* Product Selection Dialog */}
+        <Dialog open={openProductSelectDialog} onClose={() => setOpenProductSelectDialog(false)} maxWidth="md" fullWidth>
+          <DialogTitle>Selecionar Camisola da Loja</DialogTitle>
+          <DialogContent>
+            {productsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : selectedProductForOrder ? (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 2 }}>{selectedProductForOrder.name}</Typography>
+                {selectedProductForOrder.image_url && (
+                  <Box component="img" src={selectedProductForOrder.image_url} alt={selectedProductForOrder.name} sx={{ maxHeight: 200, mb: 2 }} />
+                )}
+                <Grid container spacing={2}>
+                  {selectedProductForOrder.available_sizes && selectedProductForOrder.available_sizes.length > 0 && (
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel>Tamanho</InputLabel>
+                        <Select
+                          value={productConfig.size}
+                          label="Tamanho"
+                          onChange={(e) => setProductConfig({ ...productConfig, size: e.target.value })}
+                        >
+                          {selectedProductForOrder.available_sizes.map((size: string) => (
+                            <MenuItem key={size} value={size}>{size}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  )}
+                  {selectedProductForOrder.available_shirt_type_ids && selectedProductForOrder.available_shirt_type_ids.length > 0 && (
+                    <Grid item xs={12}>
+                      <FormControl fullWidth>
+                        <InputLabel>Tipo de Camisola</InputLabel>
+                        <Select
+                          value={productConfig.shirtTypeId || ''}
+                          label="Tipo de Camisola"
+                          onChange={(e) => setProductConfig({ ...productConfig, shirtTypeId: e.target.value as number })}
+                        >
+                          {selectedProductForOrder.available_shirt_type_ids.map((id: number) => {
+                            const st = shirtTypes.find((s: any) => s.id === id);
+                            return (
+                              <MenuItem key={id} value={id}>{st?.name || id}</MenuItem>
+                            );
+                          })}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  )}
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Quantidade"
+                      type="number"
+                      value={productConfig.quantity}
+                      onChange={(e) => setProductConfig({ ...productConfig, quantity: parseInt(e.target.value) || 1 })}
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Nome do Jogador (opcional)"
+                      value={productConfig.playerName}
+                      onChange={(e) => setProductConfig({ ...productConfig, playerName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Número do Jogador (opcional)"
+                      value={productConfig.numero}
+                      onChange={(e) => setProductConfig({ ...productConfig, numero: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            ) : (
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                {products.filter((p: any) => p.productType?.base_type === 'tshirt').map((product: any) => (
+                  <Grid item xs={12} sm={6} md={4} key={product.id}>
+                    <Card sx={{ cursor: 'pointer' }} onClick={() => handleSelectProductForOrder(product)}>
+                      <CardMedia
+                        component="img"
+                        height="200"
+                        image={product.image_url}
+                        alt={product.name}
+                        sx={{ objectFit: 'contain', p: 1 }}
+                      />
+                      <CardContent>
+                        <Typography variant="h6" noWrap>{product.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          €{product.price?.toFixed(2) || '0.00'}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            {selectedProductForOrder && (
+              <>
+                <Button onClick={() => setSelectedProductForOrder(null)}>Voltar</Button>
+                <Button
+                  onClick={handleAddItemToOrder}
+                  variant="contained"
+                  disabled={addingItem || (!productConfig.size && selectedProductForOrder.available_sizes?.length > 0)}
+                >
+                  {addingItem ? <CircularProgress size={24} /> : 'Adicionar à Encomenda'}
+                </Button>
+              </>
+            )}
+            <Button onClick={() => setOpenProductSelectDialog(false)}>Cancelar</Button>
           </DialogActions>
         </Dialog>
 

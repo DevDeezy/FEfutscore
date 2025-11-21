@@ -24,7 +24,7 @@ export const fetchOrderStates = createAsyncThunk(
 
 export const updateOrderStateAsync = createAsyncThunk(
   'orderStates/updateOrderState',
-  async (data: { id: number; name: string; color: string; description?: string }) => {
+  async (data: { id: number; name?: string; name_user?: string; name_admin?: string; color: string; description?: string }) => {
     const response = await updateOrderState(data);
     return response;
   }

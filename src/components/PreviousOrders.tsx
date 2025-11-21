@@ -62,9 +62,15 @@ const PreviousOrders: React.FC = () => {
   }, []);
 
   // Get order state info dynamically
+  // Para utilizadores, usar name_user se disponível, senão name
   const getOrderStateInfo = (status: string) => {
     const orderState = orderStates.find(state => state.key === status);
-    return orderState || { name: status, color: 'gray' };
+    if (!orderState) {
+      return { name: status, color: 'gray' };
+    }
+    // Para users, usar name_user se disponível, senão name
+    const displayName = orderState.name_user || orderState.name;
+    return { ...orderState, name: displayName };
   };
 
   const statusStyles = (status: string) => {
