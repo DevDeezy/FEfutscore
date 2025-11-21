@@ -52,6 +52,7 @@ import { sendOrderEmail, EmailTemplateParams } from '../services/emailService';
 import DragDropZone from '../components/DragDropZone';
 import OrderStateManager from '../components/OrderStateManager';
 import AppCustomization from '../components/AppCustomization';
+import FilterSidebar from '../components/FilterSidebar';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -180,6 +181,9 @@ const AdminPanel = () => {
   const [openProductSelectDialog, setOpenProductSelectDialog] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productTypesForFilter, setProductTypesForFilter] = useState<any[]>([]);
+  const [selectedProductType, setSelectedProductType] = useState<string>('');
+  const [productSearchQuery, setProductSearchQuery] = useState<string>('');
   const [selectedProductForOrder, setSelectedProductForOrder] = useState<any | null>(null);
   const [productConfig, setProductConfig] = useState({
     size: '',
@@ -1040,11 +1044,28 @@ const AdminPanel = () => {
     }
   };
 
+  // Fetch product types for filter
+  const fetchProductTypesForFilter = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProductTypes?asTree=true&limit=1000`);
+      if (Array.isArray(res.data)) {
+        setProductTypesForFilter(res.data);
+      } else {
+        setProductTypesForFilter(res.data.tree || res.data.productTypes || []);
+      }
+    } catch (err) {
+      console.error('Error fetching product types:', err);
+    }
+  };
+
   // Fetch products for selection
-  const fetchProductsForSelection = async () => {
+  const fetchProductsForSelection = async (typeId: string = '') => {
     try {
       setProductsLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/.netlify/functions/getProducts?summary=true&limit=1000`);
+      const url = typeId
+        ? `${API_BASE_URL}/.netlify/functions/getProducts?productTypeId=${typeId}&summary=true&limit=1000`
+        : `${API_BASE_URL}/.netlify/functions/getProducts?summary=true&limit=1000`;
+      const res = await axios.get(url);
       if (Array.isArray(res.data)) {
         setProducts(res.data);
       } else {
@@ -1089,6 +1110,8 @@ const AdminPanel = () => {
   const handleOpenProductSelectDialog = () => {
     setOpenProductSelectDialog(true);
     setSelectedProductForOrder(null);
+    setSelectedProductType('');
+    setProductSearchQuery('');
     setProductConfig({
       size: '',
       quantity: 1,
@@ -1096,7 +1119,14 @@ const AdminPanel = () => {
       playerName: '',
       numero: '',
     });
-    fetchProductsForSelection();
+    fetchProductTypesForFilter();
+    fetchProductsForSelection('');
+  };
+
+  // Handle product type filter change
+  const handleProductTypeFilterChange = (typeId: string) => {
+    setSelectedProductType(typeId);
+    fetchProductsForSelection(typeId);
   };
 
   // Handle select product for order
@@ -2806,7 +2836,7 @@ const AdminPanel = () => {
         </Dialog>
 
         {/* Product Selection Dialog */}
-        <Dialog open={openProductSelectDialog} onClose={() => setOpenProductSelectDialog(false)} maxWidth="md" fullWidth>
+        <Dialog open={openProductSelectDialog} onClose={() => setOpenProductSelectDialog(false)} maxWidth="lg" fullWidth>
           <DialogTitle>Selecionar Camisola da Loja</DialogTitle>
           <DialogContent>
             {productsLoading ? (
@@ -2884,27 +2914,70 @@ const AdminPanel = () => {
                 </Grid>
               </Box>
             ) : (
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                {products.filter((p: any) => p.productType?.base_type === 'tshirt').map((product: any) => (
-                  <Grid item xs={12} sm={6} md={4} key={product.id}>
-                    <Card sx={{ cursor: 'pointer' }} onClick={() => handleSelectProductForOrder(product)}>
-                      <CardMedia
-                        component="img"
-                        height="200"
-                        image={product.image_url}
-                        alt={product.name}
-                        sx={{ objectFit: 'contain', p: 1 }}
-                      />
-                      <CardContent>
-                        <Typography variant="h6" noWrap>{product.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          €{product.price?.toFixed(2) || '0.00'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, gap: 2 }}>
+                  <TextField
+                    value={productSearchQuery}
+                    onChange={(e) => setProductSearchQuery(e.target.value)}
+                    placeholder="Procurar produtos..."
+                    InputProps={{
+                      startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+                    }}
+                    size="small"
+                    sx={{ flexGrow: 1, maxWidth: 400 }}
+                  />
+                </Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={3}>
+                    <FilterSidebar
+                      productTypes={productTypesForFilter}
+                      selectedType={selectedProductType}
+                      onSelectType={handleProductTypeFilterChange}
+                      onClearAll={() => handleProductTypeFilterChange('')}
+                    />
                   </Grid>
-                ))}
-              </Grid>
+                  <Grid item xs={12} md={9}>
+                    <Grid container spacing={2}>
+                      {products
+                        .filter((p: any) => p.productType?.base_type === 'tshirt')
+                        .filter((product: any) => {
+                          if (!productSearchQuery.trim()) return true;
+                          const query = productSearchQuery.toLowerCase();
+                          const name = `${product.name || ''} ${product.ano || ''}`.toLowerCase();
+                          const description = (product.description || '').toLowerCase();
+                          const typeName = (product?.productType?.name || '').toLowerCase();
+                          return name.includes(query) || description.includes(query) || typeName.includes(query);
+                        })
+                        .map((product: any) => (
+                          <Grid item xs={12} sm={6} md={4} key={product.id}>
+                            <Card sx={{ cursor: 'pointer', height: '100%' }} onClick={() => handleSelectProductForOrder(product)}>
+                              <CardMedia
+                                component="img"
+                                height="200"
+                                image={product.image_url}
+                                alt={product.name}
+                                sx={{ objectFit: 'contain', p: 1 }}
+                              />
+                              <CardContent>
+                                <Typography variant="h6" noWrap>{product.name}</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  €{product.price?.toFixed(2) || '0.00'}
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                    </Grid>
+                    {products.filter((p: any) => p.productType?.base_type === 'tshirt').length === 0 && (
+                      <Box sx={{ textAlign: 'center', p: 4 }}>
+                        <Typography variant="body1" color="text.secondary">
+                          Nenhum produto encontrado
+                        </Typography>
+                      </Box>
+                    )}
+                  </Grid>
+                </Grid>
+              </Box>
             )}
           </DialogContent>
           <DialogActions>
