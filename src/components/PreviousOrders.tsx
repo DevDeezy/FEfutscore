@@ -339,9 +339,9 @@ const PreviousOrders: React.FC = () => {
                             <Typography component="span" sx={{ fontWeight: 'bold' }}>Ano:</Typography> {item.ano}
                           </Typography>
                         )}
-                        {typeof (item as any).anuncios !== 'undefined' && (item as any).anuncios !== null && (
+                        {(item as any).anuncios === true && (
                           <Typography>
-                            <Typography component="span" sx={{ fontWeight: 'bold' }}>Anúncios:</Typography> {(item as any).anuncios ? 'Com' : 'Sem'}
+                            <Typography component="span" sx={{ fontWeight: 'bold' }}>With ads</Typography>
                           </Typography>
                         )}
                       </Grid>
