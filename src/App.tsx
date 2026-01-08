@@ -26,10 +26,23 @@ import PaymentMethods from './pages/PaymentMethods';
 import PreviousOrders from './components/PreviousOrders';
 import UserPanel from './pages/UserPanel';
 
+// Load Google Fonts
 const fontLink = document.createElement('link');
-fontLink.href = 'https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap';
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap';
 fontLink.rel = 'stylesheet';
 document.head.appendChild(fontLink);
+
+// Preconnect for faster font loading
+const preconnectGoogle = document.createElement('link');
+preconnectGoogle.rel = 'preconnect';
+preconnectGoogle.href = 'https://fonts.googleapis.com';
+document.head.appendChild(preconnectGoogle);
+
+const preconnectGstatic = document.createElement('link');
+preconnectGstatic.rel = 'preconnect';
+preconnectGstatic.href = 'https://fonts.gstatic.com';
+preconnectGstatic.crossOrigin = 'anonymous';
+document.head.appendChild(preconnectGstatic);
 
 const PasswordResetRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
   const { user } = useSelector((state: RootState) => state.auth);

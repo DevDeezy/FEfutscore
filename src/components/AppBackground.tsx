@@ -20,7 +20,7 @@ const AppBackground: React.FC = () => {
       document.body.style.backgroundRepeat = 'no-repeat';
       document.body.style.backgroundAttachment = 'fixed';
       
-      // Create overlay for opacity
+      // Create overlay for opacity (dark theme)
       let overlay = document.getElementById('app-background-overlay');
       if (!overlay) {
         overlay = document.createElement('div');
@@ -30,17 +30,17 @@ const AppBackground: React.FC = () => {
         overlay.style.left = '0';
         overlay.style.width = '100%';
         overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        overlay.style.backgroundColor = 'rgba(10, 10, 10, 0.85)';
         overlay.style.zIndex = '-1';
         overlay.style.pointerEvents = 'none';
         document.body.appendChild(overlay);
       }
       
-      // Update overlay opacity
+      // Update overlay opacity (dark theme - invert the logic)
       const opacity = 1 - (appSettings.backgroundOpacity || 0.1);
-      overlay.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+      overlay.style.backgroundColor = `rgba(10, 10, 10, ${opacity})`;
     } else {
-      // Remove background
+      // Remove custom background
       document.body.style.backgroundImage = '';
       document.body.style.backgroundSize = '';
       document.body.style.backgroundPosition = '';

@@ -53,6 +53,7 @@ import DragDropZone from '../components/DragDropZone';
 import OrderStateManager from '../components/OrderStateManager';
 import AppCustomization from '../components/AppCustomization';
 import FilterSidebar from '../components/FilterSidebar';
+import AdminAnalytics from '../components/AdminAnalytics';
 
 const AdminPanel = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -1646,6 +1647,7 @@ const AdminPanel = () => {
           scrollButtons="auto"
           aria-label="Admin tabs"
         >
+          <Tab label="Analytics" />
           <Tab label="Pedidos" />
           <Tab label="Utilizadores" />
           <Tab label="Packs & Preços" />
@@ -1654,10 +1656,18 @@ const AdminPanel = () => {
           <Tab label="Patches" />
           <Tab label="Configuração de Preços" />
           <Tab label="Estados das Encomendas" />
+          <Tab label="Personalização" />
         </Tabs>
 
-        {/* Orders Tab */}
+        {/* Analytics Tab */}
         {tab === 0 && (
+          <Box sx={{ p: isMobile ? 1 : 3 }}>
+            <AdminAnalytics />
+          </Box>
+        )}
+
+        {/* Orders Tab */}
+        {tab === 1 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ mb: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>Todos os Pedidos</Typography>
@@ -1911,7 +1921,7 @@ const AdminPanel = () => {
             )}
           </Box>
         )}
-        {tab === 1 && (
+        {tab === 2 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Utilizadores</Typography>
@@ -2019,7 +2029,7 @@ const AdminPanel = () => {
             </Dialog>
           </Box>
         )}
-        {tab === 2 && (
+        {tab === 3 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Packs</Typography>
@@ -2189,7 +2199,7 @@ const AdminPanel = () => {
             </Button>
           </DialogActions>
         </Dialog>
-        {tab === 3 && (
+        {tab === 4 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Tipos de Camisola</Typography>
@@ -2262,12 +2272,12 @@ const AdminPanel = () => {
             </Dialog>
           </Box>
         )}
-        {tab === 4 && (
+        {tab === 5 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <ProductManagement />
           </Box>
         )}
-        {tab === 5 && (
+        {tab === 6 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Gestão de Patches</Typography>
@@ -2344,7 +2354,7 @@ const AdminPanel = () => {
             )}
           </Box>
         )}
-        {tab === 6 && (
+        {tab === 7 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
               <Typography variant="h6">Configuração de Preços</Typography>
@@ -2411,14 +2421,14 @@ const AdminPanel = () => {
         )}
 
         {/* Order States Management Tab */}
-        {tab === 7 && (
+        {tab === 8 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <OrderStateManager />
           </Box>
         )}
 
         {/* App Customization Tab */}
-        {tab === 8 && (
+        {tab === 9 && (
           <Box sx={{ p: isMobile ? 1 : 3 }}>
             <AppCustomization />
           </Box>
