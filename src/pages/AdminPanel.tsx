@@ -533,7 +533,8 @@ const AdminPanel = () => {
             
             // Prepare email template parameters
             const templateParams: EmailTemplateParams = {
-              order_number: selectedOrder.id.toString()
+              order_number: selectedOrder.id.toString(),
+              to: emailToUse
             };
 
             await sendOrderEmail(templateParams);
